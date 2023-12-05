@@ -28,3 +28,19 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+h1 {
+  text-align: left;
+  max-width: 500px;
+  /* 在这里添加你想要的样式属性和值 */
+}
+
+.imagelogo {
+  text-align: right;
+  float: right;
+  margin-top: -300px;
+  margin-right: 100px;
+
+  /* 图片居右 */
+}
+
