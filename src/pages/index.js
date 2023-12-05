@@ -28,7 +28,11 @@ function HomepageHeader() {
             GitHub
           </Link>
         </div>
+           <div>
+      <img src="/img/logo.png" alt="Right Image" className="imagelogo"/>
+    </div>
       </div>
+
     </header>
   );
 }
