@@ -31,8 +31,7 @@
 
 h1 {
   text-align: left;
-  max-width: 500px;
-  /* 在这里添加你想要的样式属性和值 */
+  max-width: 480px;
 }
 
 .imagelogo {
@@ -40,7 +39,47 @@ h1 {
   float: right;
   margin-top: -300px;
   margin-right: 100px;
-
-  /* 图片居右 */
 }
 
+.hero {
+  background-color: unset;
+}
+
+.hero__title {
+  font-size: 2.5rem;
+  color: #000;
+}
+
+.navbar__logo {
+  height: 3rem;
+  margin-right: 1.3rem;
+  margin-left: 1.3rem;
+}
+
+.navbar__brand {
+  margin-right: 1rem;
+}
+
+.hero__subtitle {
+  font-size: 1rem;
+  color: #999;
+  max-width: 700px;
+}
+
+.navbar__title {
+  flex: 1 1 auto;
+  font-size: 1.2rem;
+}
+
+.heroBanner_src-pages-index-module {
+  padding-top: 145px !important;
+}
+
+.buttons_src-pages-index-module{
+  padding-top: 10px;
+}
+
+.started-button {
+  background: #E89F6D;
+  color: #fff !important;
+}
