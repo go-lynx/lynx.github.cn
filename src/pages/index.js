@@ -15,10 +15,14 @@ function HomepageHeader() {
         <Heading as="h1" className="hero__title">
           {siteConfig.tagline}
         </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <p className="hero__subtitle">
+          Lynx proudly introduces a plugin-driven modular design, enabling the combination of microservice functionality
+          modules through plugins. This unique approach allows for high customizability and adaptability to diverse
+          business needs.
+        </p>
         <div className={styles.buttons}>
           <Link
-            className="button button--secondary button--lg"
+            className="button button--secondary button--lg started-button"
             to="/docs/intro">
             Get Started
           </Link>
@@ -28,9 +32,8 @@ function HomepageHeader() {
             GitHub
           </Link>
         </div>
-           <div>
-      <img src="/img/logo.png" alt="Right Image" className="imagelogo"/>
-    </div>
+        <div>
+        </div>
       </div>
 
     </header>
