@@ -71,16 +71,6 @@ h1 {
   font-size: 1.2rem;
 }
 
-.heroBanner_src-pages-index-module {
-  padding-top: 145px !important;
-}
-
-.buttons_src-pages-index-module{
-  padding-top: 10px;
-  width: 320px;
-  justify-content: space-between !important;
-}
-
 .started-button {
   background: #E89F6D;
   color: #fff !important;
