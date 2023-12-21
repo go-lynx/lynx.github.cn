@@ -77,6 +77,8 @@ h1 {
 
 .buttons_src-pages-index-module{
   padding-top: 10px;
+  width: 320px;
+  justify-content: space-between !important;
 }
 
 .started-button {
