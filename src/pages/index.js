@@ -12,6 +12,7 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
+        <img className={styles.banner_logo} alt={'logo'} src={'img/logo.png'}/>
         <Heading as="h1" className="hero__title">
           {siteConfig.tagline}
         </Heading>
@@ -32,7 +33,8 @@ function HomepageHeader() {
             GitHub
           </Link>
         </div>
-        <div>
+        <div id="code-animation">
+
         </div>
       </div>
 
