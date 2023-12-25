@@ -6,6 +6,14 @@ import HomepageFeatures from '@site/src/components/HomepageFeatures';
 
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import {solarizedlight} from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+const code_lynx = `
+func main() {
+    boot.LynxApplication(wireApp).Run()
+}
+`;
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
@@ -33,11 +41,17 @@ function HomepageHeader() {
             GitHub
           </Link>
         </div>
-        <div id="code-animation">
-
+        <div className={styles.code_view}>
+          <h3>
+            Quick Start Code
+          </h3>
+          <div className="content">
+            <SyntaxHighlighter language="go" style={solarizedlight}>
+              {code_lynx}
+            </SyntaxHighlighter>
+          </div>
         </div>
       </div>
-
     </header>
   );
 }
@@ -46,7 +60,7 @@ export default function Home() {
   const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
+      title={`${siteConfig.title}`}
       description="Description will go into a meta tag in <head />">
       <HomepageHeader/>
       <main>
