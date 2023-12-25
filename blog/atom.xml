@@ -6,7 +6,6 @@
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://go-lynx.cn/blog"/>
     <subtitle>go-lynx Blog</subtitle>
-    <icon>https://go-lynx.cn/img/logo.png</icon>
     <entry>
         <title type="html"><![CDATA[Welcome]]></title>
         <id>https://go-lynx.cn/blog/welcome</id>
