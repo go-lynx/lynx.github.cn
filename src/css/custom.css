@@ -28,13 +28,9 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 
-  h1,h3 {
+  h1, h3, .hero__title {
     color: #fff;
   }
-}
-
-h1 {
-  text-align: center;
 }
 
 .imagelogo {
@@ -51,6 +47,7 @@ h1 {
 .hero__title {
   font-size: 2.5rem;
   color: #000;
+  text-align: center;
 }
 
 .navbar__logo {

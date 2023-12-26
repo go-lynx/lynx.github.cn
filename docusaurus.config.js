@@ -32,7 +32,7 @@ const config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'de', 'zh', 'ru'],
+    locales: ['en'],
   },
 
   plugins: [
@@ -40,7 +40,7 @@ const config = {
       require.resolve("@easyops-cn/docusaurus-search-local"),
       {
         hashed: true,
-        language: ['en', 'de', 'zh', 'ru'],
+        language: ['en'],
       },
     ],
   ],
