@@ -3,6 +3,12 @@
  * and scoped locally.
  */
 
+[data-theme='dark'] {
+  h1, h3, .hero__title {
+    color: #fff;
+  }
+}
+
 .heroBanner {
   text-align: left;
   position: relative;
