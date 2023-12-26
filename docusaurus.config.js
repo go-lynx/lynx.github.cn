@@ -32,8 +32,18 @@ const config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'de', 'zh', 'ru'],
   },
+
+  plugins: [
+    [
+      require.resolve("@easyops-cn/docusaurus-search-local"),
+      {
+        hashed: true,
+        language: ['en', 'de', 'zh', 'ru'],
+      },
+    ],
+  ],
 
   presets: [
     [
@@ -73,6 +83,10 @@ const config = {
             sidebarId: 'tutorialSidebar',
             position: 'left',
             label: 'Docs',
+          },
+          {
+            type: 'localeDropdown',
+            position: 'right',
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {
