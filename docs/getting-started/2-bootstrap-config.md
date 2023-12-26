@@ -9,7 +9,7 @@ If you are using the Configuration Center component, the local bootstrap file is
 ```yaml
 lynx:
   application:
-    name:  svc-name
+    name: svc-name
     version: v1.0.0
   polaris:
     namespace: svc-namespace
