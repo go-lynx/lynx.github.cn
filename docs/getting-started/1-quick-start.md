@@ -1,4 +1,4 @@
-# Quick Start Guide for go-lynx
+# Quick Start
 
 This guide will help you get started with the go-lynx CLI project scaffolding tool.
 

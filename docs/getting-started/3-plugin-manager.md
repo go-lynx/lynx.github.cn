@@ -1,4 +1,4 @@
-# Plugin Management in go-lynx
+# Plugin Management
 
 In go-lynx, all functionalities are designed with a plugin-oriented mindset. This approach provides a high level of modularity and flexibility, allowing you to easily customize your application to suit your specific needs.
 
