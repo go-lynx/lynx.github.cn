@@ -1,4 +1,4 @@
-# YAML Configuration in go-lynx
+# YAML Configuration
 
 In go-lynx, the application configuration is managed through YAML files. These files can be specified at application startup using the `-conf configs` command, where `configs` is the directory containing the configuration files.
 
