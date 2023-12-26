@@ -31,13 +31,10 @@
   --font-color: #fff;
 }
 
-h1, .hero__title {
+h1, .h3 .hero__title {
   color: var(--font-color) !important;
 }
 
-h3 {
-  color: #fff;
-}
 
 .imagelogo {
   text-align: right;
