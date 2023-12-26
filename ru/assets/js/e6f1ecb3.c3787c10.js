@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkgo_lynx=self.webpackChunkgo_lynx||[]).push([[232],{48882:e=>{e.exports=JSON.parse('{"permalink":"/ru/blog/tags/hola","page":1,"postsPerPage":10,"totalPages":1,"totalCount":1,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);
