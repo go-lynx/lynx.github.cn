@@ -30,7 +30,7 @@ lynx:
     version: v1.0.0
     tls:
       file_name: tls-service.yaml
-      group: rc-user
+      group: svc-group
   http:
     addr: 0.0.0.0:8000
     timeout: 5s
