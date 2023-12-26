@@ -51,7 +51,9 @@ export default function HomepageFeatures() {
   return (
     <section className={styles.features}>
       <div className="container">
-        <h1>What Go-Lynx can do</h1>
+        <Heading as="h1" className="hero__title">
+          What Go-Lynx can do
+        </Heading>
         <p className="hero__subtitle">Lynx is equipped with a comprehensive set of key microservices capabilities</p>
         <div className="row">
           {FeatureList.map((props, idx) => (
