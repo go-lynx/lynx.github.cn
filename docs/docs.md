@@ -1,4 +1,4 @@
-# Introduction to Go-Lynx
+# Introduction
 
 Welcome to Go-Lynx, a plug-and-play microservices framework designed with extensibility and simplicity at its core.
 
