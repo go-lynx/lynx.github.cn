@@ -2,13 +2,6 @@
  * CSS files with the .module.css suffix will be treated as CSS modules
  * and scoped locally.
  */
-
-[data-theme='dark'] {
-  h1, h3, .hero__title {
-    color: #fff;
-  }
-}
-
 .heroBanner {
   text-align: left;
   position: relative;
@@ -30,10 +23,6 @@
   justify-content: space-around;
   margin: auto;
   border: 0;
-
-  a {
-    border: 0;
-  }
 }
 
 .banner_logo {

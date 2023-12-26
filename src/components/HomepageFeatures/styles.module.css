@@ -1,9 +1,3 @@
-[data-theme='dark'] {
-  h1, h3, .hero__title {
-    color: #fff;
-  }
-}
-
 .features {
   display: flex;
   align-items: center;

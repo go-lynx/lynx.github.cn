@@ -75,3 +75,7 @@
   background: #E89F6D;
   color: #fff !important;
 }
+
+.button {
+  border: 0;
+}
