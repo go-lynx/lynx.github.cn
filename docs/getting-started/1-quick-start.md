@@ -30,6 +30,22 @@ Similar to the mindset of Spring Boot, you only need to focus on whether the con
 
 This makes go-lynx a highly flexible and powerful tool for managing and deploying microservices.
 
+## Application Entry Point
+
+```go
+func main() {
+    boot.LynxApplication(wireApp).Run()
+}
+```
+
+In the main entry point, you only need to write this line of code. After go-lynx starts, it will automatically perform program bootstrapping. The execution process is as follows:
+
+1. Parse the local bootstrap configuration file and load the corresponding plugins.
+2. If the plugin includes a configuration center, it will fetch the latest and complete configuration remotely.
+3. It will then repeat the first step.
+
+During this time, all plugin features will be initialized, and the application's discovery and registration, as well as http, grpc's rate limiting, and routing policy synchronization will be automatically performed.
+
 ## Conclusion
 
 With go-lynx, you can quickly and easily set up your project, define your microservices, and get your application up and running. With its robust set of features and easy-to-use interface, go-lynx is a valuable tool for any developer working with microservices.

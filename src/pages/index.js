@@ -42,9 +42,9 @@ function HomepageHeader() {
           </Link>
         </div>
         <div className={styles.code_view}>
-          <h3>
+          <h4 className={styles.code_title}>
             Quick Start Code
-          </h3>
+          </h4>
           <div className="content">
             <SyntaxHighlighter language="go" style={solarizedlight}>
               {code_lynx}
