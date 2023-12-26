@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkgo_lynx=self.webpackChunkgo_lynx||[]).push([[842],{84561:a=>{a.exports=JSON.parse('{"label":"facebook","permalink":"/ru/blog/tags/facebook","allTagsPath":"/ru/blog/tags","count":1,"unlisted":false}')}}]);
