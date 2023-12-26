@@ -23,6 +23,11 @@
   width: 320px;
   justify-content: space-around;
   margin: auto;
+  border: 0;
+
+  a {
+    border: 0;
+  }
 }
 
 .banner_logo {
