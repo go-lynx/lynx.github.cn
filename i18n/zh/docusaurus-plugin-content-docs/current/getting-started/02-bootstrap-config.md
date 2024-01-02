@@ -1,6 +1,6 @@
 ---
 id: bootstrap-config
-title: Bootstrap Config
+title: 引导配置
 ---
 
 # YAML Configuration
