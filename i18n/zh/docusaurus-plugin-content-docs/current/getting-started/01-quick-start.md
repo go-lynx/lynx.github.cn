@@ -1,6 +1,6 @@
 ---
 id: quick-start
-title: Quick Start
+title: 快速启动
 ---
 
 # Quick Start

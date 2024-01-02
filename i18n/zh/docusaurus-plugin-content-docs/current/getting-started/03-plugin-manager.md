@@ -1,6 +1,6 @@
 ---
 id: plugin-manager
-title: Plugin Manager
+title: 插件管理
 ---
 
 # Plugin Management
