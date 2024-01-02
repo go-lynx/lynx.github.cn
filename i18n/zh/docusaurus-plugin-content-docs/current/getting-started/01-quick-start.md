@@ -3,39 +3,39 @@ id: quick-start
 title: 快速启动
 ---
 
-# Quick Start
+# 快速入门
 
-This guide will help you get started with the go-lynx CLI project scaffolding tool.
+本指南将帮助您开始使用 go-lynx CLI 项目脚手架工具。
 
-## Installation
+## 安装
 
-First, install the go-lynx CLI using the following command:
+首先，使用以下命令安装 go-lynx CLI 工具：
 
 ```shell
 go install github.com/go-lynx/lynx/cmd/lynx@latest
 ```
 
-Once the installation is complete, you can create your microservice modules using the following command:
+安装完成后，您可以使用以下命令创建您的微服务模块：
 
 ```shell
 lynx new demo1 demo2 demo3
 ```
 
-The module names (`demo1`, `demo2`, `demo3` in this case) can be customized according to the modules in your business.
+在这个例子中，模块名称（`demo1`、`demo2`、`demo3`）可以根据您的业务自定义，支持单次创建多微服务模块。
 
-By following these steps, you can quickly obtain the go-lynx project scaffold.
+按照这些步骤，您可以快速获得 go-lynx 项目的脚手架。
 
-## About go-lynx
+## 关于 go-lynx
 
-By default, go-lynx uses a combination of Kratos and Polaris, providing a range of microservice capabilities such as registration, discovery, rate limiting, degradation, routing, and more.
+go-lynx 默认使用 Kratos 和 Polaris 的组合，提供一系列微服务能力，如注册、发现、限流、降级、路由等。
 
-go-lynx works by parsing yaml configuration files to load specified plugins. You can view the plugin modules in the go-lynx source code to learn more.
+go-lynx 通过解析 YAML 配置文件来加载指定的插件。您可以查看 go-lynx 源代码中的插件模块以了解更多信息。
 
-Similar to the mindset of Spring Boot, you only need to focus on whether the configuration file is edited correctly. go-lynx will automatically fetch configurations from the remote configuration center upon startup. If you're not using a configuration center, it will only load the local bootstrap configuration file to start the application.
+与 Spring Boot 的思维方式类似，您只需要关注配置文件是否正确编辑即可。go-lynx 在启动时将自动从远程配置中心获取配置。如果您没有使用配置中心，它将仅加载本地引导配置文件来启动应用程序。
 
-This makes go-lynx a highly flexible and powerful tool for managing and deploying microservices.
+这使得 go-lynx 成为一个高度灵活且功能强大的管理和部署微服务的工具。
 
-## Application Entry Point
+## 应用程序入口
 
 ```go
 func main() {
@@ -43,14 +43,14 @@ func main() {
 }
 ```
 
-In the main entry point, you only need to write this line of code. After go-lynx starts, it will automatically perform program bootstrapping. The execution process is as follows:
+在程序入口中，您只需要写下这一行代码。go-lynx 启动后，将自动执行程序引导过程。执行过程如下：
 
-1. Parse the local bootstrap configuration file and load the corresponding plugins.
-2. If the plugin includes a configuration center, it will fetch the latest and complete configuration remotely.
-3. It will then repeat the first step.
+1. 解析本地引导配置文件并加载相应的插件。
+2. 如果插件包含配置中心，它将从远程获取最新和完整的配置。
+3. 然后重复第一步，继续加载对应插件。
 
-During this time, all plugin features will be initialized, and the application's discovery and registration, as well as http, grpc's rate limiting, and routing policy synchronization will be automatically performed.
+在此期间，将初始化所有插件功能，并自动执行应用程序的服务发现和注册，以及 HTTP、gRPC 的限流和路由策略同步。
 
-## Conclusion
+## 结论
 
-With go-lynx, you can quickly and easily set up your project, define your microservices, and get your application up and running. With its robust set of features and easy-to-use interface, go-lynx is a valuable tool for any developer working with microservices.
+使用 go-lynx，您可以快速轻松地设置项目、定义微服务并使应用程序运行起来。
