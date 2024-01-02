@@ -9,7 +9,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'go-lynx',
+  title: 'Lynx',
   tagline: 'The Plug-and-Play Go Microservices Framework',
 
   // Set the production url of your site here
@@ -33,6 +33,14 @@ const config = {
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'zh'],
+    localeConfigs: {
+      en: {
+        label: 'English',
+      },
+      zh: {
+        label: '中文',
+      },
+    },
   },
   plugins: [
     [
@@ -43,7 +51,6 @@ const config = {
       },
     ],
   ],
-
   presets: [
     [
       'classic',
@@ -51,17 +58,15 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          editLocalizedFiles: true,
+          sidebarCollapsible: true,
+          sidebarCollapsed: false,
+          editUrl: 'https://github.com/go-lynx/lynx.github.cn/edit/main/',
         },
         blog: {
           showReadingTime: true,
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          editLocalizedFiles: true,
+          editUrl: 'https://github.com/go-lynx/lynx.github.cn/edit/main/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -103,7 +108,7 @@ const config = {
             items: [
               {
                 label: 'Docs',
-                to: '/docs/docs',
+                to: '/docs/intro',
               },
             ],
           },
