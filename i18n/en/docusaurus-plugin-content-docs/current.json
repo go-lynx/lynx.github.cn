@@ -1,4 +1,10 @@
 {
-  "intro": "intro",
-  "getting-started": "getting-started"
+  "intro": {
+    "message": "intro",
+    "description": "The label for category intro in sidebar docs"
+  },
+  "getting-started": {
+    "message": "getting-started",
+    "description": "The label for category getting-started in sidebar docs"
+  }
 }
