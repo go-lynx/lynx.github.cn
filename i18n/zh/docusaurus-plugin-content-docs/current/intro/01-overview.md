@@ -51,5 +51,4 @@ Go-Lynx 社区始终在这里为你提供帮助。如果你有任何问题或需
 
 ### 钉钉群
 
-![dingtalk.png](..%2F..%2F..%2F..%2F..%2Fstatic%2Fimg%2Fdingtalk.png)
-
+<img alt="dingtalk" src="/img/dingtalk.png" width="400">
