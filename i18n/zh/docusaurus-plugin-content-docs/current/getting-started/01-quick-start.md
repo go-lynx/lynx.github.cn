@@ -23,7 +23,7 @@ lynx new demo1 demo2 demo3
 
 在这个例子中，模块名称（`demo1`、`demo2`、`demo3`）可以根据您的业务自定义，支持单次创建多微服务模块。
 
-按照这些步骤，您可以快速获得 go-lynx 项目的脚手架。
+按照这些步骤，您可以快速获得 go-lynx 项目的脚手架，项目模板来自于 [Go-Lynx-Layout](https://github.com/go-lynx/lynx-layout)。
 
 ## 了解 go-lynx
 
