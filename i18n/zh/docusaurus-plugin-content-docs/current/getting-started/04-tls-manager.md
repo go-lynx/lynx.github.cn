@@ -122,7 +122,7 @@ L = Beijing
 O = 'lynx'
 OU = 'lynx'
 emailAddress = 'lynx'
-CN = rc-user
+CN = [service-name]
 
 [req_ext]
 subjectAltName = @alt_names
