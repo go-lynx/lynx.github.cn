@@ -105,7 +105,7 @@ openssl x509 -req -in [service-name].csr -CA ca.crt -CAkey ca.key -CAcreateseria
 以上步骤生成的 rootCA.crt、server.crt 和 server.key 就可以用于 GRPC 加密通讯了，配置到对应的服务器端以及客户端。
 
 #### 自定义证书字段信息
-由于在GO更高的版本中，对证书内部分字段的值验证与获取有调整。（Go 1.15版本之后会获取证书alt_names字段信息进行服务名称验证）所以我们需要在生成证书时，指定部分自定义字段信息。
+由于在Go更高的版本中，对证书内部分字段的值验证与获取有调整。（Go 1.15版本之后会获取证书alt_names字段信息进行服务名称验证）所以我们需要在生成证书时，指定部分自定义字段信息。
 
 创建一个 san.cnf 文件内容如下：
 ```text
