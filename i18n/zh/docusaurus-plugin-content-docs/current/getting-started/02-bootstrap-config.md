@@ -80,7 +80,7 @@ Go-Lynx 在启动时会优先加载本地引导配置文件，文件地址就是
 
 目前 go-lynx 所实现的控制面相关插件是腾讯 Polaris 服务治理框架，如果您需要使用注册发现，配置管理，以及微服务限流等功能，您需要先部署 Polaris 服务治理框架。
 
-相关文档：https://polarismesh.cn/docs
+相关文档：[腾讯北极星官网文档](https://polarismesh.cn/docs)
 
 ## 结论
 
