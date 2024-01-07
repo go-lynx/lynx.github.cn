@@ -157,3 +157,33 @@ openssl x509 -req -in [service-name].csr -CA ca.crt -CAkey ca.key -CAcreateseria
 ```bash
 openssl x509 -in [service-name].crt -text -noout
 ```
+
+## 如何配置
+
+在控制平面的配置中心中创建配置文件内容，内容如下
+```yaml
+crt: |
+-----BEGIN CERTIFICATE-----
+MIIDjzCCAnegAwIBAgIUeHirgWlXHIcTcsU5XjXphk6HYeAwDQYJKoZIhvcNAQEL
+BQAwVzELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDEQMA4GA1UEAwwHcmMtdXNlcjAeFw0y
+MzExMDgwNDExMTRaFw0yNDExMDcwNDExMTRaMFcxC...
+-----END CERTIFICATE-----
+
+key: |
+-----BEGIN PRIVATE KEY-----
+MIIDjzCCAnegAwIBAgIUeHirgWlXHIcTcsU5XjXphk6HYeAwDQYJKoZIhvcNAQEL
+BQAwVzELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDEQMA4GA1UEAwwHcmMtdXNlcjAeFw0y
+MzExMDgwNDExMTRaFw0yNDExMDcwNDExMTRaMFcxC...
+-----END PRIVATE KEY-----
+rootCA: |
+-----BEGIN CERTIFICATE-----
+MIIDjzCCAnegAwIBAgIUeHirgWlXHIcTcsU5XjXphk6HYeAwDQYJKoZIhvcNAQEL
+BQAwVzELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDEQMA4GA1UEAwwHcmMtdXNlcjAeFw0y
+MzExMDgwNDExMTRaFw0yNDExMDcwNDExMTRaMFcxC...
+-----END CERTIFICATE-----
+```
+
+在项目中引入证书插件，启动服务时会自动获取证书配置信息，获取位置则根据您配置的文件地址去配置中心中加载。
