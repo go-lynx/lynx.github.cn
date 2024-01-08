@@ -3,7 +3,7 @@ id: bootstrap-config
 title: 引导配置
 ---
 
-# YAML 配置
+# 引导配置
 
 在 go-lynx 中，应用程序配置通过 YAML 文件进行管理。可以在应用程序启动时使用 `-conf configs` 命令指定这些文件或目录，其中 `configs` 是包含配置文件的目录。
 
