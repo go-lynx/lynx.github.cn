@@ -24,9 +24,32 @@ go-lynx 目前提供了各种插件，包括：
 
 这些插件涵盖了广泛的功能，并且该列表在不断增长以适应各种业务场景。
 
-## 如何扩展插件支持
+## 自定义插件
 
-您可以通过实现一些接口并将插件注册到全局插件工厂来扩展插件支持。以下是一个示例，展示了如何执行此操作：
+```go
+type Plugin interface {
+    LoaderPlugin
+    SupportPlugin
+}
+
+type LoaderPlugin interface {
+    Load(config.Value) (Plugin, error)
+    Unload() error
+}
+
+type SupportPlugin interface {
+    Name() string
+    Weight() int
+    DependsOn(config.Value) []string
+    ConfPrefix() string
+}
+```
+
+实现以上接口，即可实现自定义插件。LoaderPlugin 是插件装载和卸载的能力，SupportPlugin 是插件依赖和名称以及配置文件匹配的相关接口。
+
+## 插件注册
+
+您需要将插件注册到全局插件工厂来扩展插件支持。以下是一个示例，展示了如何执行此操作：
 
 ```go
 func init() {
