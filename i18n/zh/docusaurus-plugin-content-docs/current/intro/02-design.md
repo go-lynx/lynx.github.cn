@@ -16,3 +16,4 @@ Go-Lynx 更相当于 Spring-Boot 的自动装配，但我们会完整的管理�
 
 ## 架构图
 
+<img alt="dingtalk" src="/img/architecture_diagram.png" width="900"/>
