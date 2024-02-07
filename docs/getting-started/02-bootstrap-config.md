@@ -1,15 +1,15 @@
 ---
 id: bootstrap-config
-title: 引导配置
+title: Bootstrap Configuration
 ---
 
-# 引导配置
+# Bootstrap Configuration
 
-在 go-lynx 中，应用程序配置通过 Yaml 文件进行插件管理。可以在应用程序启动时使用 `-conf configs` 命令（其中 `configs` 是包含配置文件的目录）指定这些文件或目录。go-lynx 主要通过 Yaml 配置提供了一种灵活且简单的方式来管理应用程序的设置。通过将配置文件与相应的插件对齐，您可以轻松定制应用程序以满足特定需求。本地引导配置文件和完整配置文件提供了不同级别的定制化，可以选择最适合应用程序需求的方法。此外，请记得导入插件所需的包，以确保它们按预期工作。
+In Go-Lynx, application configuration is managed through YAML files for plugin management. You can specify these files or directories at application startup using the `-conf configs` command (where `configs` is the directory containing the configuration files). Go-Lynx primarily provides a flexible and simple way to manage application settings through YAML configurations. By aligning configuration files with corresponding plugins, you can easily customize the application to meet specific needs. Both local bootstrap configuration files and full configuration files offer different levels of customization, allowing you to choose the method that best suits your application's requirements. Additionally, remember to import the packages required by the plugins to ensure they work as expected.
 
-## 本地引导配置文件
+## Local Bootstrap Configuration
 
-如果您使用了配置中心相关组件，本地引导文件非常简单，只需要几行配置。主要包括远程配置中心的配置信息（以下以Polaris为案例）：
+If you are using components related to a configuration center, the local bootstrap file is quite simple, requiring only a few lines of configuration. It mainly includes the configuration information for the remote configuration center (using Polaris as an example):
 
 ```yaml
 lynx:
@@ -24,9 +24,9 @@ lynx:
     timeout: 1s
 ```
 
-## 完整配置
+## Full Configuration
 
-go-lynx 的完整配置文件，展示了目前支持所有可用的插件配置。每个配置项对应一个插件。如果配置文件和插件匹配，框架将在启动时自动加载插件：
+Go-Lynx's full configuration file shows all currently supported plugin configurations. Each configuration item corresponds to a plugin. If the configuration file matches the plugin, the framework will automatically load the plugin at startup:
 
 ```yaml
 lynx:
@@ -68,16 +68,16 @@ lynx:
     write_timeout: 1s
 ```
 
-## 插件注册
+## Plugin Registration
 
-需要注意的是，要使用某个插件，必须导入相应插件的包到您的项目中。如果你导入了包，则只需编辑配置信息，插件将会自动注册到插件管理器中。如果未导入包，则配置文件将不会有任何作用。
+It's important to note that to use a specific plugin, you must import the corresponding plugin's package into your project. If you import the package, simply edit the configuration information, and the plugin will automatically register with the plugin manager. If the package is not imported, the configuration file will have no effect.
 
-## 启动加载
+## Startup Loading
 
-Go-Lynx 在启动时会优先加载本地引导配置文件，文件地址就是启动时的参数`-conf configs` 命令指定这些文件或目录，加载本地配置之后如果发现其中存在控制平面相关插件，会在控制平面插件初始化完成之后自动进行远程配置文件拉取，拉取的文件默认为 application-name.yaml 其中 application-name 就是启动时指定的应用名称。
+Go-Lynx will prioritize loading the local bootstrap configuration file at startup, with the file address specified by the `-conf configs` command at startup. After loading the local configuration, if it detects control plane-related plugins, it will automatically pull the remote configuration file after the control plane plugin is initialized. The default pulled file is application-name.yaml, where application-name is the application name specified at startup.
 
-## 服务治理
+## Service Governance
 
-目前 go-lynx 所实现的控制面相关插件是腾讯 Polaris 服务治理框架，如果您需要使用注册发现，配置管理，以及微服务限流等功能，您需要先部署 Polaris 服务治理框架。
+The control plane-related plugins implemented in Go-Lynx are based on the Tencent Polaris service governance framework. If you need to use features such as registration discovery, configuration management, and microservice rate limiting, you will need to deploy the Polaris service governance framework first.
 
-相关文档：[腾讯北极星官网文档](https://polarismesh.cn/docs)
+Related Documentation: [Tencent Polaris Official Documentation](https://polarismesh.cn/docs)
