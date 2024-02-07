@@ -6,5 +6,9 @@
   "sidebar.docs.category.Getting-Started": {
     "message": "快速开始",
     "description": "The label for category getting-started in sidebar docs"
+  },
+  "sidebar.docs.category.existing-plugin": {
+    "message": "已有插件",
+    "description": "The label for category existing-plugin in sidebar docs"
   }
 }
