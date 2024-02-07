@@ -22,4 +22,4 @@ The `lynx.tracer` section contains the configuration for the tracing plugin.
 `addr` represents the address of the tracer server.  
 `ratio` indicates the sampling rate, with a range between 0-1, where 1 means that every request is sampled. It is suggested to set it to 1 for testing environments, and to reduce the value appropriately for production environments.
 
-> After the configuration is complete, you can start the service and view the collected information on the Web-UI of the corresponding tracer server. We don't need to write any additional code. Go-Lynx takes care of everything; all you need to do is configure it.
+After the configuration is complete, you can start the service and view the collected information on the Web-UI of the corresponding tracer server. We don't need to write any additional code. Go-Lynx takes care of everything; all you need to do is configure it.
