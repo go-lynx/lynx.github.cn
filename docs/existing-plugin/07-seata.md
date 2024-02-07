@@ -21,7 +21,7 @@ The `config_path` is the path to the seata configuration file. Once configured, 
 
 How to deploy seata?
 
-Refer to the seata official documentation to deploy the TM (Transaction Manager) service: [seata Official Documentation](https://seata.apache.org/)
+Refer to the seata official documentation to deploy the TC (Transaction Coordinator) service: [seata Official Documentation](https://seata.apache.org/)
 
 The `seatago.yml` file should contain the following content:
 

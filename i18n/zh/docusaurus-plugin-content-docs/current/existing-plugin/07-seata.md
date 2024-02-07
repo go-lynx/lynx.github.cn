@@ -21,7 +21,7 @@ lynx:
 
 如何部署seata？
 
-查看seata官方文档进行TM服务部署: [seata官网文档](https://seata.apache.org/)
+查看seata官方文档进行 TC (Transaction Coordinator) 服务部署: [seata官网文档](https://seata.apache.org/)
 
 `seatago.yml` 文件内容如下：
 
