@@ -22,11 +22,8 @@ We are committed to providing a lightweight and flexible microservice developmen
 With Go-Lynx, you can enjoy:
 
 - **Focus on Business**: Let the underlying plugins handle all the enhancements and features, allowing you to concentrate on the most important thing - your business logic.
-
 - **Plugin Extensibility**: Use existing plugins or create your own to extend the functionality of your application.
-
 - **Easy Integration**: Plugins are designed to integrate with each other, enabling you to assemble powerful components tailored to your needs.
-
 - **Plug-and-Play**: Easily insert the plugins you need and start building your application. Simply import the corresponding module, and the plugin takes effect.
 
 Thank you for using Go-Lynx. We're excited to see what microservice modules you'll create!
