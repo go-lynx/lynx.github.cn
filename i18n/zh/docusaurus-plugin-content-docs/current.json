@@ -8,7 +8,7 @@
     "description": "The label for category getting-started in sidebar docs"
   },
   "sidebar.docs.category.Existing-Plugin": {
-    "message": "已有插件",
+    "message": "现有插件",
     "description": "The label for category existing-plugin in sidebar docs"
   }
 }
