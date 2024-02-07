@@ -1,51 +1,51 @@
 ---
 id: quick-start
-title: 快速启动
+title: Quick Start
 ---
 
-# 快速入门
+# Quick Start Guide
 
-本指南将帮助您快速入门使用 Go-Lynx，我们为 Go-Lynx 设计了 CLI 项目脚手架工具，以便于快速创建一个微服务项目。
+This guide will help you get started with Go-Lynx quickly. We have designed a CLI scaffolding tool for Go-Lynx to facilitate the rapid creation of a microservice project.
 
-## 安装
+## Installation
 
-首先，使用以下命令安装 Go-Lynx CLI 工具：
+First, install the Go-Lynx CLI tool using the following command:
 
 ```shell
 go install github.com/go-lynx/lynx/cmd/lynx@latest
 ```
 
-安装完成后，您可以使用以下命令创建您的微服务模块：
+After installation, you can create your microservice modules using the following command:
 
 ```shell
 lynx new demo1 demo2 demo3
 ```
 
-在这个例子中，模块名称（`demo1`、`demo2`、`demo3`）可以根据您的业务自定义，支持单次创建多微服务模块。
+In this example, the module names (`demo1`, `demo2`, `demo3`) can be customized according to your business needs, and it supports the creation of multiple microservice modules at once.
 
-按照这些步骤，您可以快速获得 go-lynx 项目的脚手架，项目模板来自于 [Go-Lynx-Layout](https://github.com/go-lynx/lynx-layout)。
+By following these steps, you can quickly obtain the scaffolding for a go-lynx project. The project template is derived from [Go-Lynx-Layout](https://github.com/go-lynx/lynx-layout).
 
-## 了解 Go-Lynx
+## Understanding Go-Lynx
 
-Go-Lynx 默认使用 Kratos 和 Polaris 的组合，提供一系列微服务治理能力，如注册、发现、配置、限流、降级、路由等。
+Go-Lynx defaults to using a combination of Kratos and Polaris to provide a range of microservice governance capabilities, such as registration, discovery, configuration, rate limiting, routing, etc.
 
-Go-Lynx 通过解析 YAML 配置文件来加载指定的插件。您可以查看 [Go-Lynx](https://github.com/go-lynx/lynx) 源代码中的插件模块以了解更多信息。
+Go-Lynx loads specified plugins by parsing YAML configuration files. You can view the plugin modules in the [Go-Lynx](https://github.com/go-lynx/lynx) source code to learn more.
 
-与 Spring Boot 的思维方式类似，您只需要关注配置文件是否正确编辑即可。Go-Lynx 在应用启动时将自动从远程配置中心获取配置。如果您没有使用配置中心，它将仅加载本地引导配置文件来启动应用程序。
+Similar to the Spring Boot approach, you only need to ensure that the configuration file is correctly edited. Go-Lynx will automatically retrieve configurations from a remote configuration center at application startup. If you do not use a configuration center, it will only load the local bootstrap configuration file to start the application.
 
-Go-Lynx 会根据配置文件中的内容信息，加载自身插件，并自动装配它们。
+Go-Lynx loads its own plugins based on the content information in the configuration file and automatically assembles them.
 
-这使得 Go-Lynx 成为一个高度灵活且功能强大的管理和部署微服务的工具。
+This makes Go-Lynx a highly flexible and powerful tool for managing and deploying microservices.
 
-## 项目结构
+## Project Structure
 
-我们沿用了基于 go-kratos 优秀项目结构，但在内部不需要去编写部分组件的初始化代码，以及配置代码，通过 go-lynx 插件管理器已经实现了自动装配功能。
+We follow the excellent project structure based on go-kratos, but you do not need to write the initialization code and configuration code for some components internally. The automatic assembly function has been implemented by the go-lynx plugin manager.
 
 ```
 .
-├── api // 下面维护了微服务使用的proto文件以及根据它们所生成的go文件
+├── api // Maintains the proto files used by the microservice and the generated go files based on them
 │   └── helloworld
-│       └── v1
+│       ├── v1
 │           ├── error_reason.pb.go
 │           ├── error_reason.proto
 │           ├── error_reason.swagger.json
@@ -54,37 +54,37 @@ Go-Lynx 会根据配置文件中的内容信息，加载自身插件，并自动
 │           ├── greeter.swagger.json
 │           ├── greeter_grpc.pb.go
 │           └── greeter_http.pb.go
-├── cmd  // 整个项目启动的入口文件
+├── cmd  // The entry file for the entire project to start
 │   └── server
 │       ├── main.go
-│       ├── wire.go  // 使用wire来维护依赖注入
+│       ├── wire.go  // Uses wire to maintain dependency injection
 │       └── wire_gen.go
-├── configs  // 这里通常配置微服务本地引导配置文件
+├── configs  // Typically contains the local bootstrap configuration files for the microservice
 │   └── config.yaml
 ├── generate.go
 ├── go.mod
 ├── go.sum
-├── internal  // 该服务所有不对外暴露的代码，通常的业务逻辑都在这下面，使用internal避免错误引用
-│   ├── biz   // 业务逻辑的组装层，类似 DDD 的 domain 层，data 类似 DDD 的 repo，而 repo 接口在这里定义，使用依赖倒置的原则。
+├── internal  // All non-exposed code for the service, usually the business logic is here. Using internal avoids incorrect references
+│   ├── biz   // The assembly layer of business logic, similar to the domain layer in DDD, data is similar to the repo in DDD, and the repo interface is defined here, using the principle of dependency inversion.
 │   │   ├── README.md
 │   │   ├── biz.go
 │   │   └── greeter.go
-│   ├── conf  // 内部使用的config的结构定义，使用proto格式生成
+│   ├── conf  // Internal config structure definitions, generated using the proto format
 │   │   ├── conf.pb.go
 │   │   └── conf.proto
-│   ├── data  // 业务数据访问，包含 cache、db 等封装，实现了 biz 的 repo 接口。我们可能会把 data 与 dao 混淆在一起，data 偏重业务的含义，它所要做的是将领域对象重新拿出来，我们去掉了 DDD 的 infra层。
+│   ├── data  // Business data access, including cache, db encapsulation, implements the biz repo interface. We may confuse data with dao, data focuses on business meaning, it needs to take the domain object out again, we removed the infra layer of DDD.
 │   │   ├── README.md
 │   │   ├── data.go
 │   │   └── greeter.go
-│   ├── server  // http和grpc实例的模块注册以及创建和配置
+│   ├── server  // Module registration and creation and configuration of http and grpc instances
 │   │   ├── grpc.go
 │   │   ├── http.go
 │   │   └── server.go
-│   └── service  // 实现了 api 定义的服务层，类似 DDD 的 application 层，处理 DTO 到 biz 领域实体的转换(DTO -> DO)，同时协同各类 biz 交互，但是不应处理复杂逻辑
+│   └── service  // Implements the service layer defined in the api, similar to the application layer in DDD, handles the conversion of DTO to biz domain entities (DTO -> DO), and coordinates various biz interactions, but should not handle complex logic
 │       ├── README.md
 │       ├── greeter.go
 │       └── service.go
-└── third_party  // api 依赖的第三方proto
+└── third_party  // Third-party proto dependencies for the api
     ├── README.md
     ├── google
     │   └── api
@@ -96,8 +96,7 @@ Go-Lynx 会根据配置文件中的内容信息，加载自身插件，并自动
         └── validate.proto
 ```
 
-
-## 应用程序入口
+## Application Entry Point
 
 ```go
 func main() {
@@ -105,10 +104,10 @@ func main() {
 }
 ```
 
-在程序入口中，您只需要写下这一行代码。Go-Lynx 启动后，将自动执行程序引导过程。执行过程如下：
+In the program entry point, you only need to write this line of code. After Go-Lynx starts, it will automatically execute the program bootstrap process. The execution process is as follows:
 
-1. 解析本地引导配置文件并加载相应的插件。
-2. 如果插件包含配置中心插件，它将调用插件从远程配置中心获取最新和完整的配置。
-3. 然后重复第一步，继续解析并加载对应插件，直至全部插件加载完成。
+1. Parse the local bootstrap configuration file and load the corresponding plugins.
+2. If the plugins include a configuration center plugin, it will call the plugin to retrieve the latest and complete configuration from the remote configuration center.
+3. Then repeat the first step, continue to parse and load the corresponding plugins until all plugins are loaded.
 
-在此期间，将初始化所有插件功能，并自动执行应用程序的服务发现和注册，以及 HTTP、gRPC 的限流和路由策略同步。
+During this time, all plugin features will be initialized, and the service discovery and registration of the application will be automatically executed, along with the synchronization of HTTP and gRPC rate limiting and routing strategies.
