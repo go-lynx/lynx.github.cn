@@ -1,6 +1,6 @@
 ---
 id: redis
-title: redis
+title: redis 插件
 ---
 
 # redis插件
