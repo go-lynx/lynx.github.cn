@@ -63,5 +63,3 @@ Join us in using Go-Lynx, the plug-and-play Go microservices framework, to simpl
 ![DingTalk Group](https://github.com/go-lynx/lynx/assets/32378959/cfeacfb8-95d4-4b23-8299-a868502f1076)
 
 ---
-
-Please replace `"Your Name"` with the actual author's name or leave it as a placeholder if not applicable. Adjust the markdown as needed to fit the specific formatting requirements of your Docusaurus site.
