@@ -14,9 +14,10 @@
     "write-heading-ids": "docusaurus write-heading-ids"
   },
   "dependencies": {
-    "@docusaurus/core": "3.0.0",
-    "@docusaurus/plugin-content-docs": "^3.0.1",
-    "@docusaurus/preset-classic": "3.0.0",
+    "@docusaurus/core": "^3.8.1",
+    "@docusaurus/plugin-content-docs": "^3.8.1",
+    "@docusaurus/preset-classic": "^3.8.1",
+    "@docusaurus/theme-mermaid": "^3.8.1",
     "@easyops-cn/docusaurus-search-local": "^0.40.1",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^1.2.1",
@@ -24,12 +25,13 @@
     "prismjs": "^1.29.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-simple-typewriter": "^5.0.1",
     "react-syntax-highlighter": "^15.5.0",
     "typewriter-effect": "^2.21.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.0.0",
-    "@docusaurus/types": "3.0.0"
+    "@docusaurus/module-type-aliases": "^3.8.1",
+    "@docusaurus/types": "^3.8.1"
   },
   "browserslist": {
     "production": [

@@ -4,6 +4,7 @@ import styles from './styles.module.css';
 
 const FeatureList = [
   {
+    icon: '🧩',
     title: 'Microservice Features',
     description: (
       <>
@@ -13,6 +14,7 @@ const FeatureList = [
     ),
   },
   {
+    icon: '🔌',
     title: 'Plug-and-Play',
     description: (
       <>
@@ -23,6 +25,7 @@ const FeatureList = [
     ),
   },
   {
+    icon: '⚡',
     title: 'Easy to Use',
     description: (
       <>
@@ -34,10 +37,11 @@ const FeatureList = [
 ];
 
 
-function Feature({Svg, title, description}) {
+function Feature({icon, title, description}) {
   return (
-    <div className={clsx('col col--4')}>
-      <div className="text--center">
+    <div className={clsx('col col--4', styles.featureCard)}>
+      <div className={styles.featureIconWrap}>
+        <span className={styles.featureIcon}>{icon}</span>
       </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>

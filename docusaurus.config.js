@@ -145,6 +145,7 @@ const config = {
         darkTheme: prismThemes.dracula,
       },
     }),
+  themes: ['@docusaurus/theme-mermaid'],
 };
 
 export default config;
