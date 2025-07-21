@@ -1,10 +1,18 @@
 {
   "sidebar.docs.category.Intro": {
     "message": "Intro",
-    "description": "The label for category intro in sidebar docs"
+    "description": "The label for category Intro in sidebar docs"
   },
   "sidebar.docs.category.Getting-Started": {
     "message": "Getting-Started",
-    "description": "The label for category getting-started in sidebar docs"
+    "description": "The label for category Getting-Started in sidebar docs"
+  },
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.docs.category.Existing-Plugin": {
+    "message": "Existing-Plugin",
+    "description": "The label for category Existing-Plugin in sidebar docs"
   }
 }
