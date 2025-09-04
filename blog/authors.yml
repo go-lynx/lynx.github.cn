@@ -3,3 +3,9 @@ tanzhuo:
   title: Go-Lynx Founder
   url: https://tanzhuo.xyz
   image_url: https://avatars.githubusercontent.com/u/32378959?v=4&size=64
+
+lynx-team:
+  name: Lynx Team
+  title: Lynx Framework Development Team
+  url: https://github.com/go-lynx/lynx
+  image_url: https://avatars.githubusercontent.com/u/go-lynx?v=4&size=64
