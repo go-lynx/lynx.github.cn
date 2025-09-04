@@ -1,0 +1,103 @@
+name: Sync Documentation from Main Repository
+
+on:
+  repository_dispatch:
+    types: [new-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to sync (e.g., v1.2.3)'
+        required: true
+        type: string
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout documentation repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout main lynx repository
+        uses: actions/checkout@v4
+        with:
+          repository: go-lynx/lynx
+          path: lynx-main
+          ref: ${{ github.event.client_payload.version || inputs.version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync README and documentation
+        run: |
+          VERSION="${{ github.event.client_payload.version || inputs.version }}"
+          
+          # Copy updated README files if they exist
+          if [ -f "lynx-main/README.md" ]; then
+            echo "Syncing English README..."
+            # You can add logic here to update specific sections of docs
+          fi
+          
+          if [ -f "lynx-main/README_zh.md" ]; then
+            echo "Syncing Chinese README..."
+            # You can add logic here to update specific sections of docs
+          fi
+          
+          # Copy release notes if they exist
+          if [ -f "lynx-main/RELEASE_NOTES_${VERSION}.md" ]; then
+            echo "Found release notes for ${VERSION}"
+            # Create a blog post for the new release
+            mkdir -p "blog/$(date +%Y-%m-%d)-release-${VERSION}"
+            cat > "blog/$(date +%Y-%m-%d)-release-${VERSION}/index.md" << EOF
+          ---
+          slug: release-${VERSION}
+          title: Lynx ${VERSION} Release
+          authors: [lynx-team]
+          tags: [release, ${VERSION}]
+          ---
+
+          # Lynx ${VERSION} Release Notes
+
+          $(cat lynx-main/RELEASE_NOTES_${VERSION}.md)
+          EOF
+          fi
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git add .
+          if git diff --cached --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          VERSION="${{ github.event.client_payload.version || inputs.version }}"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "chore: sync documentation for ${VERSION}
+
+          🤖 Generated with GitHub Actions
+          
+          Co-Authored-By: GitHub Actions <noreply@github.com>"
+          git push
+
+      - name: Deploy to GitHub Pages
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          npm run build
+          npm run deploy
+        env:
+          GIT_USER: ${{ github.actor }}
+          GIT_PASS: ${{ secrets.GITHUB_TOKEN }}
