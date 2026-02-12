@@ -10,42 +10,88 @@
 
 # lynx.github.cn
 
-This website is built using [Docusaurus 2](https://docusaurus.io/), a modern static website generator.
+**中文** | [English](#english)
+
+本仓库为 [Go-Lynx](https://go-lynx.cn) 官方文档站点，提供**中英双版本**文档，基于 [Docusaurus](https://docusaurus.io/) 构建。
+
+### 安装依赖
+
+```bash
+yarn
+```
+
+### 本地开发
+
+```bash
+yarn start
+```
+
+启动后可在浏览器中查看站点，修改内容会热更新。
+
+### 构建
+
+```bash
+yarn build
+```
+
+构建产物输出到 `build` 目录，可用于任意静态站点托管。
+
+### 部署（GitHub Pages）
+
+使用 SSH：
+
+```bash
+USE_SSH=true yarn deploy
+```
+
+不使用 SSH：
+
+```bash
+GIT_USER=<你的 GitHub 用户名> yarn deploy
+```
+
+该命令会构建站点并推送到 `gh-pages` 分支。
+
+---
+
+## English
+
+This repository is the **official documentation site** for [Go-Lynx](https://go-lynx.cn), with **Chinese and English** versions, built with [Docusaurus](https://docusaurus.io/).
 
 ### Installation
 
-```
-$ yarn
+```bash
+yarn
 ```
 
 ### Local Development
 
-```
-$ yarn start
+```bash
+yarn start
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+This starts a local dev server; most changes hot-reload.
 
 ### Build
 
-```
-$ yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
+```bash
+yarn build
 ```
 
-Not using SSH:
+Output is in the `build` directory.
 
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
+### Deployment (GitHub Pages)
+
+With SSH:
+
+```bash
+USE_SSH=true yarn deploy
 ```
 
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Without SSH:
+
+```bash
+GIT_USER=<Your GitHub username> yarn deploy
+```
+
+This builds the site and pushes to the `gh-pages` branch.

@@ -22,3 +22,5 @@ Based on the architecture diagram, we can clearly understand that Go-Lynx is a f
 > **bootstrap**: Initiates the application startup  
 > **LynxApplication**: The application, containing global configuration, plugin manager, and control plane  
 > **PluginManager**: The plugin manager, responsible for plugin loading, unloading, and configuration file parsing
+
+See also: [Lynx Framework Architecture](/docs/intro/arch) for the layered runtime model and service startup flow.

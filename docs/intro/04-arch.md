@@ -9,14 +9,14 @@ title: Lynx Framework Architecture
 
 Lynx Framework v1.2.3 adopts a sophisticated **four-layer runtime architecture** designed for enterprise-grade microservices:
 
-### 🏗️ Architecture Layers
+### Architecture Layers
 
 1. **Application Layer** - LynxApp, Boot, Control Plane
 2. **Plugin Management Layer** - PluginManager, TypedPluginManager, PluginFactory  
 3. **Runtime Layer** - Runtime interface, TypedRuntimePlugin, SimpleRuntime
 4. **Resource Management Layer** - Private/Shared Resources, Resource Info
 
-### 📊 Architecture Diagram
+### Architecture Diagram
 
 ```mermaid
 graph TD
@@ -109,7 +109,7 @@ sequenceDiagram
     Note over Runtime,Service: Enterprise Features: Circuit Breaking,<br/>Rate Limiting, Distributed Tracing,<br/>Resource Management, Event System
 ```
 
-## 🔧 Key Architecture Features
+## Key Architecture Features
 
 ### Type-Safe Resource Management
 - **Private Resources**: Independent namespace for each plugin
@@ -135,7 +135,7 @@ sequenceDiagram
 - **Health Endpoints**: `/health`, `/ready` for Kubernetes
 - **Distributed Tracing**: OpenTelemetry integration
 
-## 🚀 Performance Characteristics
+## Performance Characteristics
 
 | Component | Throughput | Latency | Improvement |
 |-----------|------------|---------|-------------|

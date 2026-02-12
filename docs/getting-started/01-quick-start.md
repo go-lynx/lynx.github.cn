@@ -64,7 +64,7 @@ By following these steps, you can quickly obtain a production-ready scaffolding 
 - **Distributed Tracing** - OpenTelemetry-compatible observability
 - **Load Balancing & Routing** - Intelligent traffic management
 
-### 🔌 Complete Plugin Ecosystem (18 Production-Ready Plugins)
+### Complete Plugin Ecosystem (18 Production-Ready Plugins)
 
 **Database Plugins**: MySQL, PostgreSQL, SQL Server  
 **NoSQL Plugins**: Redis (162K+ ops/sec), MongoDB, Elasticsearch  
@@ -190,7 +190,7 @@ When Lynx starts, it executes a sophisticated bootstrap sequence:
 5. **Health Checks** - Initialize monitoring endpoints and health probes
 6. **Traffic Management** - Sync HTTP/gRPC routing and rate limiting strategies
 
-### 📊 Built-in Monitoring
+### Built-in Monitoring
 
 Lynx automatically exposes:
 - **52+ Prometheus metrics** with standardized naming
@@ -198,10 +198,17 @@ Lynx automatically exposes:
 - **Performance monitoring** for all plugins
 - **Distributed tracing** integration
 
-### 🚀 Ready for Production
+### Ready for Production
 
 With v1.2.3, your applications are production-ready out of the box with enterprise-grade:
 - **Error recovery** with circuit breaker patterns
 - **Resource management** with type-safe access
 - **Event system** supporting 1M+ events/second
 - **Plugin hot-swapping** with zero downtime
+
+## Next Steps
+
+- **[Bootstrap Configuration](/docs/getting-started/bootstrap-config)** — Configure `-conf`, local vs remote config, and Polaris/Nacos.
+- **[Plugin Management](/docs/getting-started/plugin-manager)** — How plugins are loaded, dependencies, and custom plugins.
+- **[Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)** — Full list of plugins and links to each plugin's documentation.
+- **[Framework Architecture](/docs/intro/arch)** — Layered runtime, startup flow, and performance characteristics.

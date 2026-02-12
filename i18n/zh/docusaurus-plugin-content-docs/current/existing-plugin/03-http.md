@@ -1,15 +1,15 @@
 ---
 id: http
-title: http客户端
+title: HTTP 服务
 ---
 
-# http客户端
+# HTTP 服务
 
-Go-Lynx 提供了http协议客户端插件，我们可以不用关心如何去编写创建客户端的相关代码，只需要提供对应的配置文件即可自动进行http客户端初始化。
+Go-Lynx 的 HTTP 插件为应用提供 **HTTP 服务端**。在 YAML 中配置监听地址、超时与 TLS 后，框架会在启动时初始化服务端；你只需将 HTTP 处理逻辑（如 Kratos HTTP 服务）注册到该服务端上，即可完成路由与业务的绑定。底层实现基于 Kratos HTTP 模块。
 
-## 客户端配置
+## 服务端配置
 
-指定http客户端需要在配置文件中进行配置，文件内容如下：
+在配置文件中增加 `lynx.http` 段，例如：
 
 ```yaml
 lynx:
@@ -19,10 +19,7 @@ lynx:
     tls: true
 ```
 
-其中的 `lynx.http` 相关内容就是http客户端配置信息。目前底层是使用的 `kratos.http` 模块。  
-`tls: true` 表示开启证书验证并加密通讯，需要配合 `cert` 插件模块进行使用。  
-
-配置完成之后，应用程序一旦启动就会根据插件顺序进行加载http客户端。
+`lynx.http` 为 HTTP 服务端配置（地址、超时、TLS 等）。配置完成后，应用启动时会按插件顺序加载 HTTP 插件。
 
 ```go
 import (
@@ -42,4 +39,4 @@ return h
 }
 ```
 
-我们初始化成功http客户端之后，需要自己去手动把对应业务模块的service注册到http客户端中，以便于进行路由匹配从而调用您的函数。
+插件加载后，通过 `bh.GetServer()` 获取服务端实例，将你的 HTTP 服务模块（如 `RegisterLoginHTTPServer`、`RegisterRegisterHTTPServer`）注册上去，即可完成路由与处理函数的绑定。其他服务与插件说明见 [插件生态](/zh/docs/existing-plugin/plugin-ecosystem)。

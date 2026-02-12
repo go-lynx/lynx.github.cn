@@ -1,11 +1,11 @@
 ---
 id: http
-title: Http Client
+title: HTTP Service
 ---
 
-# Http Client
+# HTTP Service
 
-The Go-Lynx provides an HTTP protocol client plugin, which allows us to initialize an HTTP client without worrying about writing the client creation code ourselves. We only need to provide the corresponding configuration file.
+The Go-Lynx HTTP plugin provides the **HTTP server** for your application. You configure the listening address, timeout, and TLS in YAML; the framework initializes the server at startup. You then register your HTTP handlers (e.g. Kratos HTTP services) with the server so that routes are bound to your business logic. The underlying implementation uses the Kratos HTTP module.
 
 ## Client Configuration
 
@@ -19,9 +19,7 @@ lynx:
     tls: true
 ```
 
-The `lynx.http` section contains the HTTP client configuration information. The underlying implementation uses the `kratos.http` module.
-
-Once the configuration is complete, the application will load the HTTP client according to the plugin order when it starts.
+The `lynx.http` section contains the HTTP server configuration (address, timeout, TLS, etc.). Once the configuration is complete, the application loads the HTTP plugin at startup according to the plugin order.
 
 ```go
 import (
@@ -41,4 +39,4 @@ func NewHTTPServer(
 }
 ```
 
-After successfully initializing the HTTP client, you need to manually register the corresponding service modules of your business logic to the HTTP client. This is necessary for route matching to call your functions.
+After the HTTP plugin is loaded, use `bh.GetServer()` to obtain the server instance and register your HTTP service modules (e.g. `RegisterLoginHTTPServer`, `RegisterRegisterHTTPServer`) so that routes are matched to your handlers. See [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) for other service and plugin docs.
