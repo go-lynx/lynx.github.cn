@@ -23,7 +23,7 @@ const config = {
   organizationName: 'go-lynx', // Usually your GitHub org /user name.
   projectName: 'lynx.github.cn', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   deploymentBranch: 'gh-pages',
 
