@@ -1,6 +1,7 @@
 ---
 id: kafka
 title: Kafka 插件
+slug: existing-plugin/kafka
 ---
 
 # Kafka 插件

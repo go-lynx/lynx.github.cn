@@ -2,6 +2,7 @@
 id: plugin-ecosystem
 title: 插件生态
 sidebar_label: 插件生态
+slug: existing-plugin/plugin-ecosystem
 ---
 
 # Go-Lynx 插件生态

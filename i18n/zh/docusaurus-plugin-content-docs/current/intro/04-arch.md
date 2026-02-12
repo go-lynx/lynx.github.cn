@@ -1,6 +1,7 @@
 ---
 id: arch
 title: Lynx 框架架构
+slug: intro/arch
 ---
 
 # Lynx 框架架构

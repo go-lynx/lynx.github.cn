@@ -1,6 +1,7 @@
 ---
 id: Polaris
 title: Polaris Service Governance
+slug: existing-plugin/polaris
 ---
 
 # Polaris Service Governance
