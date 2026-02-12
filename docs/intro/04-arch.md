@@ -1,6 +1,7 @@
 ---
 id: arch
 title: Lynx Framework Architecture
+slug: intro/arch
 ---
 
 # Lynx Framework Architecture

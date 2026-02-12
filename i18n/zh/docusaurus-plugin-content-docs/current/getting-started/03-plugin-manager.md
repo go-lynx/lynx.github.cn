@@ -1,6 +1,7 @@
 ---
 id: plugin-manager
 title: 插件管理
+slug: getting-started/plugin-manager
 ---
 
 # 插件管理

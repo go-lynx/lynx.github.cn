@@ -1,6 +1,7 @@
 ---
 id: sentinel
 title: Sentinel Plugin
+slug: existing-plugin/sentinel
 ---
 
 # Sentinel Plugin

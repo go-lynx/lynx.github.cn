@@ -1,6 +1,7 @@
 ---
 id: design
 title: 设计理念
+slug: intro/design
 ---
 
 # 设计哲学

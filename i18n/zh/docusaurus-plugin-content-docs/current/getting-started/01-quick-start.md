@@ -1,6 +1,7 @@
 ---
 id: quick-start
 title: 快速启动
+slug: getting-started/quick-start
 ---
 
 # 快速入门

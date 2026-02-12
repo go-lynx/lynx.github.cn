@@ -1,6 +1,7 @@
 ---
 id: http
 title: HTTP Service
+slug: existing-plugin/http
 ---
 
 # HTTP Service

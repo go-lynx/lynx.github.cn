@@ -2,6 +2,7 @@
 id: plugin-ecosystem
 title: Plugin Ecosystem
 sidebar_label: Plugin Ecosystem
+slug: existing-plugin/plugin-ecosystem
 ---
 
 # Go-Lynx Plugin Ecosystem

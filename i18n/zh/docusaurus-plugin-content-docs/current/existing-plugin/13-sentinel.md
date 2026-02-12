@@ -1,6 +1,7 @@
 ---
 id: sentinel
 title: Sentinel 插件
+slug: existing-plugin/sentinel
 ---
 
 # Sentinel 插件

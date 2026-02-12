@@ -1,6 +1,7 @@
 ---
 id: tracer
 title: Tracer Plugin
+slug: existing-plugin/tracer
 ---
 
 # Tracer Plugin

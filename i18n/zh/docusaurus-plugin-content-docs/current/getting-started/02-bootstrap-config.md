@@ -1,6 +1,7 @@
 ---
 id: bootstrap-config
 title: 引导配置
+slug: getting-started/bootstrap-config
 ---
 
 # 引导配置
