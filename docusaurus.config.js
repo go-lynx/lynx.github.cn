@@ -31,14 +31,14 @@ const config = {
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'zh'],
+    defaultLocale: 'zh',
+    locales: ['zh', 'en'],
     localeConfigs: {
-      en: {
-        label: 'English',
-      },
       zh: {
         label: '中文',
+      },
+      en: {
+        label: 'English',
       },
     },
   },
@@ -105,40 +105,28 @@ const config = {
           {
             title: 'Docs',
             items: [
-              {
-                label: 'Docs',
-                to: '/docs/intro/overview',
-              },
+              { label: 'Overview', to: '/docs/intro/overview' },
+              { label: 'Quick Start', to: '/docs/getting-started/quick-start' },
+              { label: 'Plugin Ecosystem', to: '/docs/existing-plugin/plugin-ecosystem' },
             ],
           },
           {
             title: 'Community',
             items: [
-              {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-              },
-              {
-                label: 'Discord',
-                href: 'https://discord.gg/VtEt3pjH',
-              },
+              { label: 'Discord', href: 'https://discord.gg/2vq2Zsqq' },
+              { label: 'GitHub', href: 'https://github.com/go-lynx/lynx' },
             ],
           },
           {
             title: 'More',
             items: [
-              {
-                label: 'Blog',
-                to: '/blog',
-              },
-              {
-                label: 'GitHub',
-                href: 'https://github.com/go-lynx/lynx',
-              },
+              { label: 'Website', href: 'https://go-lynx.cn' },
+              { label: 'Blog', to: '/blog' },
+              { label: 'GitHub', href: 'https://github.com/go-lynx/lynx' },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Go-Lynx, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Go-Lynx. Built with Docusaurus.`,
       },
       prism: {
         theme: prismThemes.github,

@@ -11,7 +11,7 @@ Welcome to Go-Lynx, a plug-and-play Go microservice framework designed with scal
 
 ## Getting Started
 
-To begin using Go-Lynx, check out our quick start guide. If you're already familiar with the basics, delve into our plugin documentation to learn how to harness the power of plugins in your application.
+To begin using Go-Lynx, check out our [Quick Start](/docs/getting-started/quick-start) guide: install the Lynx CLI, create a project with `lynx new`, and run with `lynx run --watch`. If you're already familiar with the basics, see the [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) for the full list of plugins and how to configure them.
 
 ## Goals
 
@@ -36,7 +36,7 @@ Go-Lynx primarily uses Kratos + Polaris as its core foundation for design and in
 
 # Community
 
-The Go-Lynx community is always here to help you. If you have any questions or need assistance, don't hesitate to contact us. Join our DingTalk group or WeChat group for discussions and communication.
+The Go-Lynx community is always here to help you. If you have any questions or need assistance, don't hesitate to contact us. You can join our [Discord](https://discord.gg/2vq2Zsqq), or the DingTalk / WeChat groups (see below) for discussions and communication.
 
 ### Contributor List
 

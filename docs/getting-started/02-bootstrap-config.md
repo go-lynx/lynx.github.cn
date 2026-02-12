@@ -5,7 +5,9 @@ title: Bootstrap Configuration
 
 # Bootstrap Configuration
 
-In Go-Lynx, application configuration is managed through YAML files for plugin management. You can specify these files or directories at application startup using the `-conf configs` command (where `configs` is the directory containing the configuration files). Go-Lynx primarily provides a flexible and simple way to manage application settings through YAML configurations. By aligning configuration files with corresponding plugins, you can easily customize the application to meet specific needs. Both local bootstrap configuration files and full configuration files offer different levels of customization, allowing you to choose the method that best suits your application's requirements. Additionally, remember to import the packages required by the plugins to ensure they work as expected.
+In Go-Lynx, application configuration is managed through YAML files for plugin management. You can specify the configuration file or directory at application startup using the `-conf` flag (e.g. `-conf configs`, where `configs` is the directory containing your YAML files). If not specified, the application typically looks for a default path such as `configs/config.yaml` depending on your project layout. Go-Lynx provides a flexible way to manage application settings through YAML: align configuration keys with the plugins you use, and the framework loads the corresponding plugins at startup. You can use either a minimal local bootstrap (for example when using a config center) or a full local YAML with all plugin settings. Remember to import the packages of the plugins you need so they register with the plugin manager.
+
+Besides Polaris, you can also use [Nacos](/docs/existing-plugin/nacos) as the configuration center; configure `lynx.nacos` and enable config in the bootstrap accordingly.
 
 ## Local Bootstrap Configuration
 

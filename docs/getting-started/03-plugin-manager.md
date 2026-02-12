@@ -9,20 +9,7 @@ In Go-Lynx, all functionalities are designed with a plugin-centric approach. Thi
 
 ## Current Plugins Available
 
-Go-Lynx currently offers a variety of plugins, including:
-
-1. Configuration Center
-2. Registry Center
-3. Tracing
-4. Distributed Transactions
-5. Message Queue
-6. Database Management
-7. Redis
-8. HTTP
-9. GRPC
-10. TLS Certificate Management
-
-These plugins cover a wide range of functionalities, and the list is constantly growing to accommodate various business scenarios.
+Go-Lynx offers a wide range of plugins covering configuration centers (Polaris, Nacos), service registration and discovery, tracing, distributed transactions (Seata, DTM), message queues (Kafka, RabbitMQ, RocketMQ, Pulsar), databases (MySQL, PostgreSQL, SQL Server, MongoDB, Redis, Elasticsearch), HTTP/gRPC services, TLS certificate management, flow control (Sentinel), and API documentation (Swagger). For the complete list with descriptions and links to each plugin's documentation, see [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem). The list is constantly growing to accommodate various business scenarios.
 
 ## Custom Plugins
 
@@ -63,7 +50,7 @@ If you are unsure about this process, you can refer to the implementation of off
 
 ## Plugin Management Mechanism
 
-Go-Lynx's plugin management mechanism supports automatic topological sorting to resolve dependency issues. This corresponds to a directed acyclic graph, enabling the automatic sequential loading of plugins.
+Go-Lynx's plugin management mechanism supports automatic topological sorting to resolve dependency issues: plugins declare dependencies via `DependsOn`, and the framework loads them in a valid order (directed acyclic graph). This ensures that resources a plugin needs (e.g. config center, tracer) are available before the plugin is initialized. The loading order is determined at startup from the configuration and the set of registered plugins.
 
 ## Future Enhancements
 

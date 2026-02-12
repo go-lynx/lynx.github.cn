@@ -11,7 +11,7 @@ title: 简介
 
 ## 入门
 
-要开始使用 Go-Lynx，可以查看我们的快速开始指南。如果您已经熟悉基础知识，您可以深入我们的插件文档，了解如何在您的应用程序中利用插件的力量。
+要开始使用 Go-Lynx，请查看 [快速开始](/zh/docs/getting-started/quick-start)：安装 Lynx CLI、使用 `lynx new` 创建项目、使用 `lynx run --watch` 运行。若已熟悉基础，可查看 [插件生态](/zh/docs/existing-plugin/plugin-ecosystem) 了解全部插件及配置方式。
 
 ## 目标
 
@@ -38,7 +38,7 @@ Go-Lynx 底层主要使用 Kratos + Polaris 作为核心底层进行设计与集
 
 ## 社区
 
-Go-Lynx 社区始终在这里为你提供帮助。如果你有任何问题或需要帮助，请不要犹豫，直接联系我们，可加入钉钉群或者微信群进行交流沟通。
+Go-Lynx 社区始终在这里为你提供帮助。如果你有任何问题或需要帮助，请不要犹豫，直接联系我们。可加入 [Discord](https://discord.gg/2vq2Zsqq)，或下方的钉钉群、微信群进行交流沟通。
 
 ### 贡献者列表
 

@@ -64,7 +64,7 @@ lynx plugin create my-plugin
 - **分布式链路追踪** - OpenTelemetry 兼容的可观测性
 - **负载均衡与路由** - 智能流量管理
 
-### 🔌 完整插件生态系统（18个生产就绪插件）
+### 完整插件生态系统（18个生产就绪插件）
 
 **数据库插件**: MySQL、PostgreSQL、SQL Server  
 **NoSQL插件**: Redis（162K+操作/秒）、MongoDB、Elasticsearch  
@@ -191,7 +191,7 @@ Lynx 启动时会执行完善的引导序列：
 5. **健康检查** - 初始化监控端点和健康探针
 6. **流量管理** - 同步 HTTP/gRPC 路由和限流策略
 
-### 📊 内置监控
+### 内置监控
 
 Lynx 自动暴露：
 - **52+个 Prometheus 指标** 标准化命名
@@ -199,10 +199,17 @@ Lynx 自动暴露：
 - **所有插件性能监控**
 - **分布式链路追踪** 集成
 
-### 🚀 生产就绪
+### 生产就绪
 
 使用 v1.2.3，您的应用开箱即用，具备企业级：
 - **错误恢复** 熔断器模式
 - **资源管理** 类型安全访问
 - **事件系统** 支持每秒100万+事件
 - **插件热插拔** 零停机时间
+
+## 下一步
+
+- **[引导配置](/zh/docs/getting-started/bootstrap-config)** — 配置 `-conf`、本地与远程配置、Polaris/Nacos。
+- **[插件管理](/zh/docs/getting-started/plugin-manager)** — 插件加载、依赖与自定义插件。
+- **[插件生态](/zh/docs/existing-plugin/plugin-ecosystem)** — 插件完整列表及各插件文档链接。
+- **[框架架构](/zh/docs/intro/arch)** — 分层运行时、启动流程与性能特性。

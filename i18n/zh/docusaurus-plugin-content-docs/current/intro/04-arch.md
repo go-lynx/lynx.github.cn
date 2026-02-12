@@ -9,14 +9,14 @@ title: Lynx 框架架构
 
 Lynx Framework v1.2.3 采用了为企业级微服务设计的精密**四层运行时架构**：
 
-### 🏗️ 架构层次
+### 架构层次
 
 1. **应用层** - LynxApp、Boot、控制面
 2. **插件管理层** - PluginManager、TypedPluginManager、PluginFactory  
 3. **运行时层** - Runtime 接口、TypedRuntimePlugin、SimpleRuntime
 4. **资源管理层** - 私有/共享资源、资源信息
 
-### 📊 架构图
+### 架构图
 
 ```mermaid
 graph TD
@@ -109,7 +109,7 @@ sequenceDiagram
     Note over Runtime,Service: 企业级功能: 熔断器、<br/>限流、分布式追踪、<br/>资源管理、事件系统
 ```
 
-## 🔧 关键架构特性
+## 关键架构特性
 
 ### 类型安全的资源管理
 - **私有资源**: 每个插件独立的命名空间
@@ -135,7 +135,7 @@ sequenceDiagram
 - **健康端点**: `/health`、`/ready` 用于 Kubernetes
 - **分布式追踪**: OpenTelemetry 集成
 
-## 🚀 性能特性
+## 性能特性
 
 | 组件 | 吐量 | 延迟 | 改进 |
 |------|------|------|------|

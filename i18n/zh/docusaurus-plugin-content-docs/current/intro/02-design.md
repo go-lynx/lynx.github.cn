@@ -23,3 +23,5 @@ Go-Lynx 更相当于 Spring-Boot 的自动装配，但我们会完整的管理�
 > **bootstrap** : 引导应用程序启动  
 > **LynxApplication** : 应用程序,包含了全局配置，插件管理器，控制平面  
 > **PluginManager** : 插件管理器，负责插件加载，卸载，配置文件解析
+
+参见：[Lynx 框架架构](/zh/docs/intro/arch)，了解分层运行时模型与服务启动流程。
