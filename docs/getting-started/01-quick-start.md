@@ -1,99 +1,99 @@
 ---
 id: quick-start
-title: Quick Start
+title: 快速启动
 slug: getting-started/quick-start
 ---
 
-# Quick Start Guide
+# 快速入门
 
-This guide will help you get started with **Lynx Framework v1.2.3** quickly - our first production-ready release! We have designed a powerful CLI scaffolding tool for Lynx to facilitate the rapid creation of enterprise-grade microservice projects.
+本指南将帮助您快速入门使用 **Lynx Framework v1.2.3** - 我们的首个生产就绪版本！我们为 Lynx 设计了强大的 CLI 脚手架工具，以便于快速创建企业级微服务项目。
 
-## Installation
+## 安装
 
-### Prerequisites
-- **Go 1.21+** (Go 1.24.3 recommended)
-- **Docker 20.10+** (for containerized deployment)
-- **2GB RAM minimum** (4GB+ recommended for production)
+### 前置要求
+- **Go 1.21+**（推荐 Go 1.24.3）
+- **Docker 20.10+**（用于容器化部署）
+- **最少 2GB 内存**（生产环境推荐 4GB+）
 
-### Install Lynx CLI Tool
+### 安装 Lynx CLI 工具
 
 ```shell
-# Install the latest Lynx CLI (v1.2.3+)
+# 安装最新的 Lynx CLI（v1.2.3+）
 go install github.com/go-lynx/lynx/cmd/lynx@latest
 
-# Verify installation
+# 验证安装
 lynx --version
 ```
 
-### Create Your First Microservice
+### 创建您的第一个微服务
 
 ```shell
-# Create a single service
+# 创建单个服务
 lynx new my-service
 
-# Create multiple services at once
+# 一次创建多个服务
 lynx new user-service order-service payment-service
 
-# Create with custom configuration
+# 使用自定义配置创建
 lynx new demo --module github.com/acme/demo --post-tidy --ref v1.2.3
 ```
 
-The CLI supports creating multiple microservice modules simultaneously with production-ready templates.
+CLI 支持同时创建多个具有生产就绪模板的微服务模块。
 
-### Development Commands
+### 开发命令
 
 ```shell
-# Run with hot-reload development server
+# 使用热重载开发服务器运行
 lynx run --watch
 
-# Diagnose and auto-fix common issues
+# 诊断并自动修复常见问题
 lynx doctor --fix
 
-# Generate plugin scaffolding
+# 生成插件脚手架
 lynx plugin create my-plugin
 ```
 
-By following these steps, you can quickly obtain a production-ready scaffolding for your Lynx project. The project template is derived from [Go-Lynx-Layout](https://github.com/go-lynx/lynx-layout).
+按照这些步骤，您可以快速获得生产就绪的 Lynx 项目脚手架。项目模板来自于 [Go-Lynx-Layout](https://github.com/go-lynx/lynx-layout)。
 
-## Understanding Lynx Framework
+## 了解 Lynx Framework
 
-**Lynx Framework v1.2.3** is a production-ready, plugin-based Go microservice framework built on proven technologies like Kratos and Polaris. It provides comprehensive microservice governance capabilities including:
+**Lynx Framework v1.2.3** 是一个生产就绪的、基于插件的 Go 微服务框架，构建在经过验证的技术栈（如 Kratos 和 Polaris）之上。它提供了全面的微服务治理能力，包括：
 
-- **Service Discovery & Registration** - Automatic service mesh integration
-- **Configuration Management** - Centralized configuration with hot-reload
-- **Circuit Breaking & Rate Limiting** - Enterprise-grade fault tolerance
-- **Distributed Tracing** - OpenTelemetry-compatible observability
-- **Load Balancing & Routing** - Intelligent traffic management
+- **服务发现与注册** - 自动服务网格集成
+- **配置管理** - 集中式配置与热重载
+- **熔断与限流** - 企业级容错能力
+- **分布式链路追踪** - OpenTelemetry 兼容的可观测性
+- **负载均衡与路由** - 智能流量管理
 
-### Complete Plugin Ecosystem (18 Production-Ready Plugins)
+### 完整插件生态系统（18个生产就绪插件）
 
-**Database Plugins**: MySQL, PostgreSQL, SQL Server  
-**NoSQL Plugins**: Redis (162K+ ops/sec), MongoDB, Elasticsearch  
-**Message Queue Plugins**: Kafka (30K+ msg/sec), RabbitMQ (175K+ msg/sec), RocketMQ, Pulsar  
-**Service Mesh**: Polaris, HTTP Service, gRPC Service  
-**Distributed Transaction**: Seata, DTM  
-**Observability**: Tracer (OpenTelemetry), Swagger
+**数据库插件**: MySQL、PostgreSQL、SQL Server  
+**NoSQL插件**: Redis（162K+操作/秒）、MongoDB、Elasticsearch  
+**消息队列插件**: Kafka（30K+消息/秒）、RabbitMQ（175K+消息/秒）、RocketMQ、Pulsar  
+**服务治理**: Polaris、HTTP服务、gRPC服务  
+**分布式事务**: Seata、DTM  
+**可观测性**: Tracer（OpenTelemetry）、Swagger
 
-### Plugin-Based Architecture
+### 基于插件的架构
 
-Similar to Spring Boot's approach, Lynx uses YAML configuration files to load and orchestrate plugins automatically. The framework:
+类似于 Spring Boot 的方式，Lynx 使用 YAML 配置文件来自动加载和编排插件。框架会：
 
-1. **Parses configuration** and loads required plugins
-2. **Retrieves remote configuration** from configuration centers (if configured)
-3. **Auto-assembles plugins** with complete dependency injection
-4. **Initializes services** with monitoring and health checks
+1. **解析配置** 并加载所需插件
+2. **获取远程配置** 从配置中心（如果配置）
+3. **自动装配插件** 完成依赖注入
+4. **初始化服务** 配置监控和健康检查
 
-This makes Lynx a highly flexible and powerful framework for building enterprise-grade microservices.
+这使得 Lynx 成为构建企业级微服务的高度灵活且功能强大的框架。
 
-## Project Structure
+## 项目结构
 
-We follow the excellent project structure based on go-kratos, enhanced with Lynx's plugin-based architecture. You don't need to write boilerplate initialization code - the Lynx plugin manager handles automatic assembly and dependency injection.
+我们沿用了基于 go-kratos 的优秀项目结构，并增强了 Lynx 基于插件的架构。您无需编写样板初始化代码 - Lynx 插件管理器处理自动装配和依赖注入。
 
 ```
 .
-├── api // Maintains the proto files used by the microservice and the generated go files based on them
+├── api // 下面维护了微服务使用的proto文件以及根据它们所生成的go文件
 │   └── helloworld
-│       ├── v1
+│       └── v1
 │           ├── error_reason.pb.go
 │           ├── error_reason.proto
 │           ├── error_reason.swagger.json
@@ -102,37 +102,37 @@ We follow the excellent project structure based on go-kratos, enhanced with Lynx
 │           ├── greeter.swagger.json
 │           ├── greeter_grpc.pb.go
 │           └── greeter_http.pb.go
-├── cmd  // The entry file for the entire project to start
+├── cmd  // 整个项目启动的入口文件
 │   └── server
 │       ├── main.go
-│       ├── wire.go  // Uses wire to maintain dependency injection
+│       ├── wire.go  // 使用wire来维护依赖注入
 │       └── wire_gen.go
-├── configs  // Typically contains the local bootstrap configuration files for the microservice
+├── configs  // 这里通常配置微服务本地引导配置文件
 │   └── config.yaml
 ├── generate.go
 ├── go.mod
 ├── go.sum
-├── internal  // All non-exposed code for the service, usually the business logic is here. Using internal avoids incorrect references
-│   ├── biz   // The assembly layer of business logic, similar to the domain layer in DDD, data is similar to the repo in DDD, and the repo interface is defined here, using the principle of dependency inversion.
+├── internal  // 该服务所有不对外暴露的代码，通常的业务逻辑都在这下面，使用internal避免错误引用
+│   ├── biz   // 业务逻辑的组装层，类似 DDD 的 domain 层，data 类似 DDD 的 repo，而 repo 接口在这里定义，使用依赖倒置的原则。
 │   │   ├── README.md
 │   │   ├── biz.go
 │   │   └── greeter.go
-│   ├── conf  // Internal config structure definitions, generated using the proto format
+│   ├── conf  // 内部使用的config的结构定义，使用proto格式生成
 │   │   ├── conf.pb.go
 │   │   └── conf.proto
-│   ├── data  // Business data access, including cache, db encapsulation, implements the biz repo interface. We may confuse data with dao, data focuses on business meaning, it needs to take the domain object out again, we removed the infra layer of DDD.
+│   ├── data  // 业务数据访问，包含 cache、db 等封装，实现了 biz 的 repo 接口。我们可能会把 data 与 dao 混淆在一起，data 偏重业务的含义，它所要做的是将领域对象重新拿出来，我们去掉了 DDD 的 infra层。
 │   │   ├── README.md
 │   │   ├── data.go
 │   │   └── greeter.go
-│   ├── server  // Module registration and creation and configuration of http and grpc instances
+│   ├── server  // http和grpc实例的模块注册以及创建和配置
 │   │   ├── grpc.go
 │   │   ├── http.go
 │   │   └── server.go
-│   └── service  // Implements the service layer defined in the api, similar to the application layer in DDD, handles the conversion of DTO to biz domain entities (DTO -> DO), and coordinates various biz interactions, but should not handle complex logic
+│   └── service  // 实现了 api 定义的服务层，类似 DDD 的 application 层，处理 DTO 到 biz 领域实体的转换(DTO -> DO)，同时协同各类 biz 交互，但是不应处理复杂逻辑
 │       ├── README.md
 │       ├── greeter.go
 │       └── service.go
-└── third_party  // Third-party proto dependencies for the api
+└── third_party  // api 依赖的第三方proto
     ├── README.md
     ├── google
     │   └── api
@@ -144,9 +144,10 @@ We follow the excellent project structure based on go-kratos, enhanced with Lynx
         └── validate.proto
 ```
 
-## Application Entry Point
 
-### Modern Application Bootstrap (v1.2.3+)
+## 应用程序入口
+
+### 现代应用启动方式（v1.2.3+）
 
 ```go
 package main
@@ -154,25 +155,25 @@ package main
 import (
     "github.com/go-lynx/lynx/app"
     "github.com/go-lynx/lynx/boot"
-    // Import required plugins
+    // 导入所需插件
     _ "github.com/go-lynx/lynx/plugins/nosql/redis"
     _ "github.com/go-lynx/lynx/plugins/mq/kafka"
     _ "github.com/go-lynx/lynx/plugins/service/http"
 )
 
 func main() {
-    // Initialize Lynx application
+    // 初始化 Lynx 应用
     lynxApp := app.NewLynx()
     
-    // Bootstrap with configuration
+    // 使用配置启动
     boot.Bootstrap(lynxApp, "config.yaml")
     
-    // Start the application
+    // 启动应用
     lynxApp.Run()
 }
 ```
 
-### Legacy Bootstrap (Compatible)
+### 传统启动方式（兼容）
 
 ```go
 func main() {
@@ -180,37 +181,36 @@ func main() {
 }
 ```
 
-### Bootstrap Process
+### 启动流程
 
-When Lynx starts, it executes a sophisticated bootstrap sequence:
+Lynx 启动时会执行完善的引导序列：
 
-1. **Configuration Parsing** - Load local bootstrap configuration and initialize plugins
-2. **Remote Configuration** - Retrieve complete configuration from configuration centers (if enabled)
-3. **Plugin Orchestration** - Load and assemble all plugins with dependency injection
-4. **Service Registration** - Auto-register services with discovery mechanisms
-5. **Health Checks** - Initialize monitoring endpoints and health probes
-6. **Traffic Management** - Sync HTTP/gRPC routing and rate limiting strategies
+1. **配置解析** - 加载本地引导配置并初始化插件
+2. **远程配置** - 从配置中心获取完整配置（如果启用）
+3. **插件编排** - 加载并装配所有插件及依赖注入
+4. **服务注册** - 自动向发现机制注册服务
+5. **健康检查** - 初始化监控端点和健康探针
+6. **流量管理** - 同步 HTTP/gRPC 路由和限流策略
 
-### Built-in Monitoring
+### 内置监控
 
-Lynx automatically exposes:
-- **52+ Prometheus metrics** with standardized naming
-- **Health check endpoints** (`/health`, `/ready`)
-- **Performance monitoring** for all plugins
-- **Distributed tracing** integration
+Lynx 自动暴露：
+- **52+个 Prometheus 指标** 标准化命名
+- **健康检查端点**（`/health`、`/ready`）
+- **所有插件性能监控**
+- **分布式链路追踪** 集成
 
-### Ready for Production
+### 生产就绪
 
-With v1.2.3, your applications are production-ready out of the box with enterprise-grade:
-- **Error recovery** with circuit breaker patterns
-- **Resource management** with type-safe access
-- **Event system** supporting 1M+ events/second
-- **Plugin hot-swapping** with zero downtime
+使用 v1.2.3，您的应用开箱即用，具备企业级：
+- **错误恢复** 熔断器模式
+- **资源管理** 类型安全访问
+- **事件系统** 支持每秒100万+事件
+- **插件热插拔** 零停机时间
 
-## Next Steps
+## 下一步
 
-- **[Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)** — Four-step guide and scenario index for using any plugin.
-- **[Bootstrap Configuration](/docs/getting-started/bootstrap-config)** — Configure `-conf`, local vs remote config, and Polaris/Nacos.
-- **[Plugin Management](/docs/getting-started/plugin-manager)** — How plugins are loaded, dependencies, and custom plugins.
-- **[Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)** — Full list of plugins and links to each plugin's documentation.
-- **[Framework Architecture](/docs/intro/arch)** — Layered runtime, startup flow, and performance characteristics.
+- **[引导配置](/zh/docs/getting-started/bootstrap-config)** — 配置 `-conf`、本地与远程配置、Polaris/Nacos。
+- **[插件管理](/zh/docs/getting-started/plugin-manager)** — 插件加载、依赖与自定义插件。
+- **[插件生态](/zh/docs/existing-plugin/plugin-ecosystem)** — 插件完整列表及各插件文档链接。
+- **[框架架构](/zh/docs/intro/arch)** — 分层运行时、启动流程与性能特性。

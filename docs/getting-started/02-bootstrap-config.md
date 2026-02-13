@@ -1,18 +1,18 @@
 ---
 id: bootstrap-config
-title: Bootstrap Configuration
+title: 引导配置
 slug: getting-started/bootstrap-config
 ---
 
-# Bootstrap Configuration
+# 引导配置
 
-In Go-Lynx, application configuration is managed through YAML files for plugin management. You can specify the configuration file or directory at application startup using the `-conf` flag (e.g. `-conf configs`, where `configs` is the directory containing your YAML files). If not specified, the application typically looks for a default path such as `configs/config.yaml` depending on your project layout. Go-Lynx provides a flexible way to manage application settings through YAML: align configuration keys with the plugins you use, and the framework loads the corresponding plugins at startup. You can use either a minimal local bootstrap (for example when using a config center) or a full local YAML with all plugin settings. Remember to import the packages of the plugins you need so they register with the plugin manager.
+在 Go-Lynx 中，应用配置通过 YAML 文件进行插件管理。启动时可通过 `-conf` 指定配置目录（如 `-conf configs`，即包含 YAML 的目录）；未指定时，应用会按项目布局查找默认路径（如 `configs/config.yaml`）。通过 YAML 中的配置项与所用插件对应，框架会在启动时加载相应插件。可使用仅含配置中心信息的精简本地引导，或包含全部插件配置的完整本地 YAML。请记得在代码中导入所需插件的包，以便其向插件管理器注册。
 
-Besides Polaris, you can also use [Nacos](/docs/existing-plugin/nacos) as the configuration center; configure `lynx.nacos` and enable config in the bootstrap accordingly.
+除 Polaris 外，也可使用 [Nacos](/zh/docs/existing-plugin/nacos) 作为配置中心：配置 `lynx.nacos` 并在引导中启用 config 即可。
 
-## Local Bootstrap Configuration
+## 本地引导配置文件
 
-If you are using components related to a configuration center, the local bootstrap file is quite simple, requiring only a few lines of configuration. It mainly includes the configuration information for the remote configuration center (using Polaris as an example):
+如果您使用了配置中心相关组件，本地引导文件非常简单，只需要几行配置。主要包括远程配置中心的配置信息（以下以Polaris为案例）：
 
 ```yaml
 lynx:
@@ -27,9 +27,9 @@ lynx:
     timeout: 1s
 ```
 
-## Full Configuration
+## 完整配置
 
-Go-Lynx's full configuration file shows all currently supported plugin configurations. Each configuration item corresponds to a plugin. If the configuration file matches the plugin, the framework will automatically load the plugin at startup:
+go-lynx 的完整配置文件，展示了目前支持所有可用的插件配置。每个配置项对应一个插件。如果配置文件和插件匹配，框架将在启动时自动加载插件：
 
 ```yaml
 lynx:
@@ -71,16 +71,16 @@ lynx:
     write_timeout: 1s
 ```
 
-## Plugin Registration
+## 插件注册
 
-It's important to note that to use a specific plugin, you must import the corresponding plugin's package into your project. If you import the package, simply edit the configuration information, and the plugin will automatically register with the plugin manager. If the package is not imported, the configuration file will have no effect.
+需要注意的是，要使用某个插件，必须导入相应插件的包到您的项目中。如果你导入了包，则只需编辑配置信息，插件将会自动注册到插件管理器中。如果未导入包，则配置文件将不会有任何作用。
 
-## Startup Loading
+## 启动加载
 
-Go-Lynx will prioritize loading the local bootstrap configuration file at startup, with the file address specified by the `-conf configs` command at startup. After loading the local configuration, if it detects control plane-related plugins, it will automatically pull the remote configuration file after the control plane plugin is initialized. The default pulled file is application-name.yaml, where application-name is the application name specified at startup.
+Go-Lynx 在启动时会优先加载本地引导配置文件，文件地址就是启动时的参数`-conf configs` 命令指定这些文件或目录，加载本地配置之后如果发现其中存在控制平面相关插件，会在控制平面插件初始化完成之后自动进行远程配置文件拉取，拉取的文件默认为 application-name.yaml 其中 application-name 就是启动时指定的应用名称。
 
-## Service Governance
+## 服务治理
 
-The control plane-related plugins implemented in Go-Lynx are based on the Tencent Polaris service governance framework. If you need to use features such as registration discovery, configuration management, and microservice rate limiting, you will need to deploy the Polaris service governance framework first.
+目前 go-lynx 所实现的控制面相关插件是腾讯 Polaris 服务治理框架，如果您需要使用注册发现，配置管理，以及微服务限流等功能，您需要先部署 Polaris 服务治理框架。
 
-Related Documentation: [Tencent Polaris Official Documentation](https://polarismesh.cn/docs)
+相关文档：[腾讯北极星官网文档](https://polarismesh.cn/docs)

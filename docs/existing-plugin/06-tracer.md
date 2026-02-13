@@ -1,16 +1,15 @@
 ---
 id: tracer
-title: Tracer Plugin
-slug: existing-plugin/tracer
+title: 链路跟踪插件
 ---
 
-# Tracer Plugin
+# 链路跟踪插件
 
-Go-Lynx provides a tracing plugin for scheduling between microservices to facilitate error troubleshooting, performance analysis, and log auditing, currently using the `otlp` module.
+Go-Lynx 为微服务之间的调度提供了链路追踪插件，以便于我们进行错误排查，性能排查，日志审计等工作，目前底层使用的是`otlp`模块。
 
-## Configuration of the Tracer Plugin
+## 链路跟踪插件的配置
 
-To specify the tracer plugin, you need to configure it in the configuration file, with the content as follows:
+指定链路跟踪插件需要在配置文件中进行配置，文件内容如下：
 
 ```yaml
 lynx:
@@ -19,8 +18,8 @@ lynx:
     ratio: 1
 ```
 
-The `lynx.tracer` section contains the configuration for the tracing plugin.  
-`addr` represents the address of the tracer server.  
-`ratio` indicates the sampling rate, with a range between 0-1, where 1 means that every request is sampled. It is suggested to set it to 1 for testing environments, and to reduce the value appropriately for production environments.
+其中的 `lynx.tracer` 相关内容就是链路插件配置。  
+`addr` 表示链路跟踪服务器的地址  
+`ratio` 表示采样率，取值范围为 0-1 之间,1代表每次请求都要采集建议测试环境配置1，线上环境可以适当减小该值。
 
-After the configuration is complete, you can start the service and view the collected information on the Web-UI of the corresponding tracer server. We don't need to write any additional code. Go-Lynx takes care of everything; all you need to do is configure it.
+配置完成后启动服务即可在对应的链路跟踪服务器的Web-UI上去查看采集的信息，我们不需要去编写任何额外的代码。Go-Lynx帮您解决了一切，您要做的只是配置即可。

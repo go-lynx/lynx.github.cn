@@ -2,10 +2,12 @@ tanzhuo:
   name: Tan Zhuo
   title: Go-Lynx Founder
   url: https://tanzhuo.xyz
+  # 使用 GitHub 用户 ID 或 github.com/用户名.png 均可
   image_url: https://avatars.githubusercontent.com/u/32378959?v=4&size=64
 
 lynx-team:
   name: Lynx Team
   title: Lynx Framework Development Team
   url: https://github.com/go-lynx/lynx
-  image_url: https://avatars.githubusercontent.com/u/go-lynx?v=4&size=64
+  # 组织头像需用 github.com/组织名.png，avatars.githubusercontent.com/u/组织名 会 404
+  image_url: https://github.com/go-lynx.png

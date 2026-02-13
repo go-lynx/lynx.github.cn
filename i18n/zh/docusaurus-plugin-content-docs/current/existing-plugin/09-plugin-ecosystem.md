@@ -27,16 +27,16 @@ Go-Lynx 提供丰富的**生产级插件**，覆盖服务通信、数据存储�
 | [Database](/zh/docs/existing-plugin/db) | 通用数据库（MySQL/PostgreSQL/SQL Server 等） | 有 |
 | [Redis](/zh/docs/existing-plugin/redis) | Redis 客户端，连接池与指标 | 有 |
 | [MongoDB](/zh/docs/existing-plugin/mongodb) | MongoDB 客户端，连接池、TLS、健康检查 | 有 |
-| [Elasticsearch](https://github.com/go-lynx/lynx-elasticsearch) | Elasticsearch 集成 | GitHub |
+| [Elasticsearch](/zh/docs/existing-plugin/elasticsearch) | Elasticsearch 集成，检索/索引/聚合 | 有 |
 
 ### 消息队列
 
 | 插件 | 说明 | 文档 |
 |--------|-------------|-----|
 | [Kafka](/zh/docs/existing-plugin/kafka) | Apache Kafka 生产者/消费者，SASL、TLS、指标 | 有 |
-| [RabbitMQ](https://github.com/go-lynx/lynx-rabbitmq) | RabbitMQ 生产者/消费者 | GitHub |
-| [RocketMQ](https://github.com/go-lynx/lynx-rocketmq) | Apache RocketMQ | GitHub |
-| [Pulsar](https://github.com/go-lynx/lynx-pulsar) | Apache Pulsar | GitHub |
+| [RabbitMQ](/zh/docs/existing-plugin/rabbitmq) | RabbitMQ 生产者/消费者，多实例、健康与指标 | 有 |
+| [RocketMQ](/zh/docs/existing-plugin/rocketmq) | Apache RocketMQ，集群/广播消费 | 有 |
+| [Pulsar](/zh/docs/existing-plugin/pulsar) | Apache Pulsar，批处理、Schema、多租户 | 有 |
 
 ### 配置与发现
 
@@ -44,8 +44,8 @@ Go-Lynx 提供丰富的**生产级插件**，覆盖服务通信、数据存储�
 |--------|-------------|-----|
 | [Polaris](/zh/docs/existing-plugin/polaris) | 服务发现与配置 | 有 |
 | [Nacos](/zh/docs/existing-plugin/nacos) | Nacos 配置与命名 | 有 |
-| [Apollo](https://github.com/go-lynx/lynx-apollo) | Apollo 配置中心 | GitHub |
-| [Etcd](https://github.com/go-lynx/lynx-etcd) | Etcd 配置与发现 | GitHub |
+| [Apollo](/zh/docs/existing-plugin/apollo) | Apollo 配置中心，多命名空间 | 有 |
+| [Etcd](/zh/docs/existing-plugin/etcd) | Etcd 配置中心与服务注册发现 | 有 |
 
 ### 可观测与安全
 
@@ -61,16 +61,16 @@ Go-Lynx 提供丰富的**生产级插件**，覆盖服务通信、数据存储�
 | 插件 | 说明 | 文档 |
 |--------|-------------|-----|
 | [Seata](/zh/docs/existing-plugin/seata) | 分布式事务（Seata） | 有 |
-| [DTM](https://github.com/go-lynx/lynx-dtm) | 分布式事务（DTM） | GitHub |
-| [Redis Lock](https://github.com/go-lynx/lynx-redis-lock) | 基于 Redis 的分布式锁 | GitHub |
-| [Etcd Lock](https://github.com/go-lynx/lynx-etcd-lock) | 基于 Etcd 的分布式锁 | GitHub |
+| [DTM](/zh/docs/existing-plugin/dtm) | 分布式事务（DTM，SAGA/TCC/XA/二阶段消息） | 有 |
+| [Redis Lock](/zh/docs/existing-plugin/redis-lock) | 基于 Redis 的分布式锁，续期、可重入 | 有 |
+| [Etcd Lock](/zh/docs/existing-plugin/etcd-lock) | 基于 Etcd 的强一致分布式锁 | 有 |
 
 ### 其他
 
 | 插件 | 说明 | 文档 |
 |--------|-------------|-----|
-| [Layout](https://github.com/go-lynx/lynx-layout) | 官方项目模板与脚手架 | GitHub |
-| [SQL SDK](https://github.com/go-lynx/lynx-sql-sdk) | SQL 与多数据源工具 | GitHub |
+| [Layout](/zh/docs/existing-plugin/layout) | 官方项目模板与脚手架 | 有 |
+| [SQL SDK](/zh/docs/existing-plugin/sql-sdk) | SQL 基座、健康与指标、多数据源工具 | 有 |
 
 图例：本站有文档 | 请参阅 GitHub 仓库
 

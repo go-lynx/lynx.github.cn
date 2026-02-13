@@ -1,27 +1,27 @@
 ---
 id: mongodb
-title: MongoDB Plugin
+title: MongoDB 插件
 slug: existing-plugin/mongodb
 ---
 
-# MongoDB Plugin
+# MongoDB 插件
 
-The MongoDB plugin provides **MongoDB** integration for the Lynx framework, including connection pool, TLS, read/write concern, health checks, and metrics.
+MongoDB 插件为 Lynx 提供 **MongoDB** 集成，包括连接池、TLS、读写关注、健康检查与指标。
 
-## Features
+## 功能
 
-- **MongoDB client**: Full driver support.
-- **Connection pool**: Configurable min/max pool size.
-- **Authentication**: Multiple auth methods.
-- **TLS/SSL**: Secure connections.
-- **Read/Write concern**: Configurable read and write concern.
-- **Retries**: Automatic retry writes.
-- **Health checks**: Built-in health checks.
-- **Metrics**: Prometheus metrics and hot config updates.
+- **MongoDB 客户端**：完整驱动能力。
+- **连接池**：可配置最小/最大连接数。
+- **鉴权**：多种认证方式。
+- **TLS/SSL**：安全连接。
+- **读写关注**：可配置 read/write concern。
+- **重试**：自动重试写入。
+- **健康检查**：内置健康检查。
+- **指标**：Prometheus 指标与热更新配置。
 
-## Configuration
+## 配置
 
-Add under `lynx.mongodb` in your config file:
+在配置文件中增加 `lynx.mongodb` 段：
 
 ```yaml
 lynx:
@@ -42,9 +42,9 @@ lynx:
     enable_retry_writes: true
 ```
 
-## Usage
+## 使用
 
-Import the plugin and obtain the client and database via the plugin’s getters (e.g. `mongodb.GetMongoDB()`, `mongodb.GetMongoDBDatabase()`). Use them in your data layer with the official `go.mongodb.org/mongo-driver` APIs.
+导入插件后，通过插件的 getter（如 `mongodb.GetMongoDB()`、`mongodb.GetMongoDBDatabase()`）获取客户端与数据库，在数据层配合官方 `go.mongodb.org/mongo-driver` 使用。
 
 ```go
 import (
@@ -52,15 +52,15 @@ import (
     "github.com/go-lynx/lynx-mongodb"
 )
 
-// After bootstrap
+// 启动后
 client := mongodb.GetMongoDB()
 db := mongodb.GetMongoDBDatabase()
 ```
 
-## Installation
+## 安装
 
 ```bash
 go get github.com/go-lynx/lynx-mongodb
 ```
 
-Note: The MongoDB plugin may live in a separate repo (`lynx-mongodb`). Use the module path indicated in the plugin’s README.
+注意：MongoDB 插件可能位于独立仓库（lynx-mongodb），请以该插件 README 中的模块路径为准。

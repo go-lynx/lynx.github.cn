@@ -1,24 +1,24 @@
 ---
 id: sentinel
-title: Sentinel Plugin
+title: Sentinel 插件
 slug: existing-plugin/sentinel
 ---
 
-# Sentinel Plugin
+# Sentinel 插件
 
-The Sentinel plugin provides **traffic control**, **circuit breaking**, and **system protection** for the Lynx framework, so you can protect services from overload and failures.
+Sentinel 插件为 Lynx 提供**流量控制**、**熔断降级**与**系统保护**能力，避免服务过载与故障扩散。
 
-## Features
+## 功能
 
-- **Flow control**: QPS and concurrency limiting.
-- **Circuit breaking**: Open circuit on errors and recover automatically.
-- **System protection**: Load and CPU-based system rules.
-- **Monitoring**: Real-time metrics.
-- **Dashboard**: Web console for rules and monitoring (optional).
+- **流控**：按 QPS、并发等限流。
+- **熔断**：异常时自动熔断并恢复。
+- **系统保护**：基于系统负载、CPU 等的系统级规则。
+- **监控**：实时指标。
+- **控制台**：可选 Web 控制台管理规则与查看监控。
 
-## Configuration
+## 配置
 
-Configure under `lynx.sentinel`:
+在 `lynx.sentinel` 下配置：
 
 ```yaml
 lynx:
@@ -53,14 +53,14 @@ lynx:
       port: 8719
 ```
 
-## Usage
+## 使用
 
-After the plugin is loaded, Sentinel will apply flow and circuit breaker rules to the configured resources. Use the plugin’s API or middleware to mark resources and integrate with HTTP/gRPC handlers.
+插件加载后，Sentinel 会对配置的资源应用流控与熔断规则。通过插件提供的 API 或中间件标记资源，并与 HTTP/gRPC 处理链集成。
 
-## Installation
+## 安装
 
 ```bash
 go get github.com/go-lynx/lynx-sentinel
 ```
 
-Use the exact module path from the plugin’s repository.
+具体模块路径以该插件仓库为准。

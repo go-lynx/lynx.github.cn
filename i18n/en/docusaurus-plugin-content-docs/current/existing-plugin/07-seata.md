@@ -1,15 +1,16 @@
 ---
 id: seata
-title: 分布式事务插件
+title: Distributed Transaction Plugin
+slug: existing-plugin/seata
 ---
 
 # seata
 
-seata 是一款开源的分布式事务解决方案，致力于提供高性能和简单易用的分布式事务服务。Go-Lynx 集成了seata，以提供分布式事务能力。
+seata is an open-source distributed transaction solution designed to provide high-performance and easy-to-use distributed transaction services. Go-Lynx integrates seata to enhance its capability for distributed transactions.
 
-## 使用方法
+## Usage
 
-在配置文件中先启用seata配置，文件内容如下：
+First, enable the seata configuration in the configuration file as follows:
 
 ```yaml
 lynx:
@@ -17,13 +18,13 @@ lynx:
     enabled: true
     config_path: /path/to/seatago.yml
 ```
-其中 `config_path` 配置项为seata配置文件的路径。seata插件将会自动去启动seata对应的客户端初始化程序。
+The `config_path` is the path to the seata configuration file. Once configured, the seata plugin will automatically start the corresponding client initialization process.
 
-如何部署seata？
+How to deploy seata?
 
-查看seata官方文档进行 TC (Transaction Coordinator) 服务部署: [seata官网文档](https://seata.apache.org/)
+Refer to the seata official documentation to deploy the TC (Transaction Coordinator) service: [seata Official Documentation](https://seata.apache.org/)
 
-`seatago.yml` 文件内容如下：
+The `seatago.yml` file should contain the following content:
 
 ```yaml
 seata:
@@ -172,56 +173,55 @@ seata:
       cron-period: 1s
 ```
 
-如何使用 seata 的事务管理？
+Next, let's see how to use seata for transaction management:
 
-我们给您提供了官方案例进行参考：
+We provide an official example for your reference:
 
 ```go
-
 package main
 
 import (
-	"context"
-	"database/sql"
-	"time"
+    "context"
+    "database/sql"
+    "time"
 
-	"github.com/seata/seata-go/pkg/client"
-	sql2 "github.com/seata/seata-go/pkg/datasource/sql"
-	"github.com/seata/seata-go/pkg/tm"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+    "github.com/seata/seata-go/pkg/client"
+    sql2 "github.com/seata/seata-go/pkg/datasource/sql"
+    "github.com/seata/seata-go/pkg/tm"
+    "gorm.io/driver/mysql"
+    "gorm.io/gorm"
 )
 
 type OrderTblModel struct {
-	Id            int64  `gorm:"column:id" json:"id"`
-	UserId        string `gorm:"column:user_id" json:"user_id"`
-	CommodityCode string `gorm:"commodity_code" json:"commodity_code"`
-	Count         int64  `gorm:"count" json:"count"`
-	Money         int64  `gorm:"money" json:"money"`
-	Descs         string `gorm:"descs" json:"descs"`
+    Id            int64  `gorm:"column:id" json:"id"`
+    UserId        string `gorm:"column:user_id" json:"user_id"`
+    CommodityCode string `gorm:"commodity_code" json:"commodity_code"`
+    Count         int64  `gorm:"count" json:"count"`
+    Money         int64  `gorm:"money" json:"money"`
+    Descs         string `gorm:"descs" json:"descs"`
 }
 
 func main() {
-	// insert
-	tm.WithGlobalTx(context.Background(), &tm.GtxConfig{
-		Name:    "ATSampleLocalGlobalTx",
-		Timeout: time.Second * 30,
-	}, insertData)
-	<-make(chan struct{})
+    // Start a global transaction
+    tm.WithGlobalTx(context.Background(), &tm.GtxConfig{
+        Name:    "ATSampleLocalGlobalTx",
+        Timeout: time.Second * 30,
+    }, insertData)
+    <-make(chan struct{})
 }
 
-// insertData insert one data
+// insertData inserts a piece of data
 func insertData(ctx context.Context) error {
-	data := OrderTblModel{
-		Id:            1,
-		UserId:        "NO-100003",
-		CommodityCode: "C100001",
-		Count:         101,
-		Money:         11,
-		Descs:         "insert desc",
-	}
-	return gormDB.WithContext(ctx).Table("order_tbl").Create(&data).Error
+    data := OrderTblModel{
+        Id:            1,
+        UserId:        "NO-100003",
+        CommodityCode: "C100001",
+        Count:         101,
+        Money:         11,
+        Descs:         "insert desc",
+    }
+    return gormDB.WithContext(ctx).Table("order_tbl").Create(&data).Error
 }
 ```
 
-以上案例中我们去掉了数据库加载，seata初始化逻辑，只保留了如何使用全球事务的案例信息，这样更加清晰容易理解。
+In the example above, we have omitted the database loading and seata initialization logic to make the case clearer and easier to understand.
