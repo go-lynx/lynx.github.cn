@@ -14,19 +14,21 @@ const config = {
 
   // Set the production url of your site here
   url: 'https://go-lynx.cn',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment (e.g. https://go-lynx.github.io/lynx.github.cn/), use '/lynx.github.cn/'
-  // For custom domain at root (e.g. https://go-lynx.cn), set BASE_URL=/ when building
-  baseUrl: process.env.BASE_URL || '/lynx.github.cn/',
+  // baseUrl: 站点实际被访问的路径（必须以 / 结尾）
+  // - 自定义域名在根路径（https://go-lynx.cn/）时用 '/'，构建后把 build 目录内容部署到网站根目录
+  // - 若部署在子路径（https://go-lynx.cn/lynx.github.cn/），构建时设置 BASE_URL=/lynx.github.cn/，并把整个 build 目录作为部署根（保留 build 里的 lynx.github.cn 子目录）
+  baseUrl: process.env.BASE_URL || '/',
 
   // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'go-lynx', // Usually your GitHub org /user name.
-  projectName: 'lynx.github.cn', // Usually your repo name.
+  organizationName: 'go-lynx',
+  projectName: 'lynx.github.cn',
 
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   deploymentBranch: 'gh-pages',
+
+  // GitHub Pages 对尾部斜杠处理不一，显式设置可避免 404
+  trailingSlash: false,
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
