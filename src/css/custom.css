@@ -45,3 +45,15 @@ h1 {
   font-size: 1.125rem;
   font-weight: 600;
 }
+
+/* 全站主内容区：防止横向滚动 */
+main {
+  overflow-x: hidden;
+}
+
+/* 中英文排版：长词断行，避免溢出 */
+main p,
+main li {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
