@@ -14,10 +14,8 @@ const config = {
 
   // Set the production url of your site here
   url: 'https://go-lynx.cn',
-  // baseUrl: 站点实际被访问的路径（必须以 / 结尾）
-  // - 自定义域名在根路径（https://go-lynx.cn/）时用 '/'，构建后把 build 目录内容部署到网站根目录
-  // - 若部署在子路径（https://go-lynx.cn/lynx.github.cn/），构建时设置 BASE_URL=/lynx.github.cn/，并把整个 build 目录作为部署根（保留 build 里的 lynx.github.cn 子目录）
-  baseUrl: process.env.BASE_URL || '/',
+  // 站点在域名根路径（https://go-lynx.cn/），必须用 baseUrl: '/'
+  baseUrl: '/',
 
   // GitHub pages deployment config.
   organizationName: 'go-lynx',
