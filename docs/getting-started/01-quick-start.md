@@ -209,6 +209,7 @@ With v1.2.3, your applications are production-ready out of the box with enterpri
 
 ## Next Steps
 
+- **[Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)** — Four-step guide and scenario index for using any plugin.
 - **[Bootstrap Configuration](/docs/getting-started/bootstrap-config)** — Configure `-conf`, local vs remote config, and Polaris/Nacos.
 - **[Plugin Management](/docs/getting-started/plugin-manager)** — How plugins are loaded, dependencies, and custom plugins.
 - **[Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)** — Full list of plugins and links to each plugin's documentation.

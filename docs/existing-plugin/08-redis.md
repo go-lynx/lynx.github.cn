@@ -53,3 +53,10 @@ func NewData(rdb *redis.Client, logger log.Logger) (*Data, error) {
 ```
 
 We provide the `lynxRedis.GetRedis` method, which returns the connection object information from the plugin. Combined with the `wire` framework, we can generate method calls to use the Redis plugin. This is how you can fully utilize the Redis plugin.
+
+## 使用步骤小结
+
+1. **添加依赖**：`go get github.com/go-lynx/lynx/plugin/redis`（或主仓库对应路径）。
+2. **配置**：在 `config.yaml` 的 `lynx.redis` 中设置 `addr`、`password`、`db`、超时等。
+3. **注册**：在 `main.go` 中 `import _ "github.com/go-lynx/lynx/plugin/redis"`。
+4. **注入使用**：在 Wire 的 `ProviderSet` 中加入 `lynxRedis.GetRedis`，在构造函数中接收 `*redis.Client` 即可在业务层使用。
