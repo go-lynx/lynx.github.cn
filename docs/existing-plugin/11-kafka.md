@@ -1,27 +1,27 @@
 ---
 id: kafka
-title: Kafka Plugin
+title: Kafka 插件
 slug: existing-plugin/kafka
 ---
 
-# Kafka Plugin
+# Kafka 插件
 
-The Kafka plugin provides **Apache Kafka** integration for the Lynx framework, including producers and consumers with batching, retries, SASL/TLS, and Prometheus metrics.
+Kafka 插件为 Lynx 提供 **Apache Kafka** 集成，包括生产者与消费者，支持批量、重试、SASL/TLS 以及 Prometheus 指标。
 
-## Features
+## 功能
 
-- **Producer/Consumer**: Full producer and consumer API support.
-- **Batch processing**: Configurable batch size and timeout for throughput.
-- **Retries**: Retry with exponential backoff.
-- **SASL**: SASL/PLAIN, SASL/SCRAM, SASL/GSSAPI.
-- **TLS**: Encrypted connections.
-- **Compression**: gzip, snappy, lz4, zstd.
-- **Dead letter queue**: Built-in DLQ support.
-- **Metrics**: Prometheus metrics and health checks.
+- **生产者/消费者**：完整的生产者和消费者 API。
+- **批量处理**：可配置批量大小与超时，提高吞吐。
+- **重试**：支持指数退避重试。
+- **SASL**：SASL/PLAIN、SASL/SCRAM、SASL/GSSAPI。
+- **TLS**：加密连接。
+- **压缩**：gzip、snappy、lz4、zstd。
+- **死信队列**：内置 DLQ 支持。
+- **指标**：Prometheus 指标与健康检查。
 
-## Configuration
+## 配置
 
-Example configuration under `lynx.kafka`:
+在 `lynx.kafka` 下配置示例：
 
 ```yaml
 lynx:
@@ -47,14 +47,14 @@ lynx:
         group_id: "lynx-consumer-group"
 ```
 
-## Usage
+## 使用
 
-After configuration, import the plugin and use the Kafka plugin’s getters (e.g. producer/consumer managers) in your wire sets. The plugin registers resources with the Lynx runtime so you can inject the Kafka client or consumer/producer instances where needed.
+配置完成后，在 main 中导入插件，并在 wire 中通过插件提供的 getter（如生产者/消费者管理器）注入。插件会向 Lynx 运行时注册资源，可在业务中注入 Kafka 客户端或消费者/生产者实例。
 
-## Installation
+## 安装
 
 ```bash
 go get github.com/go-lynx/lynx/plugins/kafka
 ```
 
-For full options (SASL, TLS, schema registry, etc.), refer to the plugin’s README on GitHub.
+完整选项（SASL、TLS、Schema Registry 等）请参阅该插件在 GitHub 上的 README。

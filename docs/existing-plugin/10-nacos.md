@@ -1,25 +1,25 @@
 ---
 id: nacos
-title: Nacos Plugin
+title: Nacos 插件
 slug: existing-plugin/nacos
 ---
 
-# Nacos Plugin
+# Nacos 插件
 
-The Nacos plugin provides **service registration**, **service discovery**, and **configuration management** for the Lynx framework, so you can use Nacos as both a naming service and a configuration center.
+Nacos 插件为 Lynx 提供**服务注册**、**服务发现**和**配置管理**能力，可将 Nacos 同时用作命名服务与配置中心。
 
-## Features
+## 功能
 
-- **Service registration**: Register service instances with Nacos.
-- **Service discovery**: Discover instances and integrate with Lynx service calls.
-- **Configuration management**: Load and watch configuration from Nacos with real-time updates.
-- **Multi-config**: Support multiple data IDs and groups.
-- **Authentication**: Username/password or access key/secret key.
-- **Namespace**: Multi-tenant namespace isolation.
+- **服务注册**：将服务实例注册到 Nacos。
+- **服务发现**：从 Nacos 发现实例，并与 Lynx 服务调用集成。
+- **配置管理**：从 Nacos 拉取并监听配置，支持实时更新。
+- **多配置**：支持多个 dataId、group。
+- **鉴权**：用户名/密码或 AccessKey/SecretKey。
+- **命名空间**：多租户命名空间隔离。
 
-## Configuration
+## 配置
 
-Add the following under `lynx.nacos` in your config file:
+在配置文件中增加 `lynx.nacos` 段：
 
 ```yaml
 lynx:
@@ -37,9 +37,9 @@ lynx:
       cluster: "DEFAULT"
 ```
 
-## Usage
+## 使用
 
-Import the plugin and start the application; the plugin will load from configuration:
+在 main 中导入插件并启动应用，插件会根据配置自动加载：
 
 ```go
 package main
@@ -55,12 +55,12 @@ func main() {
 }
 ```
 
-When `enable_config` is true, Lynx can load the main configuration from Nacos so that service registration, discovery, and config are all driven by Nacos.
+当 `enable_config` 为 true 时，Lynx 可从 Nacos 加载主配置，从而由 Nacos 驱动注册、发现与配置。
 
-## Installation
+## 安装
 
 ```bash
 go get github.com/go-lynx/lynx/plugins/nacos
 ```
 
-For cluster mode, set `server_addresses` to a comma-separated list of Nacos server addresses.
+集群模式可将 `server_addresses` 配置为多个 Nacos 地址（逗号分隔）。

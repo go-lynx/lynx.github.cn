@@ -1,16 +1,16 @@
 ---
 id: http
-title: HTTP Service
+title: HTTP 服务
 slug: existing-plugin/http
 ---
 
-# HTTP Service
+# HTTP 服务
 
-The Go-Lynx HTTP plugin provides the **HTTP server** for your application. You configure the listening address, timeout, and TLS in YAML; the framework initializes the server at startup. You then register your HTTP handlers (e.g. Kratos HTTP services) with the server so that routes are bound to your business logic. The underlying implementation uses the Kratos HTTP module.
+Go-Lynx 的 HTTP 插件为应用提供 **HTTP 服务端**。在 YAML 中配置监听地址、超时与 TLS 后，框架会在启动时初始化服务端；你只需将 HTTP 处理逻辑（如 Kratos HTTP 服务）注册到该服务端上，即可完成路由与业务的绑定。底层实现基于 Kratos HTTP 模块。
 
-## Client Configuration
+## 服务端配置
 
-To specify an HTTP client, you need to configure it in the configuration file as follows:
+在配置文件中增加 `lynx.http` 段，例如：
 
 ```yaml
 lynx:
@@ -20,7 +20,7 @@ lynx:
     tls: true
 ```
 
-The `lynx.http` section contains the HTTP server configuration (address, timeout, TLS, etc.). Once the configuration is complete, the application loads the HTTP plugin at startup according to the plugin order.
+`lynx.http` 为 HTTP 服务端配置（地址、超时、TLS 等）。配置完成后，应用启动时会按插件顺序加载 HTTP 插件。
 
 ```go
 import (
@@ -28,25 +28,16 @@ import (
 )
 
 func NewHTTPServer(
-  login *service.LoginService,
-  register *service.RegisterService,
-  account *service.AccountService
+login *service.LoginService,
+register *service.RegisterService,
+account *service.AccountService
 ) *http.Server {
-  h := bh.GetServer()
-  loginV1.RegisterLoginHTTPServer(h, login)
-  registerV1.RegisterRegisterHTTPServer(h, register)
-  accountV1.RegisterAccountHTTPServer(h, account)
-  return h
+    h := bh.GetServer()
+    loginV1.RegisterLoginHTTPServer(h, login)
+    registerV1.RegisterRegisterHTTPServer(h, register)
+    accountV1.RegisterAccountHTTPServer(h, account)
+return h
 }
 ```
 
-After the HTTP plugin is loaded, use `bh.GetServer()` to obtain the server instance and register your HTTP service modules (e.g. `RegisterLoginHTTPServer`, `RegisterRegisterHTTPServer`) so that routes are matched to your handlers.
-
-## 使用步骤小结
-
-1. **添加依赖**：`go get github.com/go-lynx/lynx/plugin/http`（或主仓库对应路径）。
-2. **配置**：在 `config.yaml` 的 `lynx.http` 中设置 `addr`、`timeout`、`tls` 等。
-3. **注册**：在 `main.go` 中 `import _ "github.com/go-lynx/lynx/plugin/http"`。
-4. **注册路由**：在服务初始化处调用 `bh.GetServer()` 获取 `*http.Server`，再调用各 API 的 `RegisterXxxHTTPServer(h, service)` 绑定路由。
-
-See [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) for other service and plugin docs.
+插件加载后，通过 `bh.GetServer()` 获取服务端实例，将你的 HTTP 服务模块（如 `RegisterLoginHTTPServer`、`RegisterRegisterHTTPServer`）注册上去，即可完成路由与处理函数的绑定。其他服务与插件说明见 [插件生态](/zh/docs/existing-plugin/plugin-ecosystem)。

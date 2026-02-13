@@ -1,18 +1,18 @@
 ---
 id: plugin-manager
-title: Plugin Management
+title: 插件管理
 slug: getting-started/plugin-manager
 ---
 
-# Plugin Management
+# 插件管理
 
-In Go-Lynx, all functionalities are designed with a plugin-centric approach. This method provides a high degree of modularity and flexibility, allowing you to easily customize your application to meet specific needs.
+在 go-lynx 中，所有功能都是基于插件的思维方式设计的。这种方法提供了高度的模块化和灵活性，使您能够轻松定制应用程序以满足特定需求。
 
-## Current Plugins Available
+## 当前提供的插件
 
-Go-Lynx offers a wide range of plugins covering configuration centers (Polaris, Nacos), service registration and discovery, tracing, distributed transactions (Seata, DTM), message queues (Kafka, RabbitMQ, RocketMQ, Pulsar), databases (MySQL, PostgreSQL, SQL Server, MongoDB, Redis, Elasticsearch), HTTP/gRPC services, TLS certificate management, flow control (Sentinel), and API documentation (Swagger). For the complete list with descriptions and links to each plugin's documentation, see [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem). The list is constantly growing to accommodate various business scenarios.
+Go-Lynx 提供多种插件：配置中心（Polaris、Nacos）、服务注册发现、链路追踪、分布式事务（Seata、DTM）、消息队列（Kafka、RabbitMQ、RocketMQ、Pulsar）、数据库（MySQL、PostgreSQL、SQL Server、MongoDB、Redis、Elasticsearch）、HTTP/gRPC 服务、TLS 证书管理、流控（Sentinel）、API 文档（Swagger）等。完整列表与各插件说明见 [插件生态](/zh/docs/existing-plugin/plugin-ecosystem)。列表会持续更新以覆盖更多业务场景。
 
-## Custom Plugins
+## 自定义插件
 
 ```go
 type Plugin interface {
@@ -33,32 +33,32 @@ type SupportPlugin interface {
 }
 ```
 
-By implementing the above interfaces, you can create custom plugins. LoaderPlugin provides the ability to load and unload plugins, while SupportPlugin is related to plugin dependencies, names, and configuration file matching.
+实现以上接口，即可实现自定义插件。LoaderPlugin 是插件装载和卸载的能力，SupportPlugin 是插件依赖和名称以及配置文件匹配的相关接口。
 
-## Plugin Registration
+## 插件注册
 
-You need to register your plugins with the global plugin factory to extend plugin support. Here's an example of how to do this:
+您需要将插件注册到全局插件工厂来扩展插件支持。以下是一个示例，展示了如何执行此操作：
 
 ```go
 func init() {
-    factory.GlobalPluginFactory().Register(name, confPrefix, func() plugin.Plugin {
-        return Db()
-    })
+	factory.GlobalPluginFactory().Register(name, confPrefix, func() plugin.Plugin {
+		return Db()
+	})
 }
 ```
 
-If you are unsure about this process, you can refer to the implementation of official plugins in the Go-Lynx source code.
+如果您对此过程不确定，可以参考 go-lynx 源代码中官方插件的实现方式。
 
-## Plugin Management Mechanism
+## 插件管理机制
 
-Go-Lynx's plugin management mechanism supports automatic topological sorting to resolve dependency issues: plugins declare dependencies via `DependsOn`, and the framework loads them in a valid order (directed acyclic graph). This ensures that resources a plugin needs (e.g. config center, tracer) are available before the plugin is initialized. The loading order is determined at startup from the configuration and the set of registered plugins.
+Go-Lynx 的插件管理机制通过自动拓扑排序解决依赖关系：插件通过 `DependsOn` 声明依赖，框架按合法顺序加载（有向无环图），确保插件所依赖的资源（如配置中心、链路）在其初始化前已就绪。加载顺序由启动时的配置与已注册插件集合共同决定。
 
-## Future Enhancements
+## 未来的增强功能
 
-The future enhancement plans for plugin management include the following aspects:
+对插件管理的未来增强计划包括以下几个方面：
 
-1. **Instance Management**: Design support for plugins with multiple instances or single instances, and manage the ability to handle multiple instances.
-2. **Hot Updates**: The ability to update the configuration files of certain plugins without significantly impacting the application, achieving seamless plugin updates.
-3. **State Management**: A state machine is needed to manage the state of plugins, enabling global dynamic shutdown and activation of plugins under specific circumstances.
+1. **实例管理**：设计支持多实例或单实例的插件，并管理多个实例的能力。
+2. **热更新**：能够在不对应用程序产生明显影响的情况下更新某些插件的配置文件，实现无缝的插件更新。
+3. **状态管理**：需要一个状态机来管理插件的状态，在特定情况下实现全局动态关闭和开启插件。
 
-With these enhanced features, Go-Lynx will continue to improve its capabilities as a powerful, flexible, and user-friendly microservice management and deployment platform. Go-Lynx's plugin-oriented design makes it a versatile tool for building and managing microservices. With the various plugins already provided and more to come, you can customize your application as needed and also benefit from the continuous improvements and enhancements of the Go-Lynx platform.
+通过这些增强功能，go-lynx 将继续提高其提供强大、灵活和用户友好的微服务管理和部署平台的能力。go-lynx 的插件导向设计使其成为构建和管理微服务的多功能工具。通过已经提供的各种插件以及即将推出的更多插件，您可以根据自己的需要定制应用程序，同时也可以从 go-lynx 平台的持续改进和增强中受益。

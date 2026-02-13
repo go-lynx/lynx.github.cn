@@ -1,16 +1,15 @@
 ---
 id: redis
-title: Redis Plugin
-slug: existing-plugin/redis
+title: redis 插件
 ---
 
-# Redis Plugin
+# redis插件
 
-Go-Lynx provides a Redis connection plugin, which allows us to connect to Redis without worrying about writing the connection code. Simply provide the corresponding Redis configuration file, and the plugin will automatically initialize the Redis connection. Some configuration parameters are not yet complete (such as SSL encrypted communication, multi-data source configuration), but development is ongoing, so stay tuned.
+Go-Lynx 提供了redis连接插件，我们可以不用关心如何去编写连接redis的相关代码，只需要提供对应的redis配置文件即可自动进行redis连接初始化，目前部分配置参数还不够完整（例如：ssl加密通讯，多数据源配置），目前还在持续开发中，敬请期待。
 
-## Redis Configuration
+## redis配置
 
-To specify Redis, you need to configure it in the configuration file as follows:
+指定redis需要在配置文件中进行配置，文件内容如下：
 
 ```yaml
 lynx:
@@ -23,11 +22,10 @@ lynx:
     write_timeout: 1s
 ```
 
-The `lynx.redis` section contains the Redis configuration information. Currently, the default is to use `go-redis` for Redis connections, and more connection packages will be supported in the future.
+其中的 `lynx.redis` 相关内容就是redis配置信息。目前默认是使用的 `go-redis` 进行redis连接，后面会持续支持更多的连接包。
+配置完成之后，应用程序一旦启动就会根据插件顺序进行加载redis。
 
-After the configuration is complete, the application will load the Redis plugin according to the plugin order upon startup.
-
-How to obtain the Redis client?
+如何获取redis客户端？
 
 ```go
 import (
@@ -41,22 +39,15 @@ var ProviderSet = wire.NewSet(
 )
 
 type Data struct {
-    rdb *redis.Client
+    rdb   *redis.Client
 }
 
-func NewData(rdb *redis.Client, logger log.Logger) (*Data, error) {
+func NewData(rdb *redis.Client,logger log.Logger) (*Data, error) {
     d := &Data{
-        rdb: rdb,
+        rdb:  rdb
     }
     return d, nil
 }
 ```
 
-We provide the `lynxRedis.GetRedis` method, which returns the connection object information from the plugin. Combined with the `wire` framework, we can generate method calls to use the Redis plugin. This is how you can fully utilize the Redis plugin.
-
-## 使用步骤小结
-
-1. **添加依赖**：`go get github.com/go-lynx/lynx/plugin/redis`（或主仓库对应路径）。
-2. **配置**：在 `config.yaml` 的 `lynx.redis` 中设置 `addr`、`password`、`db`、超时等。
-3. **注册**：在 `main.go` 中 `import _ "github.com/go-lynx/lynx/plugin/redis"`。
-4. **注入使用**：在 Wire 的 `ProviderSet` 中加入 `lynxRedis.GetRedis`，在构造函数中接收 `*redis.Client` 即可在业务层使用。
+我们提供了 `lynxRedis.GetRedis` 方法，该方法会从插件中返回连接对象信息，再配合 `wire` 框架帮助我们进行方法调用生成即可。以上就是如何完整的使用redis插件的方式。

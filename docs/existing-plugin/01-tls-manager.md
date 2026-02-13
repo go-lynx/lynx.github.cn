@@ -1,16 +1,15 @@
 ---
 id: tls-manager
-title: Certificate Management
-slug: existing-plugin/tls-manager
+title: 证书管理
 ---
 
-# Certificate Management
+# 证书管理
 
-Go-Lynx provides a certificate loading plugin for encrypted communication between microservices within the internal network. This plugin can automatically load specified certificates and include the root certificate in the default trust. The security level can be adjusted as needed. Go-Lynx considers the security of internal scheduling communication to be an indispensable configuration, so we have specifically organized and explained the certificate configuration plugin.
+Go-Lynx 为微服务之间的内网加密通讯提供了证书加载插件，通过此插件可以自动加载指定证书。并且纳入根证书进行默认信任，安全等级可以自行调整。Go-Lynx 认为内网调度通讯安全是不可或缺的配置，所以我们将证书配置插件单独进行了梳理与讲解。
 
-## Certificate Loading
+## 证书加载
 
-To specify certificate loading, you need to configure it in the configuration file, with the content as follows:
+指定证书加载需要在配置文件中进行配置，文件内容如下：
 
 ```yaml
 lynx:
@@ -22,9 +21,8 @@ lynx:
       group: svc-group
 ```
 
-The `lynx.application.tls` section in the configuration file is where the certificate is stored. Currently, it defaults to loading from the configuration center, and support for local and remote loading will be updated later.
-
-After the certificate is loaded, the application will have the certificate information. In the corresponding GRPC and HTTP clients, you only need to enable the configuration to provide the corresponding TLS communication. The configuration is as follows:
+其中的 `lynx.application.tls` 相关内容就是证书存放位置。目前默认是使用的配置中心进行加载，后续会更新支持本地以及远程加载。
+证书加载完成之后，应用程序就已具备证书信息。在对应的Grpc以及Http客户端中只需要开启配置即可提供对应的tls通讯。配置如下：
 
 ```yaml
 lynx:
@@ -44,74 +42,74 @@ lynx:
     tls: true
 ```
 
-When the `lynx.http.tls` configuration is set to `true`, the HTTP plugin will automatically load the corresponding certificate information when loaded, thus providing HTTPS functionality.
+其中的 `lynx.http.tls` 配置为 `true` 值时，在加载http插件时就会自动装配对应证书信息。从而提供https协议功能。
 
-## Self-signed Certificates
+## 自签证书
 
-You can refer to the author's blog post, which details how to create self-signed certificates using OpenSSL and configure the corresponding certificate information.
+可查看作者blog文章，里面详细的记录了如何通过 openSSL 进行自签证书，并且配置证书对应信息。
 
-Article link:
-[TLS Self-signed Certificate](https://tanzhuo.xyz/grpcs-t-l-s/)
+文章地址：
+[TLS 自签证书](https://tanzhuo.xyz/grpcs-t-l-s/)
 
-You can also continue reading the following certificate generation tutorial, where I have copied most of the content into this document.
+也可以继续阅读以下证书生成教程，我把大部分内容复制到了这篇文档中。
 
-### Certificate Generation
+### 证书生成
 
-Here are the steps to generate a self-signed certificate using the OpenSSL command-line tool on Linux or MacOS systems. This process will create a new root certificate (CA) and then sign a new server certificate with this root certificate.
+以下是在 Linux 或 MacOS 系统上使用 OpenSSL 命令行工具生成自签名证书的步骤。这个过程将创建一个新的根证书（CA），然后使用这个根证书签名一个新的服务器证书。
 
-#### Overall Process
+#### 整体流程
 
-> 1 Root Certificate:
-> 1.1 Generate root private key
-> 1.2 Generate root certificate using the root private key
+> 1 根证书：  
+> 1.1 生成根私钥  
+> 1.2 通过根私钥生成根证书
 
-> 2 Service Certificate
-> 2.1 Generate service private key
-> 2.2 Generate service CSR using the service private key
-> 2.3 Sign the service certificate.crt file using the service.csr file + root certificate + root certificate key
+> 2 服务证书  
+> 2.1 生成服务私钥  
+> 2.2 通过服务私钥生成服务CSR  
+> 2.3 通过服务.csr 文件 + 根证书 + 根证书 key 签名出服务证书.crt文件
 
-#### Generate Root Certificate Private Key
+#### 生成根证书的私钥
 ```bash
 openssl genrsa -out ca.key 2048
 ```
-This command generates a new RSA private key, 2048 bits in length, which will be saved to a file named ca.key.
+这个命令将生成一个新的 RSA 私钥，长度为 2048 位。这个私钥将被保存到名为 ca.key 的文件中。
 
-#### Generate Root Certificate
+#### 生成根证书
 ```bash
 openssl req -new -x509 -days 365 -key ca.key -out ca.crt
 ```
-This command generates a new X.509 root certificate, signed with SHA-256, valid for 365 days (you can adjust the date). This certificate will be saved to a file named ca.crt.
+这个命令将生成一个新的 X.509 根证书，使用 SHA-256 算法进行签名，有效期为 365 天 (可自己调整日期)。这个证书将被保存到名为 ca.crt 的文件中。
 
-When executing this command, OpenSSL will prompt you for some information, which will be included in the certificate. In most cases, you can simply press Enter to accept the default values.
+在执行这个命令时，OpenSSL 会提示你输入一些信息，这些信息将被包含在证书中。在大多数情况下，你可以直接按 Enter 键接受默认值。
 
-However, the Subject Name or Common Name should be filled in with the name of the microservice endpoint.
+但 Subject Name 或 Common Name 需要填写微服务端的名称。
 
-#### Generate Service Certificate Private Key
+#### 生成服务器证书的私钥
 ```bash
 openssl genrsa -out [service-name].key 2048
 ```
-This command is similar to the first one, generating a private key that will be saved to a file named [service-name].key. [service-name] should be replaced with your own service name.
+这个命令与第一个命令类似，生成的私钥将被保存到名为 [service-name].key 的文件中。[service-name] 为你自己的服务名称。
 
-#### Generate Service Certificate Signing Request (CSR)
+#### 生成服务器证书的证书签名请求（CSR）
 ```bash
 openssl req -new -key [service-name].key -out [service-name].csr
 ```
-This command generates a new certificate signing request (CSR) containing the server certificate's public key and some additional information. This request will be saved to a file named server.csr.
+这个命令将生成一个新的证书签名请求（CSR），这个请求包含了服务器证书的公钥和一些附加信息。这个请求将被保存到名为 server.csr 的文件中。
 
-Again, OpenSSL will prompt you for some information, which will be included in the CSR.
+同样，在执行这个命令时，OpenSSL 会提示你输入一些信息，这些信息将被包含在 CSR 中。
 
-#### Sign Service Certificate with Root Certificate
+#### 使用根证书签名服务器证书
 ```bash
 openssl x509 -req -in [service-name].csr -CA ca.crt -CAkey ca.key -CAcreateserial -out [service-name].crt -days 365
 ```
-This command signs the server certificate with the root certificate, and the resulting certificate will be saved to a file named server.crt.
+这个命令将使用根证书对服务器证书进行签名，生成的证书将被保存到名为 server.crt 的文件中。
 
-The generated rootCA.crt, server.crt, and server.key can be used for GRPC encrypted communication, configured on the corresponding server and client.
+以上步骤生成的 rootCA.crt、server.crt 和 server.key 就可以用于 GRPC 加密通讯了，配置到对应的服务器端以及客户端。
 
-#### Customize Certificate Field Information
-Due to adjustments in Go's higher versions regarding the validation and retrieval of certain fields within the certificate (Go 1.15 and later versions will retrieve the alt_names field information for service name validation), we need to specify some custom field information when generating the certificate.
+#### 自定义证书字段信息
+由于在Go更高的版本中，对证书内部分字段的值验证与获取有调整。（Go 1.15版本之后会获取证书alt_names字段信息进行服务名称验证）所以我们需要在生成证书时，指定部分自定义字段信息。
 
-Create a san.cnf file with the following content:
+创建一个 san.cnf 文件内容如下：
 ```text
 [req]
 default_bits = 2048
@@ -142,30 +140,29 @@ extendedKeyUsage=serverAuth,clientAuth
 subjectAltName=@alt_names
 ```
 
-Then, when generating the certificate files, include the following commands:
+然后在上面的生成证书文件的步骤中带上
 
-When generating the service CSR file, add -extensions req_ext -config san.cnf:
+在生成服务csr文件时添加 -extensions req_ext -config san.cnf 命令
 ```bash
 openssl req -new -key [service-name].key -out [service-name].csr -extensions req_ext -config san.cnf
 ```
+在生成服务证书时，也需要添加 -extensions v3_ext -extfile san.cnf 命令
 
-When generating the service certificate, also add -extensions v3_ext -extfile san.cnf:
 ```bash
 openssl x509 -req -in [service-name].csr -CA ca.crt -CAkey ca.key -CAcreateserial -out [service-name].crt -days 365 -extensions v3_ext -extfile san.cnf
 ```
-This will generate a certificate file that includes the specified field content and some certificate description information.
+这样生成出来的证书文件就包含了我们指定字段的内容，以及部分证书描述信息。
 
-### Certificate Content Verification
-You can use the following command to check if the generated certificate indeed contains the field information:
+### 证书内容验证
+可通过命令，查看生成出来的证书是否确实包含字段信息
 
 ```bash
 openssl x509 -in [service-name].crt -text -noout
 ```
 
-## Configuration
+## 如何配置
 
-Create a configuration file in the control plane's configuration center with the following content:
-
+在控制平面的配置中心中创建配置文件内容，内容如下
 ```yaml
 crt: |
 -----BEGIN CERTIFICATE-----
@@ -192,4 +189,4 @@ MzExMDgwNDExMTRaFw0yNDExMDcwNDExMTRaMFcxC...
 -----END CERTIFICATE-----
 ```
 
-In the project, after introducing the certificate plugin, the service will automatically retrieve the certificate configuration information upon startup. The location from which to retrieve the configuration is based on the file path you have specified in the configuration center.
+在项目中引入证书插件，启动服务时会自动获取证书配置信息，获取位置则根据您配置的文件地址去配置中心中加载。

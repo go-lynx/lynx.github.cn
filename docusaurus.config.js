@@ -15,8 +15,9 @@ const config = {
   // Set the production url of your site here
   url: 'https://go-lynx.cn',
   // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  // For GitHub pages deployment (e.g. https://go-lynx.github.io/lynx.github.cn/), use '/lynx.github.cn/'
+  // For custom domain at root (e.g. https://go-lynx.cn), set BASE_URL=/ when building
+  baseUrl: process.env.BASE_URL || '/lynx.github.cn/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.

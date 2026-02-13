@@ -1,27 +1,28 @@
 ---
 id: design
-title: Design Philosophy
+title: 设计理念
 slug: intro/design
 ---
 
-# Design Philosophy
+# 设计哲学
 
-The core philosophy of Go-Lynx is that everything is a plugin. We achieve automatic assembly through plugins, allowing us to focus more on business logic. We treat each module's capabilities as a plugin, making plugins the soul of Go-Lynx. All third-party components, database management, message queues, monitoring, tracing, and other functionalities required by microservices are automatically assembled and managed through plugins.
+Go-Lynx 的核心哲学是万物均插件，合理的通过插件进行自动装配，让我们更加专注业务逻辑。我们将每个模块能力视为一个插件，使插件成为 Go-Lynx 的灵魂。所有第三方组件、数据库管理、消息队列、监控、链路和微服务需要的所有其他功能都通过插件进行自动装配及管理。
 
-Additionally, from the very beginning, Go-Lynx was designed to allow integration between plugins, making it possible to design more powerful components.
+此外，从设计之初，我们就设计了 Go-Lynx 来允许插件与插件之间的集成，从而使得更强大的组件的设计成为可能。
 
-## Design Advantages
 
-Go-Lynx is akin to Spring-Boot's auto-configuration, but we manage the complete lifecycle of each plugin and the domain modules they are responsible for, such as microservice registration, discovery, monitoring, tracing, routing capabilities, internal network communication encryption, distributed transaction management, and other microservice capabilities. We encapsulate all these functionalities through plugins to achieve a plug-and-play effect, eliminating the need to write repetitive and tedious code for creating, connecting, and configuring each module's specific client.
+## 设计优势
 
-## Architecture Diagram
+Go-Lynx 更相当于 Spring-Boot 的自动装配，但我们会完整的管理每个插件的完整生命周期以及插件负责的领域模块，例如微服务的注册，发现，监控，链路追踪，路由能力，内网通讯加密，分布式事务管理等微服务一系列的能力，我们均通过插件进行封装，达到开箱即用的效果，而不需要自行去编写每个模块的具体客户端创建，连接，配置等重复且繁琐的代码。
 
-<img alt="architecture" src="/img/diagram.png" width="940"/>
+## 架构图
 
-Based on the architecture diagram, we can clearly understand that Go-Lynx is a framework that extends capabilities through plugins. The bootstrapper initiates the application startup. After the application is successfully started, our plugin manager retrieves the global configuration file to load the corresponding plugins. Each plugin only receives its specific configuration, not the global one. We also ensure the loading order of plugins, making Go-Lynx full of infinite possibilities. In the future, we will provide hot updates for plugins, lifecycle management, and status detection. If you are interested in this framework, welcome to join our community and help develop it together.
+<img alt="dingtalk" src="/img/diagram.png" width="940"/>
 
-> **bootstrap**: Initiates the application startup  
-> **LynxApplication**: The application, containing global configuration, plugin manager, and control plane  
-> **PluginManager**: The plugin manager, responsible for plugin loading, unloading, and configuration file parsing
+根据架构图，我们可以很清晰的了解到，Go-Lynx 是一个通过插件来进行能力扩展的一个框架，通过引导程序，启动应用程序，成功启动之后我们的插件管理器会去获取全局的配置文件进行加载对应插件，每一个插件只会获取到它对应的配置，而非全局配置。并且我们保证了插件的加载先后顺序，让Go-Lynx充满了无限可能。并且在未来我们将会提供插件的热更新，插件的生命周期管理，检测状态等工作，如果您对这个框架感兴趣欢迎您加入我们的社区，一起发展它。
 
-See also: [Lynx Framework Architecture](/docs/intro/arch) for the layered runtime model and service startup flow.
+> **bootstrap** : 引导应用程序启动  
+> **LynxApplication** : 应用程序,包含了全局配置，插件管理器，控制平面  
+> **PluginManager** : 插件管理器，负责插件加载，卸载，配置文件解析
+
+参见：[Lynx 框架架构](/zh/docs/intro/arch)，了解分层运行时模型与服务启动流程。
