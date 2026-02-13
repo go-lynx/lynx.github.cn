@@ -107,6 +107,7 @@ const config = {
             items: [
               { label: 'Overview', to: '/docs/intro/overview' },
               { label: 'Quick Start', to: '/docs/getting-started/quick-start' },
+              { label: 'Plugin Usage Guide', to: '/docs/getting-started/plugin-usage-guide' },
               { label: 'Plugin Ecosystem', to: '/docs/existing-plugin/plugin-ecosystem' },
             ],
           },

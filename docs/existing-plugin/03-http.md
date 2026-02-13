@@ -40,4 +40,13 @@ func NewHTTPServer(
 }
 ```
 
-After the HTTP plugin is loaded, use `bh.GetServer()` to obtain the server instance and register your HTTP service modules (e.g. `RegisterLoginHTTPServer`, `RegisterRegisterHTTPServer`) so that routes are matched to your handlers. See [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) for other service and plugin docs.
+After the HTTP plugin is loaded, use `bh.GetServer()` to obtain the server instance and register your HTTP service modules (e.g. `RegisterLoginHTTPServer`, `RegisterRegisterHTTPServer`) so that routes are matched to your handlers.
+
+## 使用步骤小结
+
+1. **添加依赖**：`go get github.com/go-lynx/lynx/plugin/http`（或主仓库对应路径）。
+2. **配置**：在 `config.yaml` 的 `lynx.http` 中设置 `addr`、`timeout`、`tls` 等。
+3. **注册**：在 `main.go` 中 `import _ "github.com/go-lynx/lynx/plugin/http"`。
+4. **注册路由**：在服务初始化处调用 `bh.GetServer()` 获取 `*http.Server`，再调用各 API 的 `RegisterXxxHTTPServer(h, service)` 绑定路由。
+
+See [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) for other service and plugin docs.

@@ -27,16 +27,16 @@ Go-Lynx provides a rich set of **production-ready plugins** that cover service c
 | [Database](/docs/existing-plugin/db) | Generic DB plugin (MySQL/PostgreSQL/SQL Server via driver) | Yes |
 | [Redis](/docs/existing-plugin/redis) | Redis client with connection pool and metrics | Yes |
 | [MongoDB](/docs/existing-plugin/mongodb) | MongoDB client with pool, TLS, health checks | Yes |
-| [Elasticsearch](https://github.com/go-lynx/lynx-elasticsearch) | Elasticsearch integration | GitHub |
+| [Elasticsearch](/docs/existing-plugin/elasticsearch) | Elasticsearch integration, search/index/aggregation | Yes |
 
 ### Message Queue
 
 | Plugin | Description | Doc |
 |--------|-------------|-----|
 | [Kafka](/docs/existing-plugin/kafka) | Apache Kafka producer/consumer with SASL, TLS, metrics | Yes |
-| [RabbitMQ](https://github.com/go-lynx/lynx-rabbitmq) | RabbitMQ producer/consumer | GitHub |
-| [RocketMQ](https://github.com/go-lynx/lynx-rocketmq) | Apache RocketMQ | GitHub |
-| [Pulsar](https://github.com/go-lynx/lynx-pulsar) | Apache Pulsar | GitHub |
+| [RabbitMQ](/docs/existing-plugin/rabbitmq) | RabbitMQ producer/consumer, multi-instance, health/metrics | Yes |
+| [RocketMQ](/docs/existing-plugin/rocketmq) | Apache RocketMQ, clustering/broadcasting | Yes |
+| [Pulsar](/docs/existing-plugin/pulsar) | Apache Pulsar, batching, schema, multi-tenant | Yes |
 
 ### Configuration & Discovery
 
@@ -44,8 +44,8 @@ Go-Lynx provides a rich set of **production-ready plugins** that cover service c
 |--------|-------------|-----|
 | [Polaris](/docs/existing-plugin/polaris) | Service discovery and config | Yes |
 | [Nacos](/docs/existing-plugin/nacos) | Nacos config and naming | Yes |
-| [Apollo](https://github.com/go-lynx/lynx-apollo) | Apollo configuration center | GitHub |
-| [Etcd](https://github.com/go-lynx/lynx-etcd) | Etcd for config and discovery | GitHub |
+| [Apollo](/docs/existing-plugin/apollo) | Apollo configuration center, multi-namespace | Yes |
+| [Etcd](/docs/existing-plugin/etcd) | Etcd config center and service registry/discovery | Yes |
 
 ### Observability & Security
 
@@ -61,16 +61,16 @@ Go-Lynx provides a rich set of **production-ready plugins** that cover service c
 | Plugin | Description | Doc |
 |--------|-------------|-----|
 | [Seata](/docs/existing-plugin/seata) | Distributed transactions (Seata) | Yes |
-| [DTM](https://github.com/go-lynx/lynx-dtm) | Distributed transaction (DTM) | GitHub |
-| [Redis Lock](https://github.com/go-lynx/lynx-redis-lock) | Distributed lock based on Redis | GitHub |
-| [Etcd Lock](https://github.com/go-lynx/lynx-etcd-lock) | Distributed lock based on Etcd | GitHub |
+| [DTM](/docs/existing-plugin/dtm) | Distributed transaction (DTM, SAGA/TCC/XA/2PC) | Yes |
+| [Redis Lock](/docs/existing-plugin/redis-lock) | Distributed lock based on Redis, renewal, reentrant | Yes |
+| [Etcd Lock](/docs/existing-plugin/etcd-lock) | Strongly consistent distributed lock based on Etcd | Yes |
 
 ### Other
 
 | Plugin | Description | Doc |
 |--------|-------------|-----|
-| [Layout](https://github.com/go-lynx/lynx-layout) | Official project template and scaffolding | GitHub |
-| [SQL SDK](https://github.com/go-lynx/lynx-sql-sdk) | SQL and multi-datasource utilities | GitHub |
+| [Layout](/docs/existing-plugin/layout) | Official project template and scaffolding | Yes |
+| [SQL SDK](/docs/existing-plugin/sql-sdk) | SQL base, health/metrics, multi-datasource utilities | Yes |
 
 Legend: Documented on this site | See GitHub repo
 
