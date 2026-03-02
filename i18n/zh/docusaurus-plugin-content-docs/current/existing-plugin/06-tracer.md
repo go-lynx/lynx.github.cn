@@ -5,21 +5,58 @@ title: 链路跟踪插件
 
 # 链路跟踪插件
 
-Go-Lynx 为微服务之间的调度提供了链路追踪插件，以便于我们进行错误排查，性能排查，日志审计等工作，目前底层使用的是`otlp`模块。
+Go-Lynx 为微服务之间的调度提供了链路追踪插件，以便于我们进行错误排查，性能排查，日志审计等工作，底层基于 OpenTelemetry 标准实现。
 
-## 链路跟踪插件的配置
+## 基础配置
 
-指定链路跟踪插件需要在配置文件中进行配置，文件内容如下：
+在配置文件中添加以下内容即可启用链路追踪：
 
 ```yaml
 lynx:
   tracer:
-    addr: 127.0.0.1:4317
+    enable: true
+    addr: "127.0.0.1:4317"
     ratio: 1
 ```
 
-其中的 `lynx.tracer` 相关内容就是链路插件配置。  
-`addr` 表示链路跟踪服务器的地址  
-`ratio` 表示采样率，取值范围为 0-1 之间,1代表每次请求都要采集建议测试环境配置1，线上环境可以适当减小该值。
+| 配置项 | 说明 |
+|--------|------|
+| `enable` | 是否启用链路追踪（true/false） |
+| `addr` | OTLP 采集器地址，格式为 `host:port`。gRPC 常用 4317，HTTP 常用 4318 |
+| `ratio` | 采样率，取值范围 0-1。1 表示全量采样，建议测试环境用 1，生产环境可适当减小（如 0.1） |
 
-配置完成后启动服务即可在对应的链路跟踪服务器的Web-UI上去查看采集的信息，我们不需要去编写任何额外的代码。Go-Lynx帮您解决了一切，您要做的只是配置即可。
+配置完成后启动服务即可在对应的链路跟踪服务器的 Web-UI 上查看采集信息，无需编写额外代码。
+
+## 高级配置（v2）
+
+v2 版本支持模块化配置，可精细控制协议、TLS、重试、批处理、采样等：
+
+```yaml
+lynx:
+  tracer:
+    enable: true
+    addr: "otel-collector:4317"
+    config:
+      protocol: PROTOCOL_OTLP_GRPC
+      insecure: true
+      batch:
+        enabled: true
+        max_queue_size: 2048
+        max_batch_size: 512
+      sampler:
+        type: PARENT_BASED_TRACEID_RATIO
+        ratio: 0.1
+      propagators: [W3C_TRACE_CONTEXT, W3C_BAGGAGE]
+```
+
+### 特殊地址值 `None`
+
+当 `addr` 设置为 `"None"`（区分大小写）时，插件会初始化 Trace 上下文传播（traceparent、baggage 等），但**不会**向任何采集器导出数据。适用于仅需日志关联、无需实际采集的场景（如本地开发、采集器不可用时）。
+
+### 禁用采样
+
+要完全禁用采样，请使用 `config.sampler.type: ALWAYS_OFF`，而不是 `ratio: 0`（`ratio: 0` 会被归一化为 1.0）。
+
+## 更多配置
+
+完整配置选项与示例请参见 [lynx-tracer README](https://github.com/go-lynx/lynx-tracer)。
