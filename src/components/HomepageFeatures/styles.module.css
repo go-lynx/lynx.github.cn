@@ -1,9 +1,14 @@
+/**
+ * 首页特性区块 - 高端卡片与排版
+ */
+
 .features {
   display: flex;
   align-items: center;
-  padding: 2rem 0;
+  padding: 4rem 0 4.5rem;
   width: 100%;
   overflow-x: hidden;
+  background: var(--ifm-background-color);
 }
 
 .features .container {
@@ -16,6 +21,25 @@
   box-sizing: border-box;
 }
 
+/* 区块标题（覆盖 theme 的 hero__title 在此处的表现） */
+.features :global(.hero__title) {
+  font-size: 1.625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ifm-heading-color);
+  margin-bottom: 0.5rem;
+}
+
+.features :global(.hero__subtitle) {
+  font-size: 1rem;
+  color: var(--ifm-color-emphasis-700);
+  margin-bottom: 2.5rem;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
 .featureSvg {
   height: 200px;
   width: 200px;
@@ -24,11 +48,11 @@
 .featureCard {
   background: var(--ifm-background-color);
   border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 18px;
-  box-shadow: 0 2px 16px rgba(233, 140, 99, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   margin: 1.5rem 0;
-  padding: 2rem 1.2rem 1.5rem;
-  transition: transform 0.22s, box-shadow 0.22s, border-color 0.2s;
+  padding: 2rem 1.35rem 1.75rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease;
   position: relative;
   min-height: 260px;
   display: flex;
@@ -36,25 +60,46 @@
   align-items: center;
   box-sizing: border-box;
   height: 100%;
+  overflow: hidden;
 }
 
-[data-theme='dark'] .featureCard {
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.15);
+.featureCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-light) 100%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
 }
 
 .featureCard:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 8px 32px rgba(233, 140, 99, 0.18);
+  transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
   border-color: var(--ifm-color-emphasis-300);
 }
 
+.featureCard:hover::before {
+  opacity: 1;
+}
+
+[data-theme='dark'] .featureCard {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
 [data-theme='dark'] .featureCard:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
 }
 
 .featureCard h3 {
   color: var(--ifm-heading-color);
   word-break: break-word;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
 }
 
 .featureCard p {
@@ -63,13 +108,15 @@
   overflow-wrap: break-word;
   flex: 1;
   margin-bottom: 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
 }
 
 .featureIconWrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.25rem;
   flex-shrink: 0;
 }
 
@@ -77,19 +124,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2.6rem;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #e98c63 0%, #efd5b8 100%);
-  box-shadow: 0 2px 12px rgba(233, 140, 99, 0.2);
+  font-size: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-dark) 100%);
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.22);
   color: #fff;
   margin: auto;
-  border: 3px solid var(--ifm-background-color);
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.featureCard:hover .featureIcon {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);
 }
 
 @media (max-width: 996px) {
   .featureCard {
     min-height: 220px;
+    padding: 1.75rem 1.25rem 1.5rem;
   }
 }
