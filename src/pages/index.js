@@ -49,8 +49,8 @@ function QuickStartSteps() {
                 <svg className={styles.quickStartArrow} width="48" height="24" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <linearGradient id="arrowGradient" x1="0" y1="12" x2="48" y2="12" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#e98c63"/>
-                      <stop offset="1" stopColor="#ffb86c"/>
+                      <stop stopColor="#d97706"/>
+                      <stop offset="1" stopColor="#f59e0b"/>
                     </linearGradient>
                   </defs>
                   <path d="M4 12H44M44 12L36 4M44 12L36 20" stroke="url(#arrowGradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>

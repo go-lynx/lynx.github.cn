@@ -1,59 +1,142 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * Lynx 官网全局样式 - 高端文档站风格
+ * 参考 Vue / Vite / Tailwind 等开源项目视觉规范
  */
 
-/* You can override the default Infima variables here. */
+/* ========== 字体与排版 ========== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
 :root {
-  --ifm-color-primary: #c96f4a;
-  --ifm-color-primary-dark: #b85f3d;
-  --ifm-color-primary-darker: #a85636;
-  --ifm-color-primary-darkest: #8b4730;
-  --ifm-color-primary-light: #e98c63;
-  --ifm-color-primary-lighter: #f0a078;
-  --ifm-color-primary-lightest: #f5b089;
+  --ifm-font-family-base: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --ifm-font-size-base: 16px;
+  --ifm-line-height-base: 1.65;
+
+  /* 主色：更克制的橙/琥珀，偏现代 */
+  --ifm-color-primary: #d97706;
+  --ifm-color-primary-dark: #b45309;
+  --ifm-color-primary-darker: #92400e;
+  --ifm-color-primary-darkest: #78350f;
+  --ifm-color-primary-light: #f59e0b;
+  --ifm-color-primary-lighter: #fbbf24;
+  --ifm-color-primary-lightest: #fde68a;
   --ifm-code-font-size: 90%;
-  --font-color: #111;
-  --hero-bg: #fafafa;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
+
+  --font-color: #1f2937;
+  --hero-bg: linear-gradient(160deg, #fefce8 0%, #fff7ed 40%, #fafafa 100%);
+  --hero-bg-solid: #fefce8;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.06);
+
+  /* 圆角与阴影统一 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.08);
 }
 
 [data-theme='dark'] {
-  --ifm-color-primary: #e98c63;
-  --ifm-color-primary-dark: #d97a52;
-  --ifm-color-primary-darker: #c96f4a;
-  --ifm-color-primary-darkest: #a85a38;
-  --ifm-color-primary-light: #f0a078;
-  --ifm-color-primary-lighter: #f5b089;
-  --ifm-color-primary-lightest: #f9c4a8;
-  --font-color: #f0f0f0;
+  --ifm-color-primary: #f59e0b;
+  --ifm-color-primary-dark: #d97706;
+  --ifm-color-primary-darker: #b45309;
+  --ifm-color-primary-darkest: #92400e;
+  --ifm-color-primary-light: #fbbf24;
+  --ifm-color-primary-lighter: #fde68a;
+  --ifm-color-primary-lightest: #fef3c7;
+  --font-color: #f3f4f6;
   --hero-bg: var(--ifm-background-color);
-  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+  --hero-bg-solid: var(--ifm-background-color);
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.06);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.3);
 }
 
-h1 {
+/* ========== 标题 ========== */
+h1, h2, h3, h4, h5, h6 {
   color: var(--font-color);
-}
-
-.navbar__logo {
-  height: 2.25rem;
-  margin-right: 0.75rem;
-}
-
-.navbar__title {
-  font-size: 1.125rem;
+  letter-spacing: -0.02em;
   font-weight: 600;
 }
 
-/* 全站主内容区：防止横向滚动 */
+/* ========== 导航栏 ========== */
+.navbar {
+  box-shadow: var(--shadow-sm);
+  padding: 0.5rem 1rem;
+}
+.navbar__logo {
+  height: 2rem;
+  margin-right: 0.75rem;
+}
+.navbar__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.navbar__link {
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+.navbar__link--active {
+  font-weight: 600;
+}
+
+/* ========== 主内容区 ========== */
 main {
   overflow-x: hidden;
 }
-
-/* 中英文排版：长词断行，避免溢出 */
 main p,
 main li {
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+/* ========== 侧边栏与文档 ========== */
+.menu__link {
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.menu__link:hover {
+  background: var(--ifm-color-emphasis-100);
+}
+.table-of-contents__link {
+  transition: color 0.15s ease;
+}
+
+/* ========== 代码块 ========== */
+code {
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+pre {
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ========== 页脚 ========== */
+.footer {
+  padding-top: 3rem;
+  padding-bottom: 2rem;
+}
+.footer__link-item {
+  transition: opacity 0.15s ease;
+}
+.footer__link-item:hover {
+  opacity: 0.85;
+}
+
+/* ========== 按钮与链接 ========== */
+a {
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+/* ========== 无障碍：尊重用户减少动效偏好 ========== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
