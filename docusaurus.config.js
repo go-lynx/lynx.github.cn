@@ -136,6 +136,9 @@ const config = {
       },
     }),
   themes: ['@docusaurus/theme-mermaid'],
+  markdown: {
+    mermaid: true,
+  },
 };
 
 export default config;

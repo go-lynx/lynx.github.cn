@@ -1,83 +1,100 @@
 /**
- * Lynx 官网全局样式 - 高端文档站风格
- * 参考 Vue / Vite / Tailwind 等开源项目视觉规范
+ * Lynx 官网 - 遵循 SKILL.md 前端设计原则
+ * 鲜明审美、独特字体、层次背景、克制动效
  */
 
-/* ========== 字体与排版 ========== */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+/* ========== 字体：Display + Body 配对，避免通用字体 ========== */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&family=Fira+Code:wght@400;500&display=swap');
 
 :root {
-  --ifm-font-family-base: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --ifm-font-family-monospace: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ifm-font-family-base: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ifm-font-family-monospace: 'Fira Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace;
   --ifm-font-size-base: 16px;
   --ifm-line-height-base: 1.65;
 
-  /* 主色：更克制的橙/琥珀，偏现代 */
-  --ifm-color-primary: #d97706;
-  --ifm-color-primary-dark: #b45309;
-  --ifm-color-primary-darker: #92400e;
-  --ifm-color-primary-darkest: #78350f;
-  --ifm-color-primary-light: #f59e0b;
-  --ifm-color-primary-lighter: #fbbf24;
-  --ifm-color-primary-lightest: #fde68a;
+  /* 主色：与 logo 一致的暖橙色 */
+  --ifm-color-primary: #c96f4a;
+  --ifm-color-primary-dark: #b85f3d;
+  --ifm-color-primary-darker: #a85636;
+  --ifm-color-primary-darkest: #8b4730;
+  --ifm-color-primary-light: #e98c63;
+  --ifm-color-primary-lighter: #f0a078;
+  --ifm-color-primary-lightest: #f5b089;
   --ifm-code-font-size: 90%;
 
-  --font-color: #1f2937;
-  --hero-bg: linear-gradient(160deg, #fefce8 0%, #fff7ed 40%, #fafafa 100%);
-  --hero-bg-solid: #fefce8;
+  --font-color: #1c1917;
+  --hero-bg: #ffffff;
+  --hero-bg-solid: #ffffff;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.06);
 
-  /* 圆角与阴影统一 */
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.08);
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+  --shadow-accent: 0 8px 24px rgba(201, 111, 74, 0.25);
 }
 
 [data-theme='dark'] {
-  --ifm-color-primary: #f59e0b;
-  --ifm-color-primary-dark: #d97706;
-  --ifm-color-primary-darker: #b45309;
-  --ifm-color-primary-darkest: #92400e;
-  --ifm-color-primary-light: #fbbf24;
-  --ifm-color-primary-lighter: #fde68a;
-  --ifm-color-primary-lightest: #fef3c7;
-  --font-color: #f3f4f6;
+  --ifm-color-primary: #e98c63;
+  --ifm-color-primary-dark: #d97a52;
+  --ifm-color-primary-darker: #c96f4a;
+  --ifm-color-primary-darkest: #a85a38;
+  --ifm-color-primary-light: #f0a078;
+  --ifm-color-primary-lighter: #f5b089;
+  --ifm-color-primary-lightest: #f9c4a8;
+  --font-color: #fafaf9;
   --hero-bg: var(--ifm-background-color);
   --hero-bg-solid: var(--ifm-background-color);
   --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.06);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --shadow-accent: 0 8px 24px rgba(233, 140, 99, 0.3);
 }
 
-/* ========== 标题 ========== */
+/* ========== 全站 Grain 纹理（氛围与层次） ========== */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+[data-theme='dark'] body::after {
+  opacity: 0.055;
+}
+
+/* ========== 标题：使用 Display 字体 ========== */
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
   color: var(--font-color);
   letter-spacing: -0.02em;
   font-weight: 600;
 }
 
 /* ========== 导航栏 ========== */
+.navbar__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
 .navbar {
   box-shadow: var(--shadow-sm);
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1.25rem;
 }
 .navbar__logo {
   height: 2rem;
   margin-right: 0.75rem;
 }
-.navbar__title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
 .navbar__link {
   font-weight: 500;
-  transition: color 0.15s ease;
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 .navbar__link--active {
   font-weight: 600;
@@ -96,18 +113,18 @@ main li {
 /* ========== 侧边栏与文档 ========== */
 .menu__link {
   border-radius: var(--radius-sm);
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 .menu__link:hover {
   background: var(--ifm-color-emphasis-100);
 }
 .table-of-contents__link {
-  transition: color 0.15s ease;
+  transition: color 0.2s ease;
 }
 
 /* ========== 代码块 ========== */
 code {
-  border-radius: 4px;
+  border-radius: 5px;
   font-size: 0.9em;
 }
 pre {
@@ -121,18 +138,18 @@ pre {
   padding-bottom: 2rem;
 }
 .footer__link-item {
-  transition: opacity 0.15s ease;
+  transition: opacity 0.2s ease;
 }
 .footer__link-item:hover {
   opacity: 0.85;
 }
 
-/* ========== 按钮与链接 ========== */
+/* ========== 链接与按钮 ========== */
 a {
-  transition: color 0.15s ease, opacity 0.15s ease;
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
-/* ========== 无障碍：尊重用户减少动效偏好 ========== */
+/* ========== 无障碍：减少动效 ========== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

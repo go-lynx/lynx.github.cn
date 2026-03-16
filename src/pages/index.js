@@ -1,21 +1,20 @@
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 
 import Heading from '@theme/Heading';
 import styles from './index.module.css';
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
-import {solarizedlight} from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {oneDark} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Typewriter from 'typewriter-effect';
 import ArchDiagram from './ArchDiagram.mdx';
 
-const code_lynx = `
-func main() {
+const code_lynx = `func main() {
     boot.LynxApplication(wireApp).Run()
-}
-`;
+}`;
 
 const quickStartSteps = [
   {
@@ -49,8 +48,8 @@ function QuickStartSteps() {
                 <svg className={styles.quickStartArrow} width="48" height="24" viewBox="0 0 48 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <linearGradient id="arrowGradient" x1="0" y1="12" x2="48" y2="12" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#d97706"/>
-                      <stop offset="1" stopColor="#f59e0b"/>
+                      <stop stopColor="#c96f4a"/>
+                      <stop offset="1" stopColor="#e98c63"/>
                     </linearGradient>
                   </defs>
                   <path d="M4 12H44M44 12L36 4M44 12L36 20" stroke="url(#arrowGradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -65,6 +64,19 @@ function QuickStartSteps() {
 }
 
 function ArchitectureSection() {
+  const {i18n} = useDocusaurusContext();
+  const defaultLocale = i18n?.defaultLocale ?? 'zh';
+  const currentLocale = i18n?.currentLocale;
+  const archPath = useBaseUrl('/docs/intro/arch');
+  const archTo =
+    currentLocale &&
+    currentLocale !== defaultLocale &&
+    archPath &&
+    !archPath.startsWith(`/${currentLocale}/`) &&
+    archPath.startsWith('/')
+      ? `/${currentLocale}${archPath}`
+      : archPath;
+
   return (
     <section className={styles.archSection}>
       <div className="container">
@@ -76,7 +88,7 @@ function ArchitectureSection() {
           The Lynx boot and service flow is clear at a glance. The plugin mechanism enables flexible expansion of microservice capabilities, greatly improving development efficiency and maintainability.
         </p>
         <div className={styles.archBtnWrap}>
-          <Link className={styles.archBtn} to="/docs/intro/arch">
+          <Link className={styles.archBtn} to={archTo}>
             View Full Architecture Diagram
           </Link>
         </div>
@@ -86,7 +98,19 @@ function ArchitectureSection() {
 }
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+  const {siteConfig, i18n} = useDocusaurusContext();
+  const defaultLocale = i18n?.defaultLocale ?? 'zh';
+  const currentLocale = i18n?.currentLocale;
+  const overviewPath = useBaseUrl('/docs/intro/overview');
+  const overviewTo =
+    currentLocale &&
+    currentLocale !== defaultLocale &&
+    overviewPath &&
+    !overviewPath.startsWith(`/${currentLocale}/`) &&
+    overviewPath.startsWith('/')
+      ? `/${currentLocale}${overviewPath}`
+      : overviewPath;
+
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className={styles.heroInner}>
@@ -104,17 +128,27 @@ function HomepageHeader() {
           Plugin-driven, modular Go microservices framework. One line to run.
         </p>
         <div className={styles.buttons}>
-          <Link className={styles.ctaPrimary} to="/docs/intro/overview">
+          <Link className={styles.ctaPrimary} to={overviewTo}>
             Get Started
           </Link>
           <a className={styles.ctaSecondary} href="https://github.com/go-lynx/lynx" target="_blank" rel="noopener noreferrer">
             GitHub
           </a>
         </div>
-        <div className={styles.codeBlock}>
-          <SyntaxHighlighter language="go" style={solarizedlight} showLineNumbers={false} PreTag="div">
-            {code_lynx}
-          </SyntaxHighlighter>
+        <div className={styles.codeBlockWindow}>
+          <div className={styles.codeBlockWindowTitle}>
+            <div className={styles.codeBlockWindowDots}>
+              <span className={styles.codeBlockWindowDot} />
+              <span className={styles.codeBlockWindowDot} />
+              <span className={styles.codeBlockWindowDot} />
+            </div>
+            <span className={styles.codeBlockWindowFilename}>main.go</span>
+          </div>
+          <div className={styles.codeBlock}>
+            <SyntaxHighlighter language="go" style={oneDark} showLineNumbers={false} PreTag="div">
+              {code_lynx}
+            </SyntaxHighlighter>
+          </div>
         </div>
       </div>
     </header>

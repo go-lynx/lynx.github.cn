@@ -1,10 +1,21 @@
 /**
- * 首页样式 - 高端文档站风格（参考 Vue / Vite / Tailwind）
+ * 首页 - 分阶段动效、层次背景、打破网格的布局（SKILL.md）
  */
 
-/* ========== Hero ========== */
+/* ========== Hero 入场动效 ========== */
+@keyframes heroReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .heroBanner {
-  padding: 5.5rem 1.5rem 5rem;
+  padding: 6rem 1.5rem 5.5rem;
   min-height: auto;
   background: var(--hero-bg);
   background-color: var(--hero-bg-solid);
@@ -13,22 +24,25 @@
   position: relative;
 }
 
+/* 白色背景上的轻微高光（不改变底色） */
 .heroBanner::before {
   content: '';
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 120%;
-  max-width: 900px;
-  height: 60%;
-  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(251, 191, 36, 0.12) 0%, transparent 55%);
+  width: 140%;
+  max-width: 1000px;
+  height: 70%;
+  background: radial-gradient(ellipse 60% 40% at 50% -10%, rgba(201, 111, 74, 0.08) 0%, transparent 55%);
   pointer-events: none;
   z-index: 0;
 }
-
+.heroBanner::after {
+  content: none;
+}
 [data-theme='dark'] .heroBanner::before {
-  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(251, 191, 36, 0.08) 0%, transparent 55%);
+  background: radial-gradient(ellipse 60% 40% at 50% -10%, rgba(233, 140, 99, 0.1) 0%, transparent 55%);
 }
 
 .heroInner {
@@ -40,27 +54,33 @@
   z-index: 1;
 }
 
+/* 分阶段入场 */
 .banner_logo {
-  width: 80px;
-  height: 80px;
+  width: 88px;
+  height: 88px;
   margin: 0 auto 1.75rem;
   display: block;
-  border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(217, 119, 6, 0.15);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(201, 111, 74, 0.1);
+  animation: heroReveal 0.6s ease-out both;
+  animation-delay: 0.08s;
 }
 
+/* 打字机标题：与 logo 主色一致 */
 .heroTitle {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 2.25rem;
+  font-weight: 600;
   letter-spacing: -0.03em;
-  color: var(--ifm-heading-color);
+  color: var(--ifm-color-primary);
   margin-bottom: 0.875rem;
-  line-height: 1.3;
-  min-height: 2.6rem;
+  line-height: 1.25;
+  min-height: 2.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
   word-break: break-word;
+  animation: heroReveal 0.6s ease-out both;
+  animation-delay: 0.2s;
 }
 
 .heroSubtitle {
@@ -70,9 +90,11 @@
   line-height: 1.65;
   font-weight: 400;
   word-break: break-word;
-  max-width: 540px;
+  max-width: 520px;
   margin-left: auto;
   margin-right: auto;
+  animation: heroReveal 0.6s ease-out both;
+  animation-delay: 0.32s;
 }
 
 .buttons {
@@ -82,101 +104,202 @@
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 2.5rem;
+  animation: heroReveal 0.6s ease-out both;
+  animation-delay: 0.44s;
 }
 
 .ctaPrimary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.75rem;
+  padding: 0.8rem 1.85rem;
   font-size: 0.9375rem;
   font-weight: 600;
   color: #fff;
   background: linear-gradient(135deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-dark) 100%);
-  border-radius: 10px;
+  border-radius: 12px;
   text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  box-shadow: var(--shadow-accent);
 }
 
 .ctaPrimary:hover {
   color: #fff;
-  opacity: 1;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 28px rgba(201, 111, 74, 0.35);
 }
 
 .ctaSecondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1.75rem;
+  padding: 0.8rem 1.85rem;
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--ifm-font-color-base);
   background: var(--ifm-background-color);
-  border: 1.5px solid var(--ifm-color-emphasis-300);
-  border-radius: 10px;
+  border: 2px solid var(--ifm-color-emphasis-300);
+  border-radius: 12px;
   text-decoration: none;
-  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.25s ease, color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .ctaSecondary:hover {
   color: var(--ifm-color-primary);
   border-color: var(--ifm-color-primary);
-  box-shadow: 0 2px 12px rgba(217, 119, 6, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(201, 111, 74, 0.15);
 }
 
-.codeBlock {
-  max-width: 380px;
+/* 代码块：Mac 窗口风格 */
+.codeBlockWindow {
+  max-width: 400px;
   margin: 0 auto;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--ifm-color-emphasis-200);
-  font-size: 0.8125rem;
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  animation: heroReveal 0.6s ease-out both;
+  animation-delay: 0.56s;
+  background: #fff;
+}
+
+[data-theme='dark'] .codeBlockWindow {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--ifm-background-color);
+}
+
+/* 标题栏：红黄绿按钮 + 文件名 */
+.codeBlockWindowTitle {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  background: #e5e5e7;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='dark'] .codeBlockWindowTitle {
+  background: #323233;
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.codeBlockWindowDots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.codeBlockWindowDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.codeBlockWindowDot:nth-child(1) {
+  background: #ff5f57;
+}
+
+.codeBlockWindowDot:nth-child(2) {
+  background: #febc2e;
+}
+
+.codeBlockWindowDot:nth-child(3) {
+  background: #28c840;
+}
+
+.codeBlockWindowFilename {
+  margin-left: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6e6e73;
+  font-family: var(--ifm-font-family-base);
+}
+
+[data-theme='dark'] .codeBlockWindowFilename {
+  color: #98989d;
+}
+
+/* 代码区域：黑夜主题 + 干净无边框/无多余背景 */
+.codeBlock {
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #282c34 !important;
+  font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
+}
+
+.codeBlock::before {
+  display: none;
+}
+
+/* 去掉内部所有边框、描边、多余背景 */
+.codeBlock pre,
+.codeBlock code,
+.codeBlock div,
+.codeBlock span,
+.codeBlock [class*='token'] {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .codeBlock pre {
-  margin: 0;
-  padding: 1.25rem 1.5rem !important;
+  margin: 0 !important;
+  padding: 10px 18px 14px !important;
+  border-radius: 0;
+}
+
+.codeBlock code {
+  font-family: 'Fira Code', 'JetBrains Mono', 'SF Mono', Consolas, monospace !important;
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 @media (max-width: 996px) {
   .heroBanner {
-    padding: 4rem 1rem 3.5rem;
+    padding: 4.5rem 1rem 4rem;
   }
   .heroTitle {
-    font-size: 1.625rem;
+    font-size: 1.75rem;
     min-height: 2.25rem;
   }
   .banner_logo {
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
   }
 }
 
-/* ========== Quick Start ========== */
+/* ========== 区块标题：Display 字体 ========== */
 .sectionTitle {
-  font-size: 1.625rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   color: var(--ifm-heading-color);
-  margin-bottom: 2.25rem;
+  margin-bottom: 2.5rem;
   text-align: center;
   word-break: break-word;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .gradientText {
   color: var(--ifm-color-primary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
+/* ========== Quick Start：更多留白与层次 ========== */
 .quickStartSection {
-  padding: 4.5rem 1.5rem;
+  padding: 5rem 1.5rem;
   background: var(--ifm-background-surface-color);
   overflow-x: hidden;
 }
@@ -205,40 +328,40 @@
   flex: 1 1 240px;
   min-width: 200px;
   max-width: 280px;
-  padding: 1.75rem 1.35rem;
+  padding: 2rem 1.5rem;
   background: var(--ifm-background-color);
   border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 14px;
+  border-radius: 16px;
   text-align: center;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.25s ease;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .quickStartCardGlass:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
   border-color: var(--ifm-color-emphasis-300);
 }
 
 [data-theme='dark'] .quickStartCardGlass:hover {
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
 }
 
 .quickStartCircle {
-  width: 44px;
-  height: 44px;
-  margin: 0 auto 1.125rem;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1.25rem;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-dark) 100%);
   color: #fff;
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.25);
+  box-shadow: var(--shadow-accent);
 }
 
 .quickStartStep {
@@ -254,7 +377,7 @@
   color: var(--ifm-color-emphasis-700);
   word-break: break-word;
   overflow-wrap: break-word;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .quickStartDesc code {
@@ -271,7 +394,7 @@
   right: -36px;
   top: 50%;
   transform: translateY(-50%);
-  opacity: 0.45;
+  opacity: 0.5;
   z-index: 1;
 }
 
@@ -294,7 +417,7 @@
 
 /* ========== Architecture ========== */
 .archSection {
-  padding: 4.5rem 1.5rem;
+  padding: 5rem 1.5rem;
   background: var(--ifm-background-color);
   overflow-x: hidden;
 }
@@ -312,13 +435,13 @@
 .archMermaidWrap {
   max-width: 880px;
   margin: 0 auto 1.5rem;
-  padding: 1.75rem;
+  padding: 2rem;
   background: var(--ifm-background-surface-color);
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid var(--ifm-color-emphasis-200);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-md);
 }
 
 .archMermaidWrap :global(.mermaid) {
@@ -331,7 +454,7 @@
   display: block;
   width: 100%;
   max-width: 100%;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .archDesc {
@@ -354,20 +477,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.7rem 1.5rem;
+  padding: 0.8rem 1.75rem;
   font-size: 0.9375rem;
   font-weight: 600;
   color: #fff;
   background: linear-gradient(135deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-dark) 100%);
-  border-radius: 10px;
+  border-radius: 12px;
   text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
   word-break: keep-all;
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+  box-shadow: var(--shadow-accent);
 }
 
 .archBtn:hover {
   color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(201, 111, 74, 0.35);
 }

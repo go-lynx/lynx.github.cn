@@ -12,7 +12,7 @@ slug: intro/overview
 
 ## 入门
 
-要开始使用 Go-Lynx，请查看 [快速开始](/zh/docs/getting-started/quick-start)：安装 Lynx CLI、使用 `lynx new` 创建项目、使用 `lynx run --watch` 运行。若已熟悉基础，可查看 [插件生态](/zh/docs/existing-plugin/plugin-ecosystem) 了解全部插件及配置方式。
+要开始使用 Go-Lynx，请查看 [快速开始](/docs/getting-started/quick-start)：安装 Lynx CLI、使用 `lynx new` 创建项目、使用 `lynx run --watch` 运行。若已熟悉基础，可查看 [插件生态](/docs/existing-plugin/plugin-ecosystem) 了解全部插件及配置方式。
 
 ## 目标
 
