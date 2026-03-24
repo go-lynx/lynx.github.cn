@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting...</title>
+  <script>
+    (function() {
+      var path = window.location.pathname;
+      var search = window.location.search || '';
+      var hash = window.location.hash || '';
+      if (path && !path.endsWith('/') && !/\.[a-zA-Z0-9]+$/.test(path)) {
+        window.location.replace(path + '/' + search + hash);
+        return;
+      }
+      var parts = path.split('/').filter(Boolean);
+      var base = '';
+      if (parts.length >= 1 && parts[0] !== 'en' && parts[0] !== 'docs' && parts[0] !== 'blog' && parts[0] !== 'assets') {
+        var first = parts[0];
+        if (first === 'lynx.github.cn' || first.indexOf('.') !== -1) base = '/' + first + '/';
+      }
+      var isEn = base ? path.indexOf(base + 'en') === 0 : path.indexOf('/en') === 0;
+      window.location.replace((base || '/') + (isEn ? 'en/' : '') + search + hash);
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting...</p>
+</body>
+</html>
