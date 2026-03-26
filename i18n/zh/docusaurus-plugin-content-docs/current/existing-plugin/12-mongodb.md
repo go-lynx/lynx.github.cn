@@ -43,15 +43,21 @@ lynx:
 
 ## 使用
 
-导入插件后，通过插件的 getter（如 `mongodb.GetMongoDB()`、`mongodb.GetMongoDBDatabase()`）获取客户端与数据库，在数据层配合官方 `go.mongodb.org/mongo-driver` 使用。
+导入插件后，可通过插件暴露的 getter 获取客户端与数据库，在数据层配合官方 `go.mongodb.org/mongo-driver` 使用。实际 API 名称以插件仓库 README 为准。
 
 ```go
 import (
-    "github.com/go-lynx/lynx/app/boot"
-    "github.com/go-lynx/lynx-mongodb"
+    "github.com/go-lynx/lynx/boot"
+    mongodb "<mongodb-plugin-module>"
 )
 
-// 启动后
+func main() {
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
+}
+
+// 启动后在数据层获取资源
 client := mongodb.GetMongoDB()
 db := mongodb.GetMongoDBDatabase()
 ```
@@ -59,7 +65,7 @@ db := mongodb.GetMongoDBDatabase()
 ## 安装
 
 ```bash
-go get github.com/go-lynx/lynx-mongodb
+go get <mongodb-plugin-module>@latest
 ```
 
-注意：MongoDB 插件可能位于独立仓库（lynx-mongodb），请以该插件 README 中的模块路径为准。
+注意：MongoDB 插件位于独立插件仓库时，请以该插件 README 中声明的模块路径与接入 API 为准。
