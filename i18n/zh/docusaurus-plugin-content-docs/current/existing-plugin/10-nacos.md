@@ -38,28 +38,30 @@ lynx:
 
 ## 使用
 
-在 main 中导入插件并启动应用，插件会根据配置自动加载：
+在 `main` 中完成应用启动，Nacos 插件会根据配置参与启动流程：
 
 ```go
 package main
 
 import (
-    "github.com/go-lynx/lynx/app"
     "github.com/go-lynx/lynx/boot"
-    _ "github.com/go-lynx/lynx/plugins/nacos"
 )
 
 func main() {
-    boot.LynxApplication(wireApp).Run()
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
 }
 ```
 
-当 `enable_config` 为 true 时，Lynx 可从 Nacos 加载主配置，从而由 Nacos 驱动注册、发现与配置。
+如果项目通过独立插件仓库接入 Nacos，请在代码中匿名导入对应插件包，以完成注册。实际模块路径以该插件仓库 README 为准。
+
+当 `enable_config` 为 `true` 时，Lynx 可从 Nacos 拉取主配置，从而由 Nacos 驱动注册、发现与配置。
 
 ## 安装
 
 ```bash
-go get github.com/go-lynx/lynx/plugins/nacos
+go get <nacos-plugin-module>@latest
 ```
 
 集群模式可将 `server_addresses` 配置为多个 Nacos 地址（逗号分隔）。

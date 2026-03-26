@@ -50,7 +50,9 @@ lynx new demo1 demo2 demo3
 
 ```go
 func main() {
-    boot.LynxApplication(wireApp).Run()
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
 }
 ```
 

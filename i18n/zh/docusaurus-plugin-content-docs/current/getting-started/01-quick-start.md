@@ -5,7 +5,7 @@ title: 快速启动
 
 # 快速入门
 
-本指南将帮助您快速入门使用 **Lynx Framework v1.2.3** - 我们的首个生产就绪版本！我们为 Lynx 设计了强大的 CLI 脚手架工具，以便于快速创建企业级微服务项目。
+本指南将帮助您快速上手当前版本的 Lynx。Lynx 提供了 CLI 脚手架、插件注册、配置装配与统一运行时，用于快速搭建治理型 Go 微服务项目。
 
 ## 安装
 
@@ -17,7 +17,7 @@ title: 快速启动
 ### 安装 Lynx CLI 工具
 
 ```shell
-# 安装最新的 Lynx CLI（v1.2.3+）
+# 安装最新的 Lynx CLI
 go install github.com/go-lynx/lynx/cmd/lynx@latest
 
 # 验证安装
@@ -33,8 +33,8 @@ lynx new my-service
 # 一次创建多个服务
 lynx new user-service order-service payment-service
 
-# 使用自定义配置创建
-lynx new demo --module github.com/acme/demo --post-tidy --ref v1.2.3
+# 使用自定义模块路径创建
+lynx new demo --module github.com/acme/demo --post-tidy
 ```
 
 CLI 支持同时创建多个具有生产就绪模板的微服务模块。
@@ -56,7 +56,7 @@ lynx plugin create my-plugin
 
 ## 了解 Lynx Framework
 
-**Lynx Framework v1.2.3** 是一个生产就绪的、基于插件的 Go 微服务框架，构建在经过验证的技术栈（如 Kratos 和 Polaris）之上。它提供了全面的微服务治理能力，包括：
+Lynx 是一个基于插件的 Go 微服务框架，构建在成熟的工程组件之上，并将脚手架、配置、插件接入和运行时启动整合到一条开发路径中。它提供的核心能力包括：
 
 - **服务发现与注册** - 自动服务网格集成
 - **配置管理** - 集中式配置与热重载
@@ -64,14 +64,9 @@ lynx plugin create my-plugin
 - **分布式链路追踪** - OpenTelemetry 兼容的可观测性
 - **负载均衡与路由** - 智能流量管理
 
-### 完整插件生态系统（18个生产就绪插件）
+### 当前插件生态
 
-**数据库插件**: MySQL、PostgreSQL、SQL Server  
-**NoSQL插件**: Redis（162K+操作/秒）、MongoDB、Elasticsearch  
-**消息队列插件**: Kafka（30K+消息/秒）、RabbitMQ（175K+消息/秒）、RocketMQ、Pulsar  
-**服务治理**: Polaris、HTTP服务、gRPC服务  
-**分布式事务**: Seata、DTM  
-**可观测性**: Tracer（OpenTelemetry）、Swagger
+Lynx 的插件家族覆盖数据库、缓存、消息队列、配置中心、服务发现、可观测性与分布式能力。实际可用插件与模块路径应以对应插件仓库或插件 README 为准。
 
 ### 基于插件的架构
 
@@ -146,39 +141,32 @@ lynx plugin create my-plugin
 
 ## 应用程序入口
 
-### 现代应用启动方式（v1.2.3+）
+### 当前推荐的应用启动方式
 
 ```go
 package main
 
 import (
-    "github.com/go-lynx/lynx/app"
     "github.com/go-lynx/lynx/boot"
-    // 导入所需插件
-    _ "github.com/go-lynx/lynx/plugins/nosql/redis"
-    _ "github.com/go-lynx/lynx/plugins/mq/kafka"
-    _ "github.com/go-lynx/lynx/plugins/service/http"
+    // 导入所需插件以完成注册
+    _ "github.com/go-lynx/plugins/mq/kafka"
+    _ "github.com/go-lynx/plugins/nosql/redis"
+    _ "github.com/go-lynx/plugins/service/http"
 )
 
 func main() {
-    // 初始化 Lynx 应用
-    lynxApp := app.NewLynx()
-    
-    // 使用配置启动
-    boot.Bootstrap(lynxApp, "config.yaml")
-    
-    // 启动应用
-    lynxApp.Run()
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
 }
 ```
 
-### 传统启动方式（兼容）
+### 接入要点
 
-```go
-func main() {
-    boot.LynxApplication(wireApp).Run()
-}
-```
+- 使用 CLI 初始化项目与目录骨架
+- 通过 YAML 配置声明插件能力
+- 在代码中匿名导入需要注册的插件包
+- 使用 `boot.NewApplication(wireApp).Run()` 启动应用
 
 ### 启动流程
 
@@ -201,7 +189,7 @@ Lynx 自动暴露：
 
 ### 生产就绪
 
-使用 v1.2.3，您的应用开箱即用，具备企业级：
+默认接入完成后，应用通常会具备以下工程能力：
 - **错误恢复** 熔断器模式
 - **资源管理** 类型安全访问
 - **事件系统** 支持每秒100万+事件

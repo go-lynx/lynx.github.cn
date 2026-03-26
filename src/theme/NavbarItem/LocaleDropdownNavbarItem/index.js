@@ -1,6 +1,5 @@
 import React from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import {useAlternatePageUtils} from '@docusaurus/theme-common/internal';
 import {translate} from '@docusaurus/Translate';
 import {useLocation} from '@docusaurus/router';
 import DropdownNavbarItem from '@theme/NavbarItem/DropdownNavbarItem';
@@ -18,6 +17,22 @@ function normalizeLocalePath(pathname) {
     .replace(/^(\/en)+(?=\/)/, '/en');
 }
 
+function switchLocalePath(pathname, locale, defaultLocale) {
+  const normalizedPath = normalizeLocalePath(pathname || '/');
+  const withoutLocale =
+    normalizedPath.replace(/^\/(zh|en)(?=\/|$)/, '') || '/';
+
+  if (locale === defaultLocale) {
+    return withoutLocale;
+  }
+
+  if (withoutLocale === '/') {
+    return `/${locale}`;
+  }
+
+  return `/${locale}${withoutLocale}`;
+}
+
 export default function LocaleDropdownNavbarItem({
   mobile,
   dropdownItemsBefore,
@@ -26,20 +41,16 @@ export default function LocaleDropdownNavbarItem({
   ...props
 }) {
   const {
-    i18n: {currentLocale, locales, localeConfigs},
+    i18n: {currentLocale, defaultLocale, locales, localeConfigs},
   } = useDocusaurusContext();
-  const alternatePageUtils = useAlternatePageUtils();
   const {pathname, search, hash} = useLocation();
   const normalizedCurrentPath = normalizeLocalePath(pathname);
 
   const localeItems = locales.map((locale) => {
-    const alternatePath = alternatePageUtils.createUrl({
-      locale,
-      fullyQualified: false,
-    });
-    const normalizedAlternatePath = normalizeLocalePath(alternatePath);
     const targetPath =
-      locale === currentLocale ? normalizedCurrentPath : normalizedAlternatePath;
+      locale === currentLocale
+        ? normalizedCurrentPath
+        : switchLocalePath(normalizedCurrentPath, locale, defaultLocale);
     const to = `pathname://${targetPath}${search}${hash}${queryString}`;
 
     return {

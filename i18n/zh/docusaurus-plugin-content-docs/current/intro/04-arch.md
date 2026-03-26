@@ -5,9 +5,9 @@ title: Lynx 框架架构
 
 # Lynx 框架架构
 
-## 分层运行时架构（v1.2.3）
+## 分层运行时架构
 
-Lynx Framework v1.2.3 采用了为企业级微服务设计的精密**四层运行时架构**：
+Lynx 采用面向插件编排的**分层运行时架构**，将应用入口、插件管理、运行时调度和资源管理拆分为清晰的职责边界：
 
 ### 架构层次
 
@@ -44,7 +44,7 @@ graph TD
         ResInfo[资源信息]
     end
     
-    subgraph "插件生态系统（18个插件）"
+    subgraph "插件生态系统"
         Database[数据库插件<br/>MySQL, PostgreSQL, SQL Server]
         NoSQL[NoSQL插件<br/>Redis (162K 操作/秒), MongoDB, Elasticsearch]
         MQ[消息队列插件<br/>Kafka (30K 消息/秒), RabbitMQ (175K 消息/秒)]
@@ -90,10 +90,8 @@ sequenceDiagram
     Runtime->>PluginMgr: 初始化插件管理器
     PluginMgr->>Plugins: 拓扑排序并加载插件
     
-    Note over Plugins: 18个生产就绪插件
-    Note over Plugins: 数据库: MySQL, PostgreSQL, SQL Server
-    Note over Plugins: NoSQL: Redis (162K 操作/秒), MongoDB, ES
-    Note over Plugins: MQ: Kafka (30K 消息/秒), RabbitMQ (175K 消息/秒)
+    Note over Plugins: 数据库、缓存、消息队列、配置中心
+    Note over Plugins: 服务发现、可观测性与分布式能力
     
     Plugins->>Runtime: 注册资源与能力
     Runtime->>Monitor: 初始化监控（52+指标）
