@@ -5,38 +5,59 @@ title: Overview
 
 # Overview
 
-Welcome to Go-Lynx, a plug-and-play Go microservice framework designed with scalability and simplicity at its core.
+Go-Lynx is a **plugin orchestration and runtime framework** for Go microservices.
 
-> The name Go-Lynx is inspired by the lynx, a feline species, symbolizing the framework's flexibility and agility.
+Its center of gravity is not “yet another web layer”, but a unified runtime model for the infrastructure pieces that keep reappearing in service projects: plugin registration, dependency ordering, resource wiring, lifecycle control, event flow, and service-governance-facing integrations.
 
-## Getting Started
+> The name “Lynx” is inspired by the lynx: flexible, agile, and good at adapting to different environments.
 
-To begin using Go-Lynx, check out our [Quick Start](/docs/getting-started/quick-start) guide: install the Lynx CLI, create a project with `lynx new`, and run with `lynx run --watch`. If you're already familiar with the basics, see the [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) for the full list of plugins and how to configure them.
+## How To Read Lynx Today
 
-## Goals
+The most useful mental model for the current Lynx codebase is:
 
-We are committed to providing a lightweight and flexible microservice development framework. We integrate various third-party plugins and tools for microservice governance, aiming to shorten the business development cycle and allow you to focus more on business delivery.
+- **Core runtime first**: plugin registration, topology ordering, resource ownership, lifecycle, and event plumbing.
+- **Application shell second**: `boot`, app startup wiring, and control-plane-facing helpers help you bring services up cleanly.
+- **Plugin family around it**: HTTP, gRPC, config centers, service discovery, databases, queues, tracing, flow control, transactions, and distributed locks are integrated as separate modules.
 
-## Why Choose Go-Lynx?
+In practice, Lynx should be read as a microservice infrastructure assembly layer rather than a thin wrapper around one specific protocol or middleware product.
 
-With Go-Lynx, you can enjoy:
+## What You Get
 
-- **Focus on Business**: Let the underlying plugins handle all the enhancements and features, allowing you to concentrate on the most important thing - your business logic.
-- **Plugin Extensibility**: Use existing plugins or create your own to extend the functionality of your application.
-- **Easy Integration**: Plugins are designed to integrate with each other, enabling you to assemble powerful components tailored to your needs.
-- **Plug-and-Play**: Easily insert the plugins you need and start building your application. Simply import the corresponding module, and the plugin takes effect.
+With Go-Lynx, teams typically gain:
 
-Thank you for using Go-Lynx. We're excited to see what microservice modules you'll create!
+- **A more stable startup path**: plugin load order, dependencies, and resource registration are orchestrated consistently.
+- **Less glue code**: databases, message queues, config centers, discovery, tracing, and similar capabilities follow one integration model.
+- **Clearer runtime boundaries**: application, plugin, resource, and governance responsibilities are easier to reason about.
+- **A more consistent team workflow**: CLI, layout template, configuration structure, docs, and plugin contracts stay aligned.
 
-## Underlying Dependencies
+## Current Official Module Scope
 
-Go-Lynx primarily uses Kratos + Polaris as its core foundation for design and integration. However, as the version evolves, Go-Lynx may become more like a plugin glue, with the underlying components becoming plugin-based, like building blocks that can be combined to create any microservice module you need.
+The current repository family already covers the framework core and a broad set of official modules, including:
 
----
+- Service and governance: HTTP, gRPC, Polaris, Nacos, Etcd, Apollo, Sentinel, Swagger, Tracer
+- Data and storage: Redis, MongoDB, Elasticsearch, MySQL, PostgreSQL, SQL Server, SQL SDK
+- Messaging and async: Kafka, RabbitMQ, RocketMQ, Pulsar
+- Distributed capabilities: Seata, DTM, Redis Lock, Etcd Lock, Eon ID
+- Engineering tooling: Layout template and the Lynx CLI
 
-# Community
+The site already documents the main modules and usage flow, and more module pages continue to be added.
 
-The Go-Lynx community is always here to help you. If you have any questions or need assistance, don't hesitate to contact us. You can join our [Discord](https://discord.gg/2vq2Zsqq), or the DingTalk / WeChat groups (see below) for discussions and communication.
+## Suggested Reading Path
+
+If you are new to Go-Lynx, this order works well:
+
+1. [Quick Start](/docs/getting-started/quick-start): get the CLI, template, and bootstrap flow running.
+2. [Bootstrap Configuration](/docs/getting-started/bootstrap-config): understand local bootstrap config and remote config entry points.
+3. [Plugin Management](/docs/getting-started/plugin-manager): understand ordering, dependency resolution, and assembly.
+4. [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem): choose modules by capability area.
+5. [Framework Architecture](/docs/intro/arch): understand the layered runtime model.
+
+## Community
+
+If you run into problems while using or extending Go-Lynx, the community channels are the best next step:
+
+- [Discord](https://discord.gg/2vq2Zsqq)
+- DingTalk / WeChat groups (see below)
 
 ### Contributor List
 

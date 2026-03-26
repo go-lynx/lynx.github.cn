@@ -5,81 +5,92 @@ title: Bootstrap Configuration
 
 # Bootstrap Configuration
 
-In Go-Lynx, application configuration is managed through YAML files for plugin management. You can specify the configuration file or directory at application startup using the `-conf` flag (e.g. `-conf configs`, where `configs` is the directory containing your YAML files). If not specified, the application typically looks for a default path such as `configs/config.yaml` depending on your project layout. Go-Lynx provides a flexible way to manage application settings through YAML: align configuration keys with the plugins you use, and the framework loads the corresponding plugins at startup. You can use either a minimal local bootstrap (for example when using a config center) or a full local YAML with all plugin settings. Remember to import the packages of the plugins you need so they register with the plugin manager.
+In Go-Lynx, “bootstrap configuration” is not your full business configuration. It is the **first layer of configuration read during startup**. Its job is to tell the framework:
 
-Besides Polaris, you can also use [Nacos](/docs/existing-plugin/nacos) as the configuration center; configure `lynx.nacos` and enable config in the bootstrap accordingly.
+- who this application is
+- which local capabilities must come up first
+- whether a config center / discovery backend / control-plane-facing module is needed
+- where the rest of the configuration should come from
 
-## Local Bootstrap Configuration
+## Bootstrap vs Full Configuration
 
-If you are using components related to a configuration center, the local bootstrap file is quite simple, requiring only a few lines of configuration. It mainly includes the configuration information for the remote configuration center (using Polaris as an example):
+It helps to think about configuration in two layers:
 
-```yaml
-lynx:
-  application:
-    name: svc-name
-    version: v1.0.0
-  polaris:
-    namespace: svc-namespace
-    token: token
-    weight: 100
-    ttl: 5
-    timeout: 1s
+- **bootstrap configuration**: enough to bring up the application and the base runtime
+- **full application configuration**: loaded or merged after the base runtime is available
+
+That is why bootstrap config should stay focused on startup-critical information instead of becoming a giant dump of every business setting.
+
+## Common Loading Pattern
+
+In the official template and common startup flows, `-conf` points to a config file or directory:
+
+```bash
+./your-service -conf ./configs
 ```
 
-## Full Configuration
+If you do not specify it explicitly, the application usually falls back to the project’s conventional config path.
 
-Go-Lynx's full configuration file shows all currently supported plugin configurations. Each configuration item corresponds to a plugin. If the configuration file matches the plugin, the framework will automatically load the plugin at startup:
+## Minimal Example
+
+A current-style minimal bootstrap config can look like this:
 
 ```yaml
 lynx:
   application:
-    name: svc-name
-    version: v1.0.0
-    tls:
-      file_name: tls-service.yaml
-      group: svc-group
+    name: user-service
+    version: v0.1.0
   http:
     addr: 0.0.0.0:8000
     timeout: 5s
-    tls: true
-  grpc:
-    addr: 0.0.0.0:9000
-    timeout: 5s
-    tls: true
-  tracer:
-    addr: 127.0.0.1:4317
-    ratio: 1
-  polaris:
-    namespace: svc-namespace
-    token: token
-    weight: 100
-    ttl: 5
-    timeout: 5s
-  db:
-    driver: mysql
-    source: root:123@tcp(127.0.0.1:3306)/demo?parseTime=True
-    min_conn: 50
-    max_conn: 50
-    max_idle_time: 30s
-  redis:
-    addr: 127.0.0.1:6379
-    password: 123456
-    db: 0
-    dial_timeout: 3s
-    read_timeout: 1s
-    write_timeout: 1s
 ```
 
-## Plugin Registration
+This is enough to start the service locally and add more plugins incrementally afterwards.
 
-It's important to note that to use a specific plugin, you must import the corresponding plugin's package into your project. If you import the package, simply edit the configuration information, and the plugin will automatically register with the plugin manager. If the package is not imported, the configuration file will have no effect.
+## Example With Config Center / Discovery
 
-## Startup Loading
+If you want config-center or service-governance modules to participate during startup, add only the required entry information, for example:
 
-Go-Lynx will prioritize loading the local bootstrap configuration file at startup, with the file address specified by the `-conf configs` command at startup. After loading the local configuration, if it detects control plane-related plugins, it will automatically pull the remote configuration file after the control plane plugin is initialized. The default pulled file is application-name.yaml, where application-name is the application name specified at startup.
+```yaml
+lynx:
+  application:
+    name: user-service
+    version: v0.1.0
+  polaris:
+    namespace: default
+    token: your-token
+  nacos:
+    server_configs:
+      - ip_addr: 127.0.0.1
+        port: 8848
+```
 
-## Service Governance
+The exact fields depend on the plugin documentation. The key rule is: **only put startup-critical remote entry information in bootstrap config.**
 
-The control plane-related plugins implemented in Go-Lynx are based on the Tencent Polaris service governance framework. If you need to use features such as registration discovery, configuration management, and microservice rate limiting, you will need to deploy the Polaris service governance framework first.
+## Configuration Only Works If The Plugin Exists
 
-Related Documentation: [Tencent Polaris Official Documentation](https://polarismesh.cn/docs)
+Writing configuration alone does not guarantee that a plugin will load. In practice, a plugin usually needs both:
+
+1. the plugin module dependency in your project
+2. registration into the runtime / plugin factory
+
+So:
+
+- **module without config** usually means no initialization
+- **config without module** usually means no effect
+
+## Recommended Organization
+
+In the current Go-Lynx workflow, a good rule of thumb is:
+
+- keep application identity, protocol listeners, and config-center/discovery entry info in bootstrap config
+- keep detailed business-facing plugin parameters in the full config layer
+- isolate environment differences through separate files or config-center data instead of one giant config file
+
+## Next Steps
+
+After this page, continue with:
+
+- [Plugin Management](/docs/getting-started/plugin-manager): understand how config becomes plugin ordering and assembly
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide): use a consistent integration flow for concrete plugins
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem): browse the current module family

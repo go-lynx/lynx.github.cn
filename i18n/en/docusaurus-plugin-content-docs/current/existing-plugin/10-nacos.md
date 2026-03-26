@@ -5,20 +5,15 @@ title: Nacos Plugin
 
 # Nacos Plugin
 
-The Nacos plugin provides **service registration**, **service discovery**, and **configuration management** for the Lynx framework, so you can use Nacos as both a naming service and a configuration center.
+The Nacos plugin brings service registry/discovery and configuration-center capability into Lynx. It fits systems that already use Nacos for naming or configuration and want both capabilities to enter one framework startup path.
 
-## Features
+## What it is mainly for
 
-- **Service registration**: Register service instances with Nacos.
-- **Service discovery**: Discover instances and integrate with Lynx service calls.
-- **Configuration management**: Load and watch configuration from Nacos with real-time updates.
-- **Multi-config**: Support multiple data IDs and groups.
-- **Authentication**: Username/password or access key/secret key.
-- **Namespace**: Multi-tenant namespace isolation.
+- service registration and discovery
+- configuration loading and watch behavior
+- configuration integration across namespaces, groups, and data IDs
 
-## Configuration
-
-Add the following under `lynx.nacos` in your config file:
+## Basic configuration
 
 ```yaml
 lynx:
@@ -38,28 +33,31 @@ lynx:
 
 ## Usage
 
-Import the plugin and start the application; the plugin will load from configuration:
+Anonymous-import the plugin in `main`, then let the application startup flow assemble it:
 
 ```go
-package main
-
 import (
-    "github.com/go-lynx/lynx/app"
     "github.com/go-lynx/lynx/boot"
-    _ "github.com/go-lynx/lynx/plugins/nacos"
+    _ "github.com/go-lynx/lynx/plugin/nacos"
 )
 
 func main() {
-    boot.LynxApplication(wireApp).Run()
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
 }
 ```
 
-When `enable_config` is true, Lynx can load the main configuration from Nacos so that service registration, discovery, and config are all driven by Nacos.
+When `enable_config` is `true`, Nacos can also participate in main configuration loading. When `enable_register` and `enable_discovery` are enabled, registry and discovery behavior join the runtime as well.
 
-## Installation
+## Practical guidance
 
-```bash
-go get github.com/go-lynx/lynx/plugins/nacos
-```
+- decide early whether config-center and registry behavior should share the same namespace boundary
+- distinguish carefully which dynamic config changes are actually safe to apply at runtime
+- if your system already has another mature control plane, keep Nacos responsibilities clearly bounded
 
-For cluster mode, set `server_addresses` to a comma-separated list of Nacos server addresses.
+## Related pages
+
+- [Apollo](/docs/existing-plugin/apollo)
+- [Etcd](/docs/existing-plugin/etcd)
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)

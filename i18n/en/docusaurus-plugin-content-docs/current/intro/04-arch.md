@@ -5,144 +5,108 @@ title: Lynx Framework Architecture
 
 # Lynx Framework Architecture
 
-## Layered Runtime Architecture (v1.2.3)
+This page focuses on how Go-Lynx organizes applications, plugins, and resources **at runtime**.
 
-Lynx Framework v1.2.3 adopts a sophisticated **four-layer runtime architecture** designed for enterprise-grade microservices:
+If the design page answers “why Lynx is shaped this way”, the architecture page answers “what layers exist at runtime, and how those layers cooperate”.
 
-### Architecture Layers
+## Current Architectural View
 
-1. **Application Layer** - LynxApp, Boot, Control Plane
-2. **Plugin Management Layer** - PluginManager, TypedPluginManager, PluginFactory  
-3. **Runtime Layer** - Runtime interface, TypedRuntimePlugin, SimpleRuntime
-4. **Resource Management Layer** - Private/Shared Resources, Resource Info
+The most useful current view is no longer “a framework built around one middleware stack”. It is better described as four layers:
 
-### Architecture Diagram
+1. **application layer**: app entry, bootstrap shell, service process, control-plane-facing helpers
+2. **plugin orchestration layer**: registration, dependency resolution, topology ordering, lifecycle scheduling
+3. **runtime layer**: resource exposure, event flow, context propagation, unified assembly
+4. **resource layer**: private resources, shared resources, external clients, governance-facing objects
+
+## Layered Runtime View
 
 ```mermaid
 graph TD
     subgraph "Application Layer"
-        LynxApp[LynxApp]
-        Boot[Boot System]
-        Control[Control Plane]
+        App[Application]
+        Boot[Boot]
+        Service[HTTP / gRPC Service]
     end
-    
-    subgraph "Plugin Management Layer"
-        PluginMgr[Plugin Manager]
-        TypedMgr[TypedPluginManager]
-        Factory[Plugin Factory]
+
+    subgraph "Plugin Orchestration Layer"
+        Manager[Plugin Manager]
+        Resolver[Dependency Resolver]
+        Lifecycle[Lifecycle Orchestration]
     end
-    
+
     subgraph "Runtime Layer"
-        Runtime[Runtime Interface]
-        TypedRuntime[TypedRuntimePlugin]
-        SimpleRuntime[SimpleRuntime]
+        Runtime[Unified Runtime]
+        Events[Event System]
+        Context[Runtime Context]
     end
-    
-    subgraph "Resource Management Layer"
-        PrivateRes[Private Resources]
-        SharedRes[Shared Resources]
-        ResInfo[Resource Info]
+
+    subgraph "Resource Layer"
+        Private[Private Resources]
+        Shared[Shared Resources]
+        External[External Clients / Integrations]
     end
-    
-    subgraph "Plugin Ecosystem (18 Plugins)"
-        Database[Database Plugins<br/>MySQL, PostgreSQL, SQL Server]
-        NoSQL[NoSQL Plugins<br/>Redis (162K ops/sec), MongoDB, Elasticsearch]
-        MQ[Message Queue Plugins<br/>Kafka (30K msg/sec), RabbitMQ (175K msg/sec)]
-        Service[Service Plugins<br/>HTTP, gRPC, Polaris]
-        Tracing[Observability<br/>Tracer (OpenTelemetry), Swagger]
-    end
-    
-    LynxApp --> PluginMgr
-    PluginMgr --> TypedMgr
-    TypedMgr --> Factory
-    Factory --> Runtime
-    Runtime --> TypedRuntime
-    TypedRuntime --> PrivateRes
-    TypedRuntime --> SharedRes
-    
-    PluginMgr --> Database
-    PluginMgr --> NoSQL
-    PluginMgr --> MQ
-    PluginMgr --> Service
-    PluginMgr --> Tracing
+
+    App --> Boot
+    Boot --> Manager
+    Manager --> Resolver
+    Resolver --> Lifecycle
+    Lifecycle --> Runtime
+    Runtime --> Events
+    Runtime --> Context
+    Runtime --> Private
+    Runtime --> Shared
+    Shared --> External
+    Runtime --> Service
 ```
 
-## Service Startup & Lifecycle
+## Startup Flow
+
+From a startup-order perspective, the common path can be summarized like this:
 
 ```mermaid
 sequenceDiagram
-    participant User as User
     participant Main as main.go
-    participant Config as Configuration
-    participant LynxApp as LynxApp
-    participant PluginMgr as PluginManager
-    participant Runtime as Runtime Layer
-    participant Plugins as Plugin Ecosystem
-    participant Monitor as Monitoring
-    participant Control as ControlPlane
-    participant Kratos as KratosApp
-    participant Service as HTTP/gRPC Services
+    participant Boot as Boot
+    participant Config as Bootstrap Config
+    participant Manager as Plugin Manager
+    participant Runtime as Runtime
+    participant Plugins as Plugins
+    participant Service as HTTP/gRPC
 
-    User->>Main: Start Application
-    Main->>Config: Load Bootstrap Config
-    Main->>LynxApp: Initialize LynxApp
-    LynxApp->>Runtime: Initialize Runtime Layer
-    Runtime->>PluginMgr: Initialize Plugin Manager
-    PluginMgr->>Plugins: Topological Sort & Load Plugins
-    
-    Note over Plugins: 18 Production-Ready Plugins
-    Note over Plugins: Database: MySQL, PostgreSQL, SQL Server
-    Note over Plugins: NoSQL: Redis (162K ops/sec), MongoDB, ES
-    Note over Plugins: MQ: Kafka (30K msg/sec), RabbitMQ (175K msg/sec)
-    
-    Plugins->>Runtime: Register Resources & Capabilities
-    Runtime->>Monitor: Initialize Monitoring (52+ Metrics)
-    Monitor->>Service: Setup Health Checks
-    
-    LynxApp->>Control: Initialize Control Plane
-    Control->>Kratos: Initialize KratosApp
-    Kratos->>Service: Start HTTP/gRPC Services
-    
-    Service-->>Monitor: Report Performance Metrics
-    Service-->>User: Provide Microservice Capabilities
-    
-    Note over Runtime,Service: Enterprise Features: Circuit Breaking,<br/>Rate Limiting, Distributed Tracing,<br/>Resource Management, Event System
+    Main->>Boot: Start application
+    Boot->>Config: Read bootstrap config
+    Boot->>Manager: Determine required plugins
+    Manager->>Manager: Resolve dependencies and topology
+    Manager->>Plugins: Initialize plugins in order
+    Plugins->>Runtime: Register resources and capabilities
+    Runtime->>Service: Expose service endpoints and shared capabilities
+    Service-->>Main: Application enters running state
 ```
 
-## Key Architecture Features
+## Why This Matters For The Plugin Ecosystem
 
-### Type-Safe Resource Management
-- **Private Resources**: Independent namespace for each plugin
-- **Shared Resources**: Global resources accessible by all plugins
-- **Generic Access**: Type-safe resource access with `GetTypedResource[T]`
-- **Resource Tracking**: Complete resource lifecycle management
+Without this runtime structure, plugins would quickly degrade into a collection of unrelated SDKs. What the Lynx architecture enforces is:
 
-### Unified Event System
-- **Event Bus Manager**: Manages inter-plugin communication
-- **Event Isolation**: Plugin namespace prevents conflicts
-- **High Performance**: Supports 1M+ events/second
-- **Observability**: Event filtering, history, and monitoring
+- plugins are initialized with ordering and dependency rules
+- plugins do not each own the entire world; resource boundaries are managed centrally
+- plugins do not need to hard-code direct coupling everywhere; they can collaborate through resource and event models
 
-### Plugin Lifecycle Management
-- **Hot-Plugging**: Zero-downtime plugin updates
-- **Dependency Injection**: Automatic resource wiring
-- **Health Monitoring**: Per-plugin health status
-- **Error Recovery**: Circuit breaker with automated recovery
+That is the architectural basis for a growing official module family.
 
-### Production-Ready Monitoring
-- **52+ Prometheus Metrics**: Standardized `lynx_` prefix
-- **Grafana Dashboards**: Multi-panel views for each plugin
-- **Health Endpoints**: `/health`, `/ready` for Kubernetes
-- **Distributed Tracing**: OpenTelemetry integration
+## What You Usually Feel In Business Code
 
-## Performance Characteristics
+Most teams do not feel this architecture as a diagram. They feel it as outcomes:
 
-| Component | Throughput | Latency | Improvement |
-|-----------|------------|---------|-------------|
-| Redis Operations | 162K+ ops/sec | less than 1ms | +15% |
-| RabbitMQ Messages | 175K+ msg/sec | less than 5ms | +20% |
-| Kafka Messages | 30K+ msg/sec | less than 10ms | +10% |
-| HTTP Requests | 1.2M req/sec | less than 1ms | +25% |
-| Event Bus | 1M+ events/sec | less than 100μs | +30% |
+- startup paths become more stable
+- adding a plugin does not require inventing a new bootstrap flow
+- resource access follows a more consistent model
+- part of the startup ordering and boundary management moves out of application code
 
-The Lynx architecture provides crystal-clear startup and service flow. The plugin mechanism enables flexible extension of microservice capabilities, significantly improving development efficiency and maintainability while maintaining enterprise-grade performance and reliability.
+## Continue Reading
+
+If this layer model makes sense, the next useful pages are:
+
+- [Design Philosophy](/docs/intro/design)
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+- [Plugin Management](/docs/getting-started/plugin-manager)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

@@ -1,15 +1,15 @@
 ---
 id: http
-title: HTTP 服务
+title: HTTP Service
 ---
 
-# HTTP 服务
+# HTTP Service
 
-Go-Lynx 的 HTTP 插件为应用提供 **HTTP 服务端**。在 YAML 中配置监听地址、超时与 TLS 后，框架会在启动时初始化服务端；你只需将 HTTP 处理逻辑（如 Kratos HTTP 服务）注册到该服务端上，即可完成路由与业务的绑定。底层实现基于 Kratos HTTP 模块。
+The HTTP plugin brings an HTTP server into the Lynx startup flow. You provide listen configuration, the plugin initializes the server, and your application registers business services onto that server.
 
-## 服务端配置
+Its purpose is not to replace your routing design. Its purpose is to make **listen lifecycle, startup behavior, and configuration-driven initialization** follow one consistent path.
 
-在配置文件中增加 `lynx.http` 段，例如：
+## Basic configuration
 
 ```yaml
 lynx:
@@ -19,24 +19,45 @@ lynx:
     tls: true
 ```
 
-`lynx.http` 为 HTTP 服务端配置（地址、超时、TLS 等）。配置完成后，应用启动时会按插件顺序加载 HTTP 插件。
+The common fields are:
+
+- `addr`: listen address
+- `timeout`: request timeout
+- `tls`: whether TLS is enabled
+
+Once configured, the HTTP plugin is assembled during application startup.
+
+## How to register business handlers
 
 ```go
 import (
-  bh "github.com/go-lynx/lynx/plugin/http"
+    bh "github.com/go-lynx/lynx/plugin/http"
 )
 
 func NewHTTPServer(
-login *service.LoginService,
-register *service.RegisterService,
-account *service.AccountService
+    login *service.LoginService,
+    register *service.RegisterService,
+    account *service.AccountService,
 ) *http.Server {
     h := bh.GetServer()
     loginV1.RegisterLoginHTTPServer(h, login)
     registerV1.RegisterRegisterHTTPServer(h, register)
     accountV1.RegisterAccountHTTPServer(h, account)
-return h
+    return h
 }
 ```
 
-插件加载后，通过 `bh.GetServer()` 获取服务端实例，将你的 HTTP 服务模块（如 `RegisterLoginHTTPServer`、`RegisterRegisterHTTPServer`）注册上去，即可完成路由与处理函数的绑定。其他服务与插件说明见 [插件生态](/docs/existing-plugin/plugin-ecosystem)。
+The key object here is `bh.GetServer()`. It returns the `*http.Server` already owned by the Lynx runtime, and you only need to register your HTTP services onto it.
+
+## Integration steps
+
+1. add the plugin module `github.com/go-lynx/lynx/plugin/http`
+2. add `lynx.http` configuration
+3. anonymous-import the plugin in `main`
+4. register routes in the server layer through `GetServer()`
+
+## Related pages
+
+- [gRPC](/docs/existing-plugin/grpc)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

@@ -5,109 +5,50 @@ title: RocketMQ Plugin
 
 # RocketMQ Plugin
 
-The Go-Lynx RocketMQ plugin integrates Apache RocketMQ with multi-instance producers/consumers, health checks, metrics, retries, and clustering/broadcasting consumption.
+The RocketMQ plugin brings RocketMQ producers and consumers into Lynx. It fits systems that need named producer/consumer instances, configurable consumption modes, and one runtime lifecycle for messaging infrastructure.
 
-## Features
+## What it is for
 
-- **Multi-instance** — Multiple producers and consumers
-- **Health & metrics** — Connection and send/receive health, Prometheus metrics
-- **Retry & timeout** — Configurable retries, backoff, and send timeout
-- **Consume mode** — CLUSTERING or BROADCASTING
-- **Order** — CONCURRENTLY or ORDERLY
+- configuring multiple RocketMQ producers and consumers
+- switching between clustering and broadcasting consumption models
+- bringing send, subscribe, health, and retry behavior into the runtime
 
-## Configuration
-
-Add `lynx.rocketmq` (or your project’s `rocketmq`) section:
+## Basic configuration
 
 ```yaml
 lynx:
   rocketmq:
     name_server:
       - "127.0.0.1:9876"
-    access_key: "your-access-key"
-    secret_key: "your-secret-key"
-    dial_timeout: "3s"
-    request_timeout: "30s"
-
     producers:
       - name: "default-producer"
         enabled: true
         group_name: "lynx-producer-group"
-        max_retries: 3
-        retry_backoff: "100ms"
-        send_timeout: "3s"
-        enable_trace: false
-
     consumers:
       - name: "default-consumer"
         enabled: true
         group_name: "lynx-consumer-group"
         consume_model: "CLUSTERING"
         consume_order: "CONCURRENTLY"
-        max_concurrency: 1
-        pull_batch_size: 32
-        pull_interval: "100ms"
         topics:
           - "test-topic"
-        enable_trace: false
 ```
 
-`consume_model`: `CLUSTERING` (load balance) or `BROADCASTING`.  
-`consume_order`: `CONCURRENTLY` or `ORDERLY`.
-
-## How to use
-
-### 1. Add dependency
-
-```bash
-go get github.com/go-lynx/lynx-rocketmq
-```
-
-### 2. Get client from plugin manager
+## Usage
 
 ```go
-import (
-    "context"
-    "github.com/go-lynx/lynx/plugin/rocketmq"
-)
-
 client := pluginManager.GetPlugin("rocketmq").(rocketmq.ClientInterface)
 ```
 
-### 3. Send
+Once you obtain the client capability, you can send with a named producer or attach subscription handlers to a named consumer.
 
-```go
-err := client.SendMessage(ctx, "test-topic", []byte("Hello RocketMQ"))
-err = client.SendMessageWith(ctx, "default-producer", "test-topic", []byte("Hello"))
-```
+## Practical guidance
 
-### 4. Consume
+- keep consumer-group responsibility boundaries explicit
+- choose `CLUSTERING` or `BROADCASTING` based on real consumption semantics rather than mixing them casually
+- ordered and concurrent consumption trade throughput for consistency differently, so that choice belongs to the business case
 
-```go
-import "github.com/apache/rocketmq-client-go/v2/primitive"
-
-handler := func(ctx context.Context, msg *primitive.MessageExt) error {
-    log.Printf("Received: %s", string(msg.Body))
-    return nil
-}
-err := client.Subscribe(ctx, []string{"test-topic"}, handler)
-err = client.SubscribeWith(ctx, "default-consumer", []string{"topic-a", "topic-b"}, handler)
-```
-
-### 5. Health & metrics
-
-```go
-if client.IsProducerReady("default-producer") { /* ... */ }
-if client.IsConsumerReady("default-consumer") { /* ... */ }
-metrics := client.GetMetrics()
-```
-
-## Notes
-
-- For multiple topics, ensure config and code pass the same topic list; the plugin subscribes per topic.
-- Transactional messages require application-level or custom plugin support.
-
-## See also
+## Related pages
 
 - Repo: [go-lynx/lynx-rocketmq](https://github.com/go-lynx/lynx-rocketmq)
 - [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

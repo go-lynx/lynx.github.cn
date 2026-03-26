@@ -2,3 +2,5 @@ label: 'Intro'
 position: 0
 link:
   type: generated-index
+  title: Intro
+  description: Start with Lynx positioning, design philosophy, and runtime architecture before diving into integration and plugin docs.

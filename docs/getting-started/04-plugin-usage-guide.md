@@ -1,111 +1,136 @@
 ---
 id: plugin-usage-guide
-title: 插件使用指南
+title: Plugin Usage Guide
 ---
 
-# 插件使用指南
+# Plugin Usage Guide
 
-本文说明在 Go-Lynx 中**如何使用现有插件**的通用步骤，便于快速上手任意插件。
+In Lynx, a plugin is not just another SDK dependency. It is a capability module that joins a shared runtime. Most plugins follow the same path: **add the module, provide config, anonymously import it, let startup assemble it, then obtain the instance in application code**.
 
-## 四步使用插件
+This page does not try to document every plugin parameter. Its purpose is to explain the common integration path you will use for most Lynx plugins.
 
-大多数 Lynx 插件都遵循同一套使用方式：
+## Standard integration flow
 
-### 1. 添加依赖
+### 1. Add the plugin module
 
-使用 Go modules 拉取插件所在模块，例如：
+Bring the plugin module into your project first. Different plugins may live in different repositories:
 
 ```bash
-# 框架内置插件（以主仓库路径为准）
+# in-repo plugins
+go get github.com/go-lynx/lynx/plugin/http
 go get github.com/go-lynx/lynx/plugin/redis
 
-# 独立仓库插件
-go get github.com/go-lynx/lynx-elasticsearch
+# standalone plugin repos
+go get github.com/go-lynx/lynx-kafka
 go get github.com/go-lynx/lynx-rabbitmq
-go get github.com/go-lynx/lynx-dtm
+go get github.com/go-lynx/lynx-tracer
 ```
 
-具体包名以各插件的 README 或 [插件生态](/docs/existing-plugin/plugin-ecosystem) 为准。
+If you are unsure about the module path, start with the [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) page or the plugin repository README.
 
-### 2. 在配置中声明
+### 2. Add startup-critical configuration
 
-在 `config.yaml`（或 bootstrap 配置）中增加对应段落，键名一般为 `lynx.<插件名>`：
+Plugins need configuration to initialize. In practice you usually add a `lynx.<plugin>` block in local config or remote config, for example:
 
 ```yaml
 lynx:
+  http:
+    addr: 0.0.0.0:8000
+    timeout: 5s
   redis:
     addr: 127.0.0.1:6379
     password: ""
     db: 0
-  http:
-    addr: 0.0.0.0:8000
-    timeout: 5s
 ```
 
-部分插件（如 DTM、Etcd Lock）依赖其他插件，需先配置并加载被依赖的插件。
+Two rules matter here:
 
-### 3. 注册插件（导入）
+- keep startup-critical information in bootstrap entry config
+- keep large amounts of mutable business configuration in application or remote config
 
-在 `main.go` 或初始化入口中**匿名导入**插件包，使框架在启动时加载该插件：
+The rationale for that split is covered in [Bootstrap Configuration](/docs/getting-started/bootstrap-config).
+
+### 3. Register the plugin with an anonymous import
+
+Most Lynx plugins are registered through anonymous imports. That means configuration alone is not enough; the plugin package also needs to be loaded at startup:
 
 ```go
 import (
-    _ "github.com/go-lynx/lynx/plugin/redis"
     _ "github.com/go-lynx/lynx/plugin/http"
-    _ "github.com/go-lynx/lynx-elasticsearch"
+    _ "github.com/go-lynx/lynx/plugin/redis"
+    _ "github.com/go-lynx/lynx-kafka"
 )
 ```
 
-插件会在 [Bootstrap](/docs/getting-started/bootstrap-config) 阶段根据配置与 [插件顺序](/docs/getting-started/plugin-manager) 完成初始化。
+The point of the anonymous import is to register the plugin factory into the runtime. The actual initialization is still controlled by the plugin manager and the startup flow, not by import time side effects alone.
 
-### 4. 在业务中注入使用
+### 4. Let the application startup assemble the runtime
 
-通过插件提供的 **Getter** 或 **插件管理器** 获取实例，再结合 Wire 或手动注入到业务代码：
+The recommended startup entry today is:
 
 ```go
-// 方式一：插件提供的 GetXxx()
-import lynxRedis "github.com/go-lynx/lynx/plugin/redis"
+func main() {
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
+}
+```
+
+Through this path, Lynx reads configuration, builds the runtime, resolves plugin dependencies, and initializes plugins in order.
+
+If one plugin depends on another, such as a distributed lock depending on Redis or governance capabilities depending on a registry, that dependency chain is handled in this stage as well. See [Plugin Management](/docs/getting-started/plugin-manager) for the runtime side of that process.
+
+### 5. Obtain the capability in business code
+
+Once startup finishes, there are two common ways to use a plugin.
+
+The first is to use the Getter exposed by the plugin, which works well with Wire:
+
+```go
+import (
+    "github.com/google/wire"
+    lynxRedis "github.com/go-lynx/lynx/plugin/redis"
+)
 
 var ProviderSet = wire.NewSet(
     NewData,
     lynxRedis.GetRedis,
 )
-
-func NewData(rdb *redis.Client, logger log.Logger) (*Data, error) {
-    // 使用 rdb 操作 Redis
-    return &Data{rdb: rdb}, nil
-}
 ```
 
+The second is to obtain the plugin instance through the runtime or plugin manager, which is useful for more dynamic integration paths:
+
 ```go
-// 方式二：从插件管理器按名称获取（部分插件）
 plugin := app.Lynx().GetPluginManager().GetPlugin("rabbitmq")
 client := plugin.(rabbitmq.ClientInterface)
 ```
 
-各插件的 Getter 名称与类型见对应文档（如 [Redis](/docs/existing-plugin/redis)、[HTTP](/docs/existing-plugin/http)）。
+Whether a plugin exposes `GetXxx`, what type it returns, and whether helper wrappers exist depends on the plugin itself. Check the corresponding plugin document.
 
-## 常见场景速查
+## Common integration scenarios
 
-| 需求           | 推荐插件与文档 |
-|----------------|----------------|
-| 提供 HTTP 接口 | [HTTP](/docs/existing-plugin/http) |
-| 提供 gRPC 服务 | [gRPC](/docs/existing-plugin/grpc) |
-| 关系型数据库   | [Database](/docs/existing-plugin/db) |
-| 缓存           | [Redis](/docs/existing-plugin/redis) |
-| 全文检索       | [Elasticsearch](/docs/existing-plugin/elasticsearch) |
-| 消息队列       | [Kafka](/docs/existing-plugin/kafka) / [RabbitMQ](/docs/existing-plugin/rabbitmq) / [RocketMQ](/docs/existing-plugin/rocketmq) / [Pulsar](/docs/existing-plugin/pulsar) |
-| 配置中心       | [Nacos](/docs/existing-plugin/nacos) / [Apollo](/docs/existing-plugin/apollo) / [Etcd](/docs/existing-plugin/etcd) / [Polaris](/docs/existing-plugin/polaris) |
-| 服务发现       | [Polaris](/docs/existing-plugin/polaris) / [Nacos](/docs/existing-plugin/nacos) / [Etcd](/docs/existing-plugin/etcd) |
-| 分布式事务     | [Seata](/docs/existing-plugin/seata) / [DTM](/docs/existing-plugin/dtm) |
-| 分布式锁       | [Redis Lock](/docs/existing-plugin/redis-lock) / [Etcd Lock](/docs/existing-plugin/etcd-lock) |
-| 链路追踪       | [Tracer](/docs/existing-plugin/tracer) |
-| API 文档       | [Swagger](/docs/existing-plugin/swagger) |
-| 限流熔断       | [Sentinel](/docs/existing-plugin/sentinel) |
-| 新项目脚手架   | [Layout](/docs/existing-plugin/layout) + [Quick Start](/docs/getting-started/quick-start) |
+| Need | Recommended plugins |
+|------|---------------------|
+| HTTP APIs | [HTTP](/docs/existing-plugin/http) |
+| gRPC services | [gRPC](/docs/existing-plugin/grpc) |
+| Relational database access | [Database](/docs/existing-plugin/db) / [SQL SDK](/docs/existing-plugin/sql-sdk) |
+| Cache and shared state | [Redis](/docs/existing-plugin/redis) |
+| Full-text search | [Elasticsearch](/docs/existing-plugin/elasticsearch) |
+| Message queues | [Kafka](/docs/existing-plugin/kafka) / [RabbitMQ](/docs/existing-plugin/rabbitmq) / [RocketMQ](/docs/existing-plugin/rocketmq) / [Pulsar](/docs/existing-plugin/pulsar) |
+| Config center and service discovery | [Nacos](/docs/existing-plugin/nacos) / [Apollo](/docs/existing-plugin/apollo) / [Etcd](/docs/existing-plugin/etcd) / [Polaris](/docs/existing-plugin/polaris) |
+| Distributed transactions | [Seata](/docs/existing-plugin/seata) / [DTM](/docs/existing-plugin/dtm) |
+| Distributed locks | [Redis Lock](/docs/existing-plugin/redis-lock) / [Etcd Lock](/docs/existing-plugin/etcd-lock) |
+| Observability and API docs | [Tracer](/docs/existing-plugin/tracer) / [Swagger](/docs/existing-plugin/swagger) / [Sentinel](/docs/existing-plugin/sentinel) |
 
-## 下一步
+## Practical rules
 
-- [插件生态一览](/docs/existing-plugin/plugin-ecosystem) — 所有插件列表与文档链接  
-- [Bootstrap 配置](/docs/getting-started/bootstrap-config) — 配置文件与远程配置  
-- [插件管理](/docs/getting-started/plugin-manager) — 加载顺序与自定义插件  
+- only promote capabilities into plugins when they truly need shared lifecycle and runtime ownership
+- keep bootstrap config focused on what startup must know
+- prefer explicit application startup and dependency injection over global-singleton-first usage
+- if an official plugin already exists, prefer it over scattering one-off glue code in business packages
+
+## Next steps
+
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+- [Plugin Management](/docs/getting-started/plugin-manager)

@@ -1,27 +1,52 @@
 ---
 id: design
-title: 设计理念
+title: Design Philosophy
 ---
 
-# 设计哲学
+# Design Philosophy
 
-Go-Lynx 的核心哲学是万物均插件，合理的通过插件进行自动装配，让我们更加专注业务逻辑。我们将每个模块能力视为一个插件，使插件成为 Go-Lynx 的灵魂。所有第三方组件、数据库管理、消息队列、监控、链路和微服务需要的所有其他功能都通过插件进行自动装配及管理。
+Go-Lynx is not primarily trying to wrap every technology with one more abstraction layer. Its design focus is to collapse the repeated infrastructure wiring in microservice projects into one **plugin runtime model**.
 
-此外，从设计之初，我们就设计了 Go-Lynx 来允许插件与插件之间的集成，从而使得更强大的组件的设计成为可能。
+## Core Ideas
 
+The current Lynx codebase is best understood through these ideas:
 
-## 设计优势
+- **plugin-first**: services, config, storage, messaging, governance, tracing, and flow control are integrated as modular capabilities
+- **runtime-first**: the framework is responsible for assembly, ordering, resources, and lifecycle, not only client creation
+- **configuration-driven**: whether a capability is enabled, how it is initialized, and what it depends on is decided through config plus runtime assembly
+- **clear boundaries**: business logic stays in business layers, plugins own infra capabilities, and the runtime organizes them
 
-Go-Lynx 更相当于 Spring-Boot 的自动装配，但我们会完整的管理每个插件的完整生命周期以及插件负责的领域模块，例如微服务的注册，发现，监控，链路追踪，路由能力，内网通讯加密，分布式事务管理等微服务一系列的能力，我们均通过插件进行封装，达到开箱即用的效果，而不需要自行去编写每个模块的具体客户端创建，连接，配置等重复且繁琐的代码。
+## The Problem It Solves Is Bigger Than A Single SDK
 
-## 架构图
+In real service projects, teams repeatedly need to:
 
-<img alt="dingtalk" src="/img/diagram.png" width="940"/>
+- initialize databases, caches, queues, discovery backends, and tracing clients
+- decide what depends on what and what must start first
+- share resources across modules safely
+- attach health checks, metrics, and lifecycle hooks to integrations
+- keep local development and production bootstrap paths as consistent as possible
 
-根据架构图，我们可以很清晰的了解到，Go-Lynx 是一个通过插件来进行能力扩展的一个框架，通过引导程序，启动应用程序，成功启动之后我们的插件管理器会去获取全局的配置文件进行加载对应插件，每一个插件只会获取到它对应的配置，而非全局配置。并且我们保证了插件的加载先后顺序，让Go-Lynx充满了无限可能。并且在未来我们将会提供插件的热更新，插件的生命周期管理，检测状态等工作，如果您对这个框架感兴趣欢迎您加入我们的社区，一起发展它。
+The value of Go-Lynx is that these jobs are handled in one plugin runtime instead of being scattered across application code.
 
-> **bootstrap** : 引导应用程序启动  
-> **LynxApplication** : 应用程序,包含了全局配置，插件管理器，控制平面  
-> **PluginManager** : 插件管理器，负责插件加载，卸载，配置文件解析
+## Why It Is More Than “Auto Configuration”
 
-参见：[Lynx 框架架构](/docs/intro/arch)，了解分层运行时模型与服务启动流程。
+At a glance, Lynx can look similar to familiar auto-assembly frameworks. But it goes beyond deciding **what to load**.
+
+It also decides:
+
+- **in which order to load**
+- **which resources are owned where**
+- **when those resources are created and released**
+
+That makes Lynx closer to a runtime orchestration layer for plugins than to a simple configuration parser.
+
+## Practical Outcomes
+
+- **Cleaner business code**: less infrastructure bootstrap logic inside application layers
+- **More consistent integrations**: plugins follow one configuration and lifecycle model
+- **A more stable startup path**: dependency ordering and runtime resources are no longer maintained manually
+- **A more extensible ecosystem**: official modules and internal plugins can plug into the same model
+
+## Relationship To The Architecture Page
+
+If this page answers “why Lynx is designed this way”, then [Lynx Framework Architecture](/docs/intro/arch) answers “how that design is realized at runtime”.

@@ -5,11 +5,9 @@ title: Tracer Plugin
 
 # Tracer Plugin
 
-Go-Lynx provides a tracing plugin for scheduling between microservices to facilitate error troubleshooting, performance analysis, and log auditing, built on the OpenTelemetry standard.
+`lynx-tracer` brings distributed tracing into the Lynx runtime. It is built on OpenTelemetry, and its real value is that **trace exporting, context propagation, and sampling policy** become part of startup, instead of every service assembling its own tracing bootstrap code.
 
-## Basic Configuration
-
-Add the following to your configuration file to enable tracing:
+## Basic configuration
 
 ```yaml
 lynx:
@@ -21,15 +19,13 @@ lynx:
 
 | Option | Description |
 |--------|-------------|
-| `enable` | Whether to enable tracing (true/false) |
-| `addr` | OTLP collector address in `host:port` format. gRPC typically uses 4317, HTTP uses 4318 |
-| `ratio` | Sampling rate, range 0-1. 1 means full sampling. Use 1 for testing, reduce (e.g. 0.1) for production |
+| `enable` | whether tracing is enabled |
+| `addr` | OTLP collector address, usually in `host:port` form |
+| `ratio` | sampling ratio, where `1` means full sampling |
 
-After configuration, start the service and view collected traces on the tracer server's Web-UI. No additional code is required.
+## Advanced configuration
 
-## Advanced Configuration (v2)
-
-v2 supports modular configuration for protocol, TLS, retry, batch processing, sampling, etc.:
+If you need finer control over protocol, batching, propagators, or sampling, use the extended config:
 
 ```yaml
 lynx:
@@ -49,14 +45,18 @@ lynx:
       propagators: [W3C_TRACE_CONTEXT, W3C_BAGGAGE]
 ```
 
-### Special address value `None`
+## Special behavior
 
-When `addr` is set to `"None"` (case-sensitive), the plugin initializes trace context propagation (traceparent, baggage, etc.) but **does not export** traces to any collector. Useful when you need trace context for log correlation without running a collector (e.g., local development or when collector is unavailable).
+- when `addr` is set to `"None"`, the plugin keeps trace context propagation but does not export to a collector
+- if you want to fully disable sampling, prefer `config.sampler.type: ALWAYS_OFF`
 
-### Disable sampling
+## When to enable it
 
-To fully disable sampling, use `config.sampler.type: ALWAYS_OFF` instead of `ratio: 0` (unset `ratio` is normalized to 1.0).
+- when you need cross-service call chain visibility
+- when you are investigating latency or failure hotspots
+- when you want more stable correlation between logs, traces, and metrics
 
 ## More
 
-For full configuration options and examples, see [lynx-tracer README](https://github.com/go-lynx/lynx-tracer).
+- Repo: [lynx-tracer](https://github.com/go-lynx/lynx-tracer)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)

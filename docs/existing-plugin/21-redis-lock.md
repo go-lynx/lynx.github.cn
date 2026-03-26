@@ -1,114 +1,35 @@
 ---
 id: redis-lock
-title: Redis 分布式锁 Plugin
+title: Redis Lock Plugin
 ---
 
-# Redis 分布式锁 Plugin
+# Redis Lock Plugin
 
-Go-Lynx 的 Redis 分布式锁插件基于 Redis 提供分布式锁能力，支持自动续期、重试、可重入（同一实例）、兼容 standalone/Cluster/Sentinel。
+The Redis Lock plugin provides distributed locking on top of Redis. It fits systems that already rely on Redis and need lightweight coordination semantics.
 
-## 功能概览
+## What it is mainly for
 
-- **分布式锁**：基于 Redis 的加锁/解锁
-- **自动续期**：可配置续期阈值与间隔，避免业务执行时间超过 TTL
-- **重试**：可配置重试次数与退避策略
-- **可重入**：同一 `*RedisLock` 实例可多次 Acquire/Release
-- **健康与指标**：Prometheus 指标与优雅关闭
+- mutual exclusion based on Redis
+- centralized handling of lock renewal, timeout, and retry behavior
+- bringing lock capability into Lynx runtime assembly
 
-## 前置条件
+## Basic configuration
 
-需先启用 [Redis Plugin](/docs/existing-plugin/redis)，以提供 Redis 连接（插件内部使用 `GetUniversalRedis()`，兼容单机/集群/哨兵）。
+Redis Lock usually depends on the Redis plugin itself, so Redis connectivity should be available before the lock capability is used.
 
-## 配置说明
+## When to use it
 
-在 `config.yaml` 的 `lynx.redis` 下增加 `lock` 段：
+- the lock scope is reasonably clear
+- you need stronger coordination than a local lock but not necessarily the stronger semantics of Etcd
+- your team already has stable Redis infrastructure
 
-```yaml
-lynx:
-  redis:
-    addrs: ["localhost:6379"]
-    password: ""
-    db: 0
-    lock:
-      default_timeout: 30s
-      default_retry_interval: 100ms
-      max_retries: 3
-      renewal_enabled: true
-      renewal_threshold: 0.5
-      renewal_interval: 10s
-```
+## Practical guidance
 
-长耗时任务建议开启 `renewal_enabled` 并适当增大 `default_timeout`。
+- lock-key design must be understandable at the business level; do not let random strings become your contract
+- expiration, renewal strategy, and idempotent compensation should be designed together
+- if the scenario needs stronger consistency, evaluate [Etcd Lock](/docs/existing-plugin/etcd-lock) first
 
-## 如何使用
+## Related pages
 
-### 1. 引入依赖
-
-```bash
-go get github.com/go-lynx/lynx-redis-lock
-```
-
-### 2. 简单加锁执行（推荐）
-
-```go
-import (
-    "context"
-    "github.com/go-lynx/lynx-redis-lock"
-)
-
-err := redislock.Lock(ctx, "my-lock", 30*time.Second, func() error {
-    // 临界区业务逻辑
-    return nil
-})
-if err != nil {
-    log.Printf("lock failed: %v", err)
-}
-```
-
-### 3. 自定义选项（超时、重试、续期）
-
-```go
-options := redislock.LockOptions{
-    Expiration:       60 * time.Second,
-    RetryStrategy:    redislock.RetryStrategy{MaxRetries: 3, RetryDelay: 100 * time.Millisecond},
-    RenewalEnabled:   true,
-    RenewalThreshold: 0.5,
-}
-err := redislock.LockWithOptions(ctx, "my-lock", options, func() error {
-    // 长耗时逻辑
-    return nil
-})
-```
-
-### 4. 手动加锁/解锁
-
-```go
-lock, err := redislock.NewLock(ctx, "my-lock", options)
-if err != nil {
-    return err
-}
-if err := lock.Acquire(ctx); err != nil {
-    return err
-}
-defer lock.Release(ctx)
-// 业务逻辑
-held, err := lock.IsLocked(ctx)
-```
-
-### 5. 优雅关闭
-
-```go
-if err := redislock.Shutdown(ctx); err != nil {
-    log.Printf("shutdown: %v", err)
-}
-```
-
-## 设计说明与限制
-
-- 可重入仅在同一 `*RedisLock` 实例内有效；每次 `NewLock`/`Lock()` 为不同实例，不共享重入计数。
-- 单节点 Redis 与 Redlock、进程暂停与 TTL、fencing token 等说明见仓库 [LIMITATIONS.md](https://github.com/go-lynx/lynx-redis-lock/blob/main/LIMITATIONS.md)。
-
-## 相关链接
-
-- 仓库：[go-lynx/lynx-redis-lock](https://github.com/go-lynx/lynx-redis-lock)
-- [Redis Plugin](/docs/existing-plugin/redis) | [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- [Redis](/docs/existing-plugin/redis)
+- [Etcd Lock](/docs/existing-plugin/etcd-lock)

@@ -2,3 +2,5 @@ label: 'Existing-Plugin'
 position: 2
 link:
   type: generated-index
+  title: Plugin Ecosystem
+  description: An overview of Lynx official plugins and modules across services, config, storage, messaging, governance, observability, and distributed capabilities.

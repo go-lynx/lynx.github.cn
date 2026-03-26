@@ -1,101 +1,31 @@
 ---
 id: sql-sdk
-title: SQL SDK / Multi-datasource Plugin
+title: SQL SDK
 ---
 
-# SQL SDK / Multi-datasource Plugin
+# SQL SDK
 
-The Go-Lynx SQL Base / SQL SDK provides **shared functionality** for MySQL, PostgreSQL, MSSQL, and other SQL plugins: health checks, Prometheus metrics, connection pool, and error categorization, plus multi-datasource support.
+The SQL SDK is the shared base layer behind Lynx SQL-related plugins. It is closer to a common capability layer than to a standalone plugin you use directly for business access.
 
-## Features
+## What it is mainly for
 
-- **Health checks** — Connection and query health, connection pool status
-- **Metrics** — Prometheus metrics (connections, query duration, errors)
-- **Connection management** — Shared pool and timeout config
-- **Error categorization** — Connection failure, timeout, constraint violation, etc.
-- **Multi-datasource** — Common base for different SQL plugins
+- providing shared abstractions for MySQL, PostgreSQL, MSSQL, and similar SQL integrations
+- unifying health checks, metrics, pooling, and base resource handling
+- reducing duplicated low-level logic across SQL plugins
 
-## Relationship to database plugins
+## When you will care about it
 
-- Importing any SQL plugin (e.g. MySQL, PostgreSQL, MSSQL) brings in the SQL Base behavior.
-- You do not install the SQL SDK separately; it is the shared foundation for the DB plugins.
+- when you are reading implementation details or extension points of SQL plugins
+- when you need multi-datasource or platform-level data infrastructure
+- when you are extending the Lynx SQL ecosystem itself
 
-## Configuration
+## Practical guidance
 
-You can set common options under `lynx.sql` in `config.yaml` (exact keys depend on each SQL plugin):
+- application teams should usually focus on the concrete SQL plugin rather than coding directly around SQL SDK
+- if you are building platform extensions, SQL SDK is the more relevant entry point
+- keep business repositories, ORM models, and the shared SQL base cleanly separated
 
-```yaml
-lynx:
-  sql:
-    health_check:
-      enabled: true
-      interval: "30s"
-      timeout: "5s"
-    metrics:
-      enabled: true
-      namespace: "lynx_sql"
-    connection_pool:
-      max_open_conns: 100
-      max_idle_conns: 10
-      conn_max_lifetime: "1h"
-      conn_max_idle_time: "30m"
-```
+## Related pages
 
-## How to use
-
-### 1. Use via a concrete SQL plugin
-
-```go
-import _ "github.com/go-lynx/lynx/plugin/sql/mysql"
-// or
-import _ "github.com/go-lynx/lynx/plugin/sql/pgsql"
-import _ "github.com/go-lynx/lynx/plugin/sql/mssql"
-```
-
-Business code uses each plugin’s `GetDriver()` or equivalent to get `*sql.DB` or the driver for your ORM; health and metrics are handled by the framework and SQL Base.
-
-### 2. Health check (if plugin exposes HealthChecker)
-
-```go
-import "github.com/go-lynx/lynx/plugin/sql/base"
-
-healthChecker := base.GetHealthChecker()
-health, err := healthChecker.CheckHealth("mysql")
-if err != nil {
-    log.Errorf("health check failed: %v", err)
-    return
-}
-if health.IsHealthy {
-    log.Infof("database healthy: %s", health.Message)
-}
-```
-
-### 3. Error categorization (if plugin exposes ErrorHandler)
-
-```go
-errorHandler := base.GetErrorHandler()
-err := someDatabaseOperation()
-if err != nil {
-    errorType := errorHandler.CategorizeError(err)
-    errorHandler.RecordError(errorType)
-    // retry or alert based on errorType
-}
-```
-
-### 4. Custom metrics (if plugin exposes MetricsCollector)
-
-```go
-metrics := base.GetMetricsCollector()
-customCounter := prometheus.NewCounterVec(
-    prometheus.CounterOpts{Name: "custom_sql_operations_total", Help: "..."},
-    []string{"operation", "status"},
-)
-metrics.RegisterCustomMetric("custom_operations", customCounter)
-```
-
-Exact APIs depend on [go-lynx/lynx-sql-sdk](https://github.com/go-lynx/lynx-sql-sdk) or the main repo’s SQL plugin implementation.
-
-## See also
-
-- Repo: [go-lynx/lynx-sql-sdk](https://github.com/go-lynx/lynx-sql-sdk)
-- [Database Plugin](/docs/existing-plugin/db) | [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Database Plugin](/docs/existing-plugin/db)
+- [Layout](/docs/existing-plugin/layout)

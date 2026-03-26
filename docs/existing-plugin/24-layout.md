@@ -1,90 +1,102 @@
 ---
 id: layout
-title: Lynx 项目模板 (Layout)
+title: Lynx Project Template (Layout)
 ---
 
-# Lynx 项目模板 (Layout)
+# Lynx Project Template (Layout)
 
-Lynx-Layout 是 Go-Lynx 的**官方微服务项目模板**，提供标准目录结构、Polaris 集成与本地无 Polaris 开发方式，便于快速搭建微服务项目。
+`lynx-layout` is the official starter repository recommended for Lynx services. Its value is not just that it generates folders. It gives you a default engineering path already aligned with the Lynx runtime: **scaffolding, layering, config entry, Wire assembly, and plugin startup conventions** are all wired in the expected way.
 
-## 功能概览
+If you want the fastest route to a service that already looks and behaves like a Lynx application, `lynx-layout` is the right starting point.
 
-- **标准目录**：api / biz / bo / code / conf / data / service / server 分层
-- **Polaris 集成**：服务发现、限流、熔断（可选）
-- **开箱即用**：HTTP、gRPC、MySQL/PostgreSQL、Redis、Tracer、Token 等可插拔
-- **CLI 脚手架**：通过 `lynx new` 一键生成项目
+## What it provides
 
-## 项目结构概览
+- a standard layered project structure so protocol, business, data, and server responsibilities stay separated
+- a startup entry aligned with the current Lynx model, using `boot.NewApplication(wireApp).Run()`
+- ready integration points for common microservice capabilities such as HTTP, gRPC, database access, cache, governance, and observability
+- a local-development path and a production-facing config path that can evolve without changing the whole application shape
 
+## How to read the structure
+
+The important part of the repository structure is not the folder names themselves, but the responsibility split:
+
+```text
+api      protocol definitions and generated code
+biz      business flow and domain logic
+bo       data objects shared between biz and data
+code     status codes and error codes
+conf     configuration structs and mapping
+data     data access and external dependency integration
+service  service-layer validation and response assembly
+server   HTTP, gRPC, and other server registration
 ```
-📦 微服务模板项目
- ┣ 📂 api     - Protobuf 及生成的 Go 代码
- ┣ 📂 biz     - 业务逻辑与流程
- ┣ 📂 bo      - biz 与 data 层之间的数据对象
- ┣ 📂 code    - 应用状态码与错误码
- ┣ 📂 conf    - 配置文件与映射
- ┣ 📂 data    - 数据访问（DB、远程调用）
- ┣ 📂 service - 服务声明、参数校验、数据转换
- ┗ 📂 server  - HTTP/gRPC 等接口配置与注册
-```
 
-## 如何使用
+This structure does not compete with Lynx's plugin runtime. Plugins handle infrastructure capabilities; your application directories hold the domain code.
 
-### 1. 安装 Lynx CLI
+## How to create a new project
+
+Install the Lynx CLI first:
 
 ```bash
 go install github.com/go-lynx/lynx/cmd/lynx@latest
 ```
 
-### 2. 使用模板创建项目
+Then generate a project from the template:
 
 ```bash
-# 创建单个服务
-lynx new demo1
+# create one service
+lynx new demo
 
-# 一次创建多个服务
-lynx new demo1 demo2 demo3
+# create several services at once
+lynx new user-service order-service gateway
 ```
 
-### 3. 启动应用
+The generated project already contains the base layout and startup wiring, so you can move directly into business code and plugin configuration.
+
+## Current recommended startup entry
+
+The template follows the startup entry recommended by current Lynx:
 
 ```go
 func main() {
-    boot.LynxApplication(wireApp).Run()
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
 }
 ```
 
-默认会加载 HTTP、gRPC（含 TLS）、MySQL/PostgreSQL、Redis、Tracer、Token 等组件，可按需在配置与 wire 中增删插件。
+Here `wireApp` assembles the Kratos app, while Lynx handles runtime ownership, plugin lifecycle, and configuration-driven infrastructure initialization.
 
-## 本地开发（不依赖 Polaris）
+That means the template does not hide startup from you. It narrows startup into one stable and explicit path.
 
-若仅需本地调试、不接入 Polaris，可按以下步骤：
+## How to run locally
 
-1. **Go 版本**：建议 Go 1.25.3（或项目要求的版本）  
-   ```bash
-   go env -w GOTOOLCHAIN=go1.25.3
-   ```
+If you only want to develop locally and do not want to introduce governance dependencies such as Polaris first, you can use the local config path:
 
-2. **启动本地依赖（如 PostgreSQL、Redis）**  
-   ```bash
-   docker compose -f deployments/docker-compose.local.yml up -d
-   ```  
-   默认会提供 `postgres://lynx:lynx@127.0.0.1:5432/lynx` 与 `redis://127.0.0.1:6379`。
+1. prepare the required Go version and local dependencies
+2. start the PostgreSQL, Redis, and other services shipped with the template
+3. run the service with the local bootstrap config
 
-3. **使用本地配置启动**（不加载 Polaris）  
-   ```bash
-   go run ./cmd/user -conf ./configs/bootstrap.local.yaml
-   ```  
-   可根据需要修改 `configs/bootstrap.local.yaml` 中的数据库与 Redis 配置。
+Example:
 
-4. **关闭依赖**  
-   ```bash
-   docker compose -f deployments/docker-compose.local.yml down
-   ```
+```bash
+docker compose -f deployments/docker-compose.local.yml up -d
+go run ./cmd/user -conf ./configs/bootstrap.local.yaml
+```
 
-生产或需要 Polaris 时，使用 `configs/bootstrap.yaml` 等正式配置即可。
+The local config usually skips governance integration and keeps only what is necessary to start the service, such as database access, cache, and listen addresses. When you need Polaris, a config center, or production parameters, switch to the main bootstrap path.
 
-## 相关链接
+## When to use it
 
-- 仓库：[go-lynx/lynx-layout](https://github.com/go-lynx/lynx-layout)
-- [快速开始](/docs/getting-started/quick-start) | [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- when you are creating a new Lynx service and do not want to hand-assemble the whole project skeleton
+- when your team wants consistent structure, Wire assembly, and config entry across services
+- when you want to validate a plugin combination quickly instead of first building an application shell from scratch
+
+If you already have a mature project structure, you can still borrow the startup and configuration patterns without copying every folder literally.
+
+## See also
+
+- Repo: [go-lynx/lynx-layout](https://github.com/go-lynx/lynx-layout)
+- [Quick Start](/docs/getting-started/quick-start)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

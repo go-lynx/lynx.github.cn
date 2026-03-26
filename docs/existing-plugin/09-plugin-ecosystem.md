@@ -1,85 +1,115 @@
 ---
 id: plugin-ecosystem
-title: 插件生态
-sidebar_label: 插件生态
+title: Plugin Ecosystem
+sidebar_label: Plugin Ecosystem
 ---
 
-# Go-Lynx 插件生态
+# Lynx Plugin Ecosystem
 
-Go-Lynx 提供丰富的**生产级插件**，覆盖服务通信、数据存储、消息队列、配置中心、可观测性与分布式能力。所有插件均采用统一的即插即用方式：在 YAML 中配置，由框架完成注入。
+The Go-Lynx ecosystem is easiest to understand in two layers:
 
-## 插件分类
+- **framework core**: plugin registration, dependency ordering, resource ownership, event flow, and runtime assembly
+- **official module family**: independent modules for services, config, storage, messaging, governance, observability, and distributed capabilities
 
-### 服务与通信
+Today, the official repository family already covers 20+ modules, and this site documents the main modules and integration paths.
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [HTTP](/docs/existing-plugin/http) | HTTP/HTTPS 服务，支持 TLS、中间件、指标与健康检查 | 有 |
-| [gRPC](/docs/existing-plugin/grpc) | gRPC 服务端与客户端，支持服务发现、TLS、熔断 | 有 |
-| [Polaris](/docs/existing-plugin/polaris) | 服务注册发现与流量管理 | 有 |
-| [Nacos](/docs/existing-plugin/nacos) | Nacos 注册发现与配置中心 | 有 |
+## How To Read The Ecosystem
 
-### 数据库与存储
+In Go-Lynx, a plugin is not merely “an SDK you drop into a project”. More accurately:
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Database](/docs/existing-plugin/db) | 通用数据库（MySQL/PostgreSQL/SQL Server 等） | 有 |
-| [Redis](/docs/existing-plugin/redis) | Redis 客户端，连接池与指标 | 有 |
-| [MongoDB](/docs/existing-plugin/mongodb) | MongoDB 客户端，连接池、TLS、健康检查 | 有 |
-| [Elasticsearch](/docs/existing-plugin/elasticsearch) | Elasticsearch 集成，检索/索引/聚合 | 有 |
+- plugins are registered and initialized through one runtime
+- plugins can collaborate through shared resources and the event system
+- capabilities enter the application lifecycle through configuration and assembly order
+- plugin docs describe how a module behaves **inside the Lynx runtime**, not only how the underlying client library works
 
-### 消息队列
+## Main Modules Covered On This Site
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Kafka](/docs/existing-plugin/kafka) | Apache Kafka 生产者/消费者，SASL、TLS、指标 | 有 |
-| [RabbitMQ](/docs/existing-plugin/rabbitmq) | RabbitMQ 生产者/消费者，多实例、健康与指标 | 有 |
-| [RocketMQ](/docs/existing-plugin/rocketmq) | Apache RocketMQ，集群/广播消费 | 有 |
-| [Pulsar](/docs/existing-plugin/pulsar) | Apache Pulsar，批处理、Schema、多租户 | 有 |
+### Service & Communication
 
-### 配置与发现
+| Module | Description | Doc |
+|------|------|------|
+| [HTTP](/docs/existing-plugin/http) | HTTP/HTTPS server, TLS, middleware, health checks, metrics | Yes |
+| [gRPC](/docs/existing-plugin/grpc) | gRPC service integration, TLS, and service exposure | Yes |
+| [Polaris](/docs/existing-plugin/polaris) | registration, discovery, governance, traffic management | Yes |
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Polaris](/docs/existing-plugin/polaris) | 服务发现与配置 | 有 |
-| [Nacos](/docs/existing-plugin/nacos) | Nacos 配置与命名 | 有 |
-| [Apollo](/docs/existing-plugin/apollo) | Apollo 配置中心，多命名空间 | 有 |
-| [Etcd](/docs/existing-plugin/etcd) | Etcd 配置中心与服务注册发现 | 有 |
+### Config & Discovery
 
-### 可观测与安全
+| Module | Description | Doc |
+|------|------|------|
+| [Nacos](/docs/existing-plugin/nacos) | config center, discovery, naming | Yes |
+| [Apollo](/docs/existing-plugin/apollo) | config center, multi-namespace, watch, local cache | Yes |
+| [Etcd](/docs/existing-plugin/etcd) | config center and service registry/discovery backend | Yes |
+| [Polaris](/docs/existing-plugin/polaris) | also reused for configuration / governance scenarios | Yes |
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Tracer](/docs/existing-plugin/tracer) | OpenTelemetry 分布式追踪 | 有 |
-| [Swagger](/docs/existing-plugin/swagger) | Swagger/OpenAPI 文档与 UI（仅开发/测试） | 有 |
-| [Sentinel](/docs/existing-plugin/sentinel) | 流控、熔断与系统保护 | 有 |
-| [TLS Manager](/docs/existing-plugin/tls-manager) | TLS 与证书管理 | 有 |
+### Data & Storage
 
-### 分布式与锁
+| Module | Description | Doc |
+|------|------|------|
+| [Database](/docs/existing-plugin/db) | relational database entry point for MySQL / PostgreSQL / SQL Server style integrations | Yes |
+| [Redis](/docs/existing-plugin/redis) | Redis client, pool, metrics, health checks | Yes |
+| [MongoDB](/docs/existing-plugin/mongodb) | MongoDB client, pool, TLS, health checks | Yes |
+| [Elasticsearch](/docs/existing-plugin/elasticsearch) | search, indexing, aggregation, health, metrics | Yes |
+| [SQL SDK](/docs/existing-plugin/sql-sdk) | shared SQL base, multi-datasource helpers, health/metrics adapters | Yes |
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Seata](/docs/existing-plugin/seata) | 分布式事务（Seata） | 有 |
-| [DTM](/docs/existing-plugin/dtm) | 分布式事务（DTM，SAGA/TCC/XA/二阶段消息） | 有 |
-| [Redis Lock](/docs/existing-plugin/redis-lock) | 基于 Redis 的分布式锁，续期、可重入 | 有 |
-| [Etcd Lock](/docs/existing-plugin/etcd-lock) | 基于 Etcd 的强一致分布式锁 | 有 |
+> The wider repository family also includes dedicated modules such as `lynx-mysql`, `lynx-pgsql`, and `lynx-mssql`.
 
-### 其他
+### Messaging & Async
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Layout](/docs/existing-plugin/layout) | 官方项目模板与脚手架 | 有 |
-| [SQL SDK](/docs/existing-plugin/sql-sdk) | SQL 基座、健康与指标、多数据源工具 | 有 |
+| Module | Description | Doc |
+|------|------|------|
+| [Kafka](/docs/existing-plugin/kafka) | producer/consumer, SASL, TLS, metrics | Yes |
+| [RabbitMQ](/docs/existing-plugin/rabbitmq) | multi-instance producer/consumer, health, metrics | Yes |
+| [RocketMQ](/docs/existing-plugin/rocketmq) | clustering/broadcasting, multi-topic workflows | Yes |
+| [Pulsar](/docs/existing-plugin/pulsar) | batching, schema, multi-tenant, TLS | Yes |
 
-图例：本站有文档 | 请参阅 GitHub 仓库
+### Observability & Security
 
-## 使用方式
+| Module | Description | Doc |
+|------|------|------|
+| [Tracer](/docs/existing-plugin/tracer) | OpenTelemetry tracing | Yes |
+| [Swagger](/docs/existing-plugin/swagger) | OpenAPI / Swagger UI, mainly for dev/test workflows | Yes |
+| [Sentinel](/docs/existing-plugin/sentinel) | flow control, circuit breaking, system protection | Yes |
+| [TLS Manager](/docs/existing-plugin/tls-manager) | TLS configuration and certificate management | Yes |
 
-1. **添加依赖**：`go get github.com/go-lynx/lynx/plugins/<名称>`（或该插件的模块路径）。
-2. **配置**：在 `config.yaml` 中增加 `lynx.<插件>` 配置段。
-3. **导入**：在 `main.go` 中 `import _ "github.com/go-lynx/lynx/plugins/<名称>"`（或按插件要求）。
-4. **注入**：在 wire 中使用插件提供的 getter（如 `db.GetDriver`、`lynxRedis.GetRedis`）。
+### Distributed Capabilities
 
-启动与插件顺序详见 [启动与配置](/docs/getting-started/bootstrap-config) 与 [插件管理](/docs/getting-started/plugin-manager)。
+| Module | Description | Doc |
+|------|------|------|
+| [Seata](/docs/existing-plugin/seata) | distributed transactions via Seata | Yes |
+| [DTM](/docs/existing-plugin/dtm) | distributed transactions via SAGA / TCC / XA / 2PC | Yes |
+| [Redis Lock](/docs/existing-plugin/redis-lock) | distributed lock on top of Redis | Yes |
+| [Etcd Lock](/docs/existing-plugin/etcd-lock) | strongly consistent distributed lock on top of Etcd | Yes |
 
-**相关文档：** [快速开始](/docs/getting-started/quick-start) | [引导配置](/docs/getting-started/bootstrap-config) | [插件管理](/docs/getting-started/plugin-manager) | [框架架构](/docs/intro/arch)
+### Engineering & Templates
+
+| Module | Description | Doc |
+|------|------|------|
+| [Layout](/docs/existing-plugin/layout) | official project template and service scaffold structure | Yes |
+
+## Modules Present In The Repo Family But Not Fully Covered Yet
+
+Beyond the modules already documented here, the current repository family also includes modules such as:
+
+- `lynx-http`
+- `lynx-eon-id`
+- `lynx-mysql`
+- `lynx-pgsql`
+- `lynx-mssql`
+
+This is a useful signal that the ecosystem is broader than a small demo set of plugins and is evolving into a more complete runtime-centered module family.
+
+## Common Integration Path
+
+Most plugins follow roughly the same path:
+
+1. add the module dependency
+2. add `lynx.<plugin>` configuration in bootstrap/config
+3. import the module or consume its getter/builder as required
+4. let the unified runtime initialize it, register resources, and manage lifecycle
+
+If you want the surrounding concepts and ordering, continue with:
+
+- [Quick Start](/docs/getting-started/quick-start)
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+- [Plugin Management](/docs/getting-started/plugin-manager)
+- [Framework Architecture](/docs/intro/arch)

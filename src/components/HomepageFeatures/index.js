@@ -6,7 +6,7 @@ import styles from './styles.module.css';
 
 const featureContent = {
   zh: {
-    title: 'Lynx 首页该先记住什么',
+    title: '首页先看 Lynx 的哪三点',
     subtitle: '不是能力列表堆砌，而是三件最容易感知到差异的事情。',
     list: [
       {
@@ -27,7 +27,7 @@ const featureContent = {
     ],
   },
   en: {
-    title: 'What To Remember First',
+    title: 'What To Notice First',
     subtitle: 'Not a vague feature list, but the three differences you will notice immediately.',
     list: [
       {
@@ -72,11 +72,12 @@ export default function HomepageFeatures() {
       ? 'zh'
       : i18n?.currentLocale;
   const copy = featureContent[currentLocale === 'zh' ? 'zh' : 'en'];
+  const kicker = currentLocale === 'zh' ? '核心能力' : 'Capabilities';
   return (
     <section className={styles.features}>
       <div className="container">
         <div className={styles.featuresIntro}>
-          <span className={styles.sectionKicker}>Capabilities</span>
+          <span className={styles.sectionKicker}>{kicker}</span>
           <Heading as="h2" className="hero__title">
             {copy.title}
           </Heading>
