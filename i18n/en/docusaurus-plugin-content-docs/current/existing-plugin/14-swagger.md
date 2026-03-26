@@ -5,18 +5,15 @@ title: Swagger Plugin
 
 # Swagger Plugin
 
-The Swagger plugin provides **Swagger/OpenAPI** documentation and **Swagger UI** for Lynx HTTP services. It is intended for **development and testing only** and disables itself in production.
+The Swagger plugin provides OpenAPI documentation and Swagger UI for Lynx HTTP services. It fits development and testing workflows and should not be treated as a default production capability.
 
-## Features
+## What it is mainly for
 
-- **Auto-generated API docs** from Go annotations.
-- **Swagger UI** for exploring and testing APIs.
-- **File watching** for live doc updates.
-- **Security**: Disabled in production; path traversal and XSS protections; secure headers and CORS.
+- exposing an API documentation entry automatically
+- giving developers an interactive interface for browsing and testing APIs
+- keeping the documentation endpoint inside the same startup path as the HTTP service
 
-## Configuration
-
-Example under `lynx.swagger`:
+## Basic configuration
 
 ```yaml
 lynx:
@@ -32,16 +29,17 @@ lynx:
 
 ## Usage
 
-1. Import the plugin: `import _ "github.com/go-lynx/lynx/plugins/swagger"`.
-2. Add annotations to your HTTP API (e.g. comments or OpenAPI spec).
-3. Run in development; open `http://localhost:<port>/swagger` for Swagger UI.
+1. import the plugin module: `import _ "github.com/go-lynx/lynx-swagger"`
+2. maintain annotations or OpenAPI descriptions at the API layer
+3. visit `http://localhost:<port>/swagger` in an allowed environment
 
-**Important**: Do not enable this plugin in production. It restricts allowed environments (e.g. `ENV`, `GO_ENV`, `APP_ENV`) and will not serve the UI when the app is in production mode.
+## Practical guidance
 
-## Installation
+- do not enable Swagger UI by default in production
+- documentation is not a substitute for real authentication and access control
+- if the API changes frequently, annotations and spec descriptions must evolve with the code or the page becomes misleading quickly
 
-```bash
-go get github.com/go-lynx/lynx/plugins/swagger
-```
+## Related pages
 
-For annotation format and advanced options, see the plugin’s README on GitHub.
+- Repo: [go-lynx/lynx-swagger](https://github.com/go-lynx/lynx-swagger)
+- [HTTP](/docs/existing-plugin/http)

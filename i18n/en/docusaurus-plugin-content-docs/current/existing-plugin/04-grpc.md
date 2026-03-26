@@ -1,43 +1,63 @@
 ---
 id: grpc
-title: Grpc Client
+title: gRPC Service
 ---
 
-# Grpc Client
+# gRPC Service
 
-Go-Lynx provides a gRPC protocol client plugin, which allows you to initialize a gRPC client without worrying about writing the client creation code. You just need to provide the corresponding configuration file.
+The gRPC plugin brings a gRPC server into the Lynx runtime. Like the HTTP plugin, you do not have to hand-build the server initialization path. You provide listen configuration and register your business services onto the managed server.
 
-## Client Configuration
+Older versions of the docs described this as a "gRPC client", which is misleading. This page is about **gRPC server integration**.
 
-To specify the gRPC client in the configuration file, the content should be as follows:
+## Basic configuration
 
 ```yaml
 lynx:
   grpc:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:9000
     timeout: 5s
     tls: true
 ```
 
-The `lynx.grpc` section contains the gRPC client configuration. The underlying module used is `kratos.grpc`.
+Where:
 
-After the configuration is complete, the application will load the gRPC client according to the plugin order when it starts.
+- `addr`: gRPC listen address
+- `timeout`: request timeout
+- `tls`: whether certificate-related settings are enabled
+
+Once configured, the plugin initializes the gRPC server during application startup.
+
+## Service registration example
 
 ```go
 import (
-  bg "github.com/go-lynx/lynx/plugin/grpc"
+    bg "github.com/go-lynx/lynx/plugin/grpc"
 )
 
 func NewGRPCServer(
-login *service.LoginService,
-register *service.RegisterService,
-account *service.AccountService) *grpc.Server {
-  g := bg.GetServer()
-  loginV1.RegisterLoginServer(g, login)
-  registerV1.RegisterRegisterServer(g, register)
-  accountV1.RegisterAccountServer(g, account)
-  return g
+    login *service.LoginService,
+    register *service.RegisterService,
+    account *service.AccountService,
+) *grpc.Server {
+    g := bg.GetServer()
+    loginV1.RegisterLoginServer(g, login)
+    registerV1.RegisterRegisterServer(g, register)
+    accountV1.RegisterAccountServer(g, account)
+    return g
 }
 ```
 
-After successfully initializing the gRPC client, you need to manually register the corresponding service modules to the gRPC client to facilitate route matching and call your functions.
+`bg.GetServer()` returns the `*grpc.Server` already owned by the Lynx lifecycle. You only need to attach the generated protobuf service registrations.
+
+## Integration steps
+
+1. add the plugin module `github.com/go-lynx/lynx/plugin/grpc`
+2. add `lynx.grpc` configuration
+3. anonymous-import the plugin in `main`
+4. register gRPC services in the server layer through `GetServer()`
+
+## Related pages
+
+- [HTTP](/docs/existing-plugin/http)
+- [TLS Manager](/docs/existing-plugin/tls-manager)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)

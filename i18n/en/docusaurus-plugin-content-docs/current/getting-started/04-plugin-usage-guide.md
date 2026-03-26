@@ -5,107 +5,132 @@ title: Plugin Usage Guide
 
 # Plugin Usage Guide
 
-This page describes the **general steps for using existing plugins** in Go-Lynx, so you can get started with any plugin quickly.
+In Lynx, a plugin is not just another SDK dependency. It is a capability module that joins a shared runtime. Most plugins follow the same path: **add the module, provide config, anonymously import it, let startup assemble it, then obtain the instance in application code**.
 
-## Four Steps to Use a Plugin
+This page does not try to document every plugin parameter. Its purpose is to explain the common integration path you will use for most Lynx plugins.
 
-Most Lynx plugins follow the same usage pattern:
+## Standard integration flow
 
-### 1. Add dependency
+### 1. Add the plugin module
 
-Pull the plugin module with Go modules, for example:
+Bring the plugin module into your project first. Different plugins may live in different repositories:
 
 ```bash
-# In-repo plugins (path may vary by main repo)
+# in-repo plugins
+go get github.com/go-lynx/lynx/plugin/http
 go get github.com/go-lynx/lynx/plugin/redis
 
-# Standalone repos
-go get github.com/go-lynx/lynx-elasticsearch
+# standalone plugin repos
+go get github.com/go-lynx/lynx-kafka
 go get github.com/go-lynx/lynx-rabbitmq
-go get github.com/go-lynx/lynx-dtm
+go get github.com/go-lynx/lynx-tracer
 ```
 
-Check each plugin's README or the [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) for the exact package path.
+If you are unsure about the module path, start with the [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) page or the plugin repository README.
 
-### 2. Declare in configuration
+### 2. Add startup-critical configuration
 
-Add the corresponding section in `config.yaml` (or bootstrap config). The key is usually `lynx.<plugin-name>`:
+Plugins need configuration to initialize. In practice you usually add a `lynx.<plugin>` block in local config or remote config, for example:
 
 ```yaml
 lynx:
+  http:
+    addr: 0.0.0.0:8000
+    timeout: 5s
   redis:
     addr: 127.0.0.1:6379
     password: ""
     db: 0
-  http:
-    addr: 0.0.0.0:8000
-    timeout: 5s
 ```
 
-Some plugins (e.g. DTM, Etcd Lock) depend on others; configure and load those first.
+Two rules matter here:
 
-### 3. Register the plugin (import)
+- keep startup-critical information in bootstrap entry config
+- keep large amounts of mutable business configuration in application or remote config
 
-In `main.go` or your init entry, **anonymous import** the plugin package so the framework loads it at startup:
+The rationale for that split is covered in [Bootstrap Configuration](/docs/getting-started/bootstrap-config).
+
+### 3. Register the plugin with an anonymous import
+
+Most Lynx plugins are registered through anonymous imports. That means configuration alone is not enough; the plugin package also needs to be loaded at startup:
 
 ```go
 import (
-    _ "github.com/go-lynx/lynx/plugin/redis"
     _ "github.com/go-lynx/lynx/plugin/http"
-    _ "github.com/go-lynx/lynx-elasticsearch"
+    _ "github.com/go-lynx/lynx/plugin/redis"
+    _ "github.com/go-lynx/lynx-kafka"
 )
 ```
 
-Plugins are initialized during [Bootstrap](/docs/getting-started/bootstrap-config) according to config and [plugin order](/docs/getting-started/plugin-manager).
+The point of the anonymous import is to register the plugin factory into the runtime. The actual initialization is still controlled by the plugin manager and the startup flow, not by import time side effects alone.
 
-### 4. Inject and use in business code
+### 4. Let the application startup assemble the runtime
 
-Obtain the instance via the plugin's **Getter** or the **plugin manager**, then inject with Wire or manually:
+The recommended startup entry today is:
 
 ```go
-// Option 1: plugin GetXxx()
-import lynxRedis "github.com/go-lynx/lynx/plugin/redis"
+func main() {
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
+}
+```
+
+Through this path, Lynx reads configuration, builds the runtime, resolves plugin dependencies, and initializes plugins in order.
+
+If one plugin depends on another, such as a distributed lock depending on Redis or governance capabilities depending on a registry, that dependency chain is handled in this stage as well. See [Plugin Management](/docs/getting-started/plugin-manager) for the runtime side of that process.
+
+### 5. Obtain the capability in business code
+
+Once startup finishes, there are two common ways to use a plugin.
+
+The first is to use the Getter exposed by the plugin, which works well with Wire:
+
+```go
+import (
+    "github.com/google/wire"
+    lynxRedis "github.com/go-lynx/lynx/plugin/redis"
+)
 
 var ProviderSet = wire.NewSet(
     NewData,
     lynxRedis.GetRedis,
 )
-
-func NewData(rdb *redis.Client, logger log.Logger) (*Data, error) {
-    // use rdb for Redis
-    return &Data{rdb: rdb}, nil
-}
 ```
 
+The second is to obtain the plugin instance through the runtime or plugin manager, which is useful for more dynamic integration paths:
+
 ```go
-// Option 2: get by name from plugin manager (some plugins)
 plugin := app.Lynx().GetPluginManager().GetPlugin("rabbitmq")
 client := plugin.(rabbitmq.ClientInterface)
 ```
 
-See each plugin's doc for the exact Getter name and type (e.g. [Redis](/docs/existing-plugin/redis), [HTTP](/docs/existing-plugin/http)).
+Whether a plugin exposes `GetXxx`, what type it returns, and whether helper wrappers exist depends on the plugin itself. Check the corresponding plugin document.
 
-## Scenario index
+## Common integration scenarios
 
-| Need | Recommended plugin & doc |
-|------|---------------------------|
-| HTTP API | [HTTP](/docs/existing-plugin/http) |
-| gRPC service | [gRPC](/docs/existing-plugin/grpc) |
-| Relational DB | [Database](/docs/existing-plugin/db) |
-| Cache | [Redis](/docs/existing-plugin/redis) |
+| Need | Recommended plugins |
+|------|---------------------|
+| HTTP APIs | [HTTP](/docs/existing-plugin/http) |
+| gRPC services | [gRPC](/docs/existing-plugin/grpc) |
+| Relational database access | [Database](/docs/existing-plugin/db) / [SQL SDK](/docs/existing-plugin/sql-sdk) |
+| Cache and shared state | [Redis](/docs/existing-plugin/redis) |
 | Full-text search | [Elasticsearch](/docs/existing-plugin/elasticsearch) |
-| Message queue | [Kafka](/docs/existing-plugin/kafka) / [RabbitMQ](/docs/existing-plugin/rabbitmq) / [RocketMQ](/docs/existing-plugin/rocketmq) / [Pulsar](/docs/existing-plugin/pulsar) |
-| Config center | [Nacos](/docs/existing-plugin/nacos) / [Apollo](/docs/existing-plugin/apollo) / [Etcd](/docs/existing-plugin/etcd) / [Polaris](/docs/existing-plugin/polaris) |
-| Service discovery | [Polaris](/docs/existing-plugin/polaris) / [Nacos](/docs/existing-plugin/nacos) / [Etcd](/docs/existing-plugin/etcd) |
-| Distributed transaction | [Seata](/docs/existing-plugin/seata) / [DTM](/docs/existing-plugin/dtm) |
-| Distributed lock | [Redis Lock](/docs/existing-plugin/redis-lock) / [Etcd Lock](/docs/existing-plugin/etcd-lock) |
-| Tracing | [Tracer](/docs/existing-plugin/tracer) |
-| API docs | [Swagger](/docs/existing-plugin/swagger) |
-| Rate limit & circuit break | [Sentinel](/docs/existing-plugin/sentinel) |
-| Project scaffold | [Layout](/docs/existing-plugin/layout) + [Quick Start](/docs/getting-started/quick-start) |
+| Message queues | [Kafka](/docs/existing-plugin/kafka) / [RabbitMQ](/docs/existing-plugin/rabbitmq) / [RocketMQ](/docs/existing-plugin/rocketmq) / [Pulsar](/docs/existing-plugin/pulsar) |
+| Config center and service discovery | [Nacos](/docs/existing-plugin/nacos) / [Apollo](/docs/existing-plugin/apollo) / [Etcd](/docs/existing-plugin/etcd) / [Polaris](/docs/existing-plugin/polaris) |
+| Distributed transactions | [Seata](/docs/existing-plugin/seata) / [DTM](/docs/existing-plugin/dtm) |
+| Distributed locks | [Redis Lock](/docs/existing-plugin/redis-lock) / [Etcd Lock](/docs/existing-plugin/etcd-lock) |
+| Observability and API docs | [Tracer](/docs/existing-plugin/tracer) / [Swagger](/docs/existing-plugin/swagger) / [Sentinel](/docs/existing-plugin/sentinel) |
+
+## Practical rules
+
+- only promote capabilities into plugins when they truly need shared lifecycle and runtime ownership
+- keep bootstrap config focused on what startup must know
+- prefer explicit application startup and dependency injection over global-singleton-first usage
+- if an official plugin already exists, prefer it over scattering one-off glue code in business packages
 
 ## Next steps
 
-- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem) — Full plugin list and doc links  
-- [Bootstrap Configuration](/docs/getting-started/bootstrap-config) — Config file and remote config  
-- [Plugin Management](/docs/getting-started/plugin-manager) — Load order and custom plugins  
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+- [Plugin Management](/docs/getting-started/plugin-manager)

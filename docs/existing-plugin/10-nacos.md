@@ -1,24 +1,19 @@
 ---
 id: nacos
-title: Nacos 插件
+title: Nacos Plugin
 ---
 
-# Nacos 插件
+# Nacos Plugin
 
-Nacos 插件为 Lynx 提供**服务注册**、**服务发现**和**配置管理**能力，可将 Nacos 同时用作命名服务与配置中心。
+The Nacos plugin brings service registry/discovery and configuration-center capability into Lynx. It fits systems that already use Nacos for naming or configuration and want both capabilities to enter one framework startup path.
 
-## 功能
+## What it is mainly for
 
-- **服务注册**：将服务实例注册到 Nacos。
-- **服务发现**：从 Nacos 发现实例，并与 Lynx 服务调用集成。
-- **配置管理**：从 Nacos 拉取并监听配置，支持实时更新。
-- **多配置**：支持多个 dataId、group。
-- **鉴权**：用户名/密码或 AccessKey/SecretKey。
-- **命名空间**：多租户命名空间隔离。
+- service registration and discovery
+- configuration loading and watch behavior
+- configuration integration across namespaces, groups, and data IDs
 
-## 配置
-
-在配置文件中增加 `lynx.nacos` 段：
+## Basic configuration
 
 ```yaml
 lynx:
@@ -36,30 +31,33 @@ lynx:
       cluster: "DEFAULT"
 ```
 
-## 使用
+## Usage
 
-在 main 中导入插件并启动应用，插件会根据配置自动加载：
+Anonymous-import the plugin in `main`, then let the application startup flow assemble it:
 
 ```go
-package main
-
 import (
-    "github.com/go-lynx/lynx/app"
     "github.com/go-lynx/lynx/boot"
-    _ "github.com/go-lynx/lynx/plugins/nacos"
+    _ "github.com/go-lynx/lynx/plugin/nacos"
 )
 
 func main() {
-    boot.LynxApplication(wireApp).Run()
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
 }
 ```
 
-当 `enable_config` 为 true 时，Lynx 可从 Nacos 加载主配置，从而由 Nacos 驱动注册、发现与配置。
+When `enable_config` is `true`, Nacos can also participate in main configuration loading. When `enable_register` and `enable_discovery` are enabled, registry and discovery behavior join the runtime as well.
 
-## 安装
+## Practical guidance
 
-```bash
-go get github.com/go-lynx/lynx/plugins/nacos
-```
+- decide early whether config-center and registry behavior should share the same namespace boundary
+- distinguish carefully which dynamic config changes are actually safe to apply at runtime
+- if your system already has another mature control plane, keep Nacos responsibilities clearly bounded
 
-集群模式可将 `server_addresses` 配置为多个 Nacos 地址（逗号分隔）。
+## Related pages
+
+- [Apollo](/docs/existing-plugin/apollo)
+- [Etcd](/docs/existing-plugin/etcd)
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)

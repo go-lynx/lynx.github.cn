@@ -5,22 +5,48 @@ title: Design Philosophy
 
 # Design Philosophy
 
-The core philosophy of Go-Lynx is that everything is a plugin. We achieve automatic assembly through plugins, allowing us to focus more on business logic. We treat each module's capabilities as a plugin, making plugins the soul of Go-Lynx. All third-party components, database management, message queues, monitoring, tracing, and other functionalities required by microservices are automatically assembled and managed through plugins.
+Go-Lynx is not primarily trying to wrap every technology with one more abstraction layer. Its design focus is to collapse the repeated infrastructure wiring in microservice projects into one **plugin runtime model**.
 
-Additionally, from the very beginning, Go-Lynx was designed to allow integration between plugins, making it possible to design more powerful components.
+## Core Ideas
 
-## Design Advantages
+The current Lynx codebase is best understood through these ideas:
 
-Go-Lynx is akin to Spring-Boot's auto-configuration, but we manage the complete lifecycle of each plugin and the domain modules they are responsible for, such as microservice registration, discovery, monitoring, tracing, routing capabilities, internal network communication encryption, distributed transaction management, and other microservice capabilities. We encapsulate all these functionalities through plugins to achieve a plug-and-play effect, eliminating the need to write repetitive and tedious code for creating, connecting, and configuring each module's specific client.
+- **plugin-first**: services, config, storage, messaging, governance, tracing, and flow control are integrated as modular capabilities
+- **runtime-first**: the framework is responsible for assembly, ordering, resources, and lifecycle, not only client creation
+- **configuration-driven**: whether a capability is enabled, how it is initialized, and what it depends on is decided through config plus runtime assembly
+- **clear boundaries**: business logic stays in business layers, plugins own infra capabilities, and the runtime organizes them
 
-## Architecture Diagram
+## The Problem It Solves Is Bigger Than A Single SDK
 
-<img alt="architecture" src="/img/diagram.png" width="940"/>
+In real service projects, teams repeatedly need to:
 
-Based on the architecture diagram, we can clearly understand that Go-Lynx is a framework that extends capabilities through plugins. The bootstrapper initiates the application startup. After the application is successfully started, our plugin manager retrieves the global configuration file to load the corresponding plugins. Each plugin only receives its specific configuration, not the global one. We also ensure the loading order of plugins, making Go-Lynx full of infinite possibilities. In the future, we will provide hot updates for plugins, lifecycle management, and status detection. If you are interested in this framework, welcome to join our community and help develop it together.
+- initialize databases, caches, queues, discovery backends, and tracing clients
+- decide what depends on what and what must start first
+- share resources across modules safely
+- attach health checks, metrics, and lifecycle hooks to integrations
+- keep local development and production bootstrap paths as consistent as possible
 
-> **bootstrap**: Initiates the application startup  
-> **LynxApplication**: The application, containing global configuration, plugin manager, and control plane  
-> **PluginManager**: The plugin manager, responsible for plugin loading, unloading, and configuration file parsing
+The value of Go-Lynx is that these jobs are handled in one plugin runtime instead of being scattered across application code.
 
-See also: [Lynx Framework Architecture](/docs/intro/arch) for the layered runtime model and service startup flow.
+## Why It Is More Than “Auto Configuration”
+
+At a glance, Lynx can look similar to familiar auto-assembly frameworks. But it goes beyond deciding **what to load**.
+
+It also decides:
+
+- **in which order to load**
+- **which resources are owned where**
+- **when those resources are created and released**
+
+That makes Lynx closer to a runtime orchestration layer for plugins than to a simple configuration parser.
+
+## Practical Outcomes
+
+- **Cleaner business code**: less infrastructure bootstrap logic inside application layers
+- **More consistent integrations**: plugins follow one configuration and lifecycle model
+- **A more stable startup path**: dependency ordering and runtime resources are no longer maintained manually
+- **A more extensible ecosystem**: official modules and internal plugins can plug into the same model
+
+## Relationship To The Architecture Page
+
+If this page answers “why Lynx is designed this way”, then [Lynx Framework Architecture](/docs/intro/arch) answers “how that design is realized at runtime”.

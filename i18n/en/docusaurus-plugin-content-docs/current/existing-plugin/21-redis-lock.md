@@ -1,113 +1,35 @@
 ---
 id: redis-lock
-title: Redis Distributed Lock Plugin
+title: Redis Lock Plugin
 ---
 
-# Redis Distributed Lock Plugin
+# Redis Lock Plugin
 
-The Go-Lynx Redis distributed lock plugin provides Redis-based distributed locking with automatic renewal, retries, reentrancy (same instance), and support for standalone, Cluster, and Sentinel via `redis.UniversalClient`.
+The Redis Lock plugin provides distributed locking on top of Redis. It fits systems that already rely on Redis and need lightweight coordination semantics.
 
-## Features
+## What it is mainly for
 
-- **Distributed lock** — Lock/unlock via Redis
-- **Automatic renewal** — Configurable threshold and interval so long-running work does not exceed TTL
-- **Retry** — Configurable retries and backoff
-- **Reentrant** — Same `*RedisLock` instance can Acquire/Release multiple times
-- **Health & metrics** — Prometheus metrics and graceful shutdown
+- mutual exclusion based on Redis
+- centralized handling of lock renewal, timeout, and retry behavior
+- bringing lock capability into Lynx runtime assembly
 
-## Prerequisites
+## Basic configuration
 
-Enable the [Redis Plugin](/docs/existing-plugin/redis) first; the lock plugin uses `GetUniversalRedis()` (standalone/cluster/sentinel).
+Redis Lock usually depends on the Redis plugin itself, so Redis connectivity should be available before the lock capability is used.
 
-## Configuration
+## When to use it
 
-Add a `lock` section under `lynx.redis` in `config.yaml`:
+- the lock scope is reasonably clear
+- you need stronger coordination than a local lock but not necessarily the stronger semantics of Etcd
+- your team already has stable Redis infrastructure
 
-```yaml
-lynx:
-  redis:
-    addrs: ["localhost:6379"]
-    password: ""
-    db: 0
-    lock:
-      default_timeout: 30s
-      default_retry_interval: 100ms
-      max_retries: 3
-      renewal_enabled: true
-      renewal_threshold: 0.5
-      renewal_interval: 10s
-```
+## Practical guidance
 
-Enable `renewal_enabled` and consider a larger `default_timeout` for long-running work.
+- lock-key design must be understandable at the business level; do not let random strings become your contract
+- expiration, renewal strategy, and idempotent compensation should be designed together
+- if the scenario needs stronger consistency, evaluate [Etcd Lock](/docs/existing-plugin/etcd-lock) first
 
-## How to use
+## Related pages
 
-### 1. Add dependency
-
-```bash
-go get github.com/go-lynx/lynx-redis-lock
-```
-
-### 2. Simple lock and run (recommended)
-
-```go
-import (
-    "context"
-    "github.com/go-lynx/lynx-redis-lock"
-)
-
-err := redislock.Lock(ctx, "my-lock", 30*time.Second, func() error {
-    // critical section
-    return nil
-})
-if err != nil {
-    log.Printf("lock failed: %v", err)
-}
-```
-
-### 3. Custom options (timeout, retry, renewal)
-
-```go
-options := redislock.LockOptions{
-    Expiration:       60 * time.Second,
-    RetryStrategy:    redislock.RetryStrategy{MaxRetries: 3, RetryDelay: 100 * time.Millisecond},
-    RenewalEnabled:   true,
-    RenewalThreshold: 0.5,
-}
-err := redislock.LockWithOptions(ctx, "my-lock", options, func() error {
-    // long-running logic
-    return nil
-})
-```
-
-### 4. Manual lock/unlock
-
-```go
-lock, err := redislock.NewLock(ctx, "my-lock", options)
-if err != nil {
-    return err
-}
-if err := lock.Acquire(ctx); err != nil {
-    return err
-}
-defer lock.Release(ctx)
-// business logic
-held, err := lock.IsLocked(ctx)
-```
-
-### 5. Graceful shutdown
-
-```go
-if err := redislock.Shutdown(ctx); err != nil {
-    log.Printf("shutdown: %v", err)
-}
-```
-
-## Design and limitations
-
-Reentrancy is per lock instance; each `NewLock`/`Lock()` is a different instance. See the repo’s [LIMITATIONS.md](https://github.com/go-lynx/lynx-redis-lock/blob/main/LIMITATIONS.md) for single-node vs Redlock, process pause/TTL, and fencing tokens.
-
-## See also
-
-- Repo: [go-lynx/lynx-redis-lock](https://github.com/go-lynx/lynx-redis-lock)
-- [Redis Plugin](/docs/existing-plugin/redis) | [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Redis](/docs/existing-plugin/redis)
+- [Etcd Lock](/docs/existing-plugin/etcd-lock)

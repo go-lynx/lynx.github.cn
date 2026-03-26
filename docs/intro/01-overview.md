@@ -1,51 +1,70 @@
 ---
 id: overview
-title: 简介
+title: Overview
 ---
 
-# 简介
+# Overview
 
-欢迎来到 Go-Lynx，这是一个以可扩展性和简洁性为核心设计的即插即用 Go 微服务框架。
+Go-Lynx is a **plugin orchestration and runtime framework** for Go microservices.
 
-> Go-Lynx 的命名是因为希望框架可以像猞猁 (一种猫科动物) 一样灵活的寓意。
+Its center of gravity is not “yet another web layer”, but a unified runtime model for the infrastructure pieces that keep reappearing in service projects: plugin registration, dependency ordering, resource wiring, lifecycle control, event flow, and service-governance-facing integrations.
 
-## 入门
+> The name “Lynx” is inspired by the lynx: flexible, agile, and good at adapting to different environments.
 
-要开始使用 Go-Lynx，请查看 [快速开始](/docs/getting-started/quick-start)：安装 Lynx CLI、使用 `lynx new` 创建项目、使用 `lynx run --watch` 运行。若已熟悉基础，可查看 [插件生态](/docs/existing-plugin/plugin-ecosystem) 了解全部插件及配置方式。
+## How To Read Lynx Today
 
-## 目标
+The most useful mental model for the current Lynx codebase is:
 
-我们致力于提供轻便，灵活的微服务开发框架，我们会整合各种第三方插件及工具，微服务治理相关功能，缩短业务开发周期，从而更加聚焦于业务交付。
+- **Core runtime first**: plugin registration, topology ordering, resource ownership, lifecycle, and event plumbing.
+- **Application shell second**: `boot`, app startup wiring, and control-plane-facing helpers help you bring services up cleanly.
+- **Plugin family around it**: HTTP, gRPC, config centers, service discovery, databases, queues, tracing, flow control, transactions, and distributed locks are integrated as separate modules.
 
+In practice, Lynx should be read as a microservice infrastructure assembly layer rather than a thin wrapper around one specific protocol or middleware product.
 
-## 为什么选择 Go-Lynx？
+## What You Get
 
-使用 Go-Lynx，你可以获得：
+With Go-Lynx, teams typically gain:
 
-- **专注业务**：通过底层插件处理所有，增强功能，你可以专注于最重要的事情 - 你的业务逻辑。
-- **插件扩展**：使用现有的插件或创建你自己的插件来扩展你的应用程序的功能。
-- **轻松集成**：允许插件之间互相集成，使你能够为你的需求组装强大的组件。
-- **即插即用**：你可以轻松地插入你需要的插件，并开始构建你的应用程序，只需要引入对应模块，插件即可生效。
+- **A more stable startup path**: plugin load order, dependencies, and resource registration are orchestrated consistently.
+- **Less glue code**: databases, message queues, config centers, discovery, tracing, and similar capabilities follow one integration model.
+- **Clearer runtime boundaries**: application, plugin, resource, and governance responsibilities are easier to reason about.
+- **A more consistent team workflow**: CLI, layout template, configuration structure, docs, and plugin contracts stay aligned.
 
-在此感谢您使用 Go-Lynx，我们很期待您将构建什么微服务模块！
+## Current Official Module Scope
 
+The current repository family already covers the framework core and a broad set of official modules, including:
 
-## 底层依赖
+- Service and governance: HTTP, gRPC, Polaris, Nacos, Etcd, Apollo, Sentinel, Swagger, Tracer
+- Data and storage: Redis, MongoDB, Elasticsearch, MySQL, PostgreSQL, SQL Server, SQL SDK
+- Messaging and async: Kafka, RabbitMQ, RocketMQ, Pulsar
+- Distributed capabilities: Seata, DTM, Redis Lock, Etcd Lock, Eon ID
+- Engineering tooling: Layout template and the Lynx CLI
 
-Go-Lynx 底层主要使用 Kratos + Polaris 作为核心底层进行设计与集成，但随着版本的迭代，Go-Lynx 可能会更像一个插件的粘合剂，底层都将会进行插件化，就像积木一样，可以组合任何的插件组合成为你需要的微服务模块。
+The site already documents the main modules and usage flow, and more module pages continue to be added.
 
----
+## Suggested Reading Path
 
-## 社区
+If you are new to Go-Lynx, this order works well:
 
-Go-Lynx 社区始终在这里为你提供帮助。如果你有任何问题或需要帮助，请不要犹豫，直接联系我们。可加入 [Discord](https://discord.gg/2vq2Zsqq)，或下方的钉钉群、微信群进行交流沟通。
+1. [Quick Start](/docs/getting-started/quick-start): get the CLI, template, and bootstrap flow running.
+2. [Bootstrap Configuration](/docs/getting-started/bootstrap-config): understand local bootstrap config and remote config entry points.
+3. [Plugin Management](/docs/getting-started/plugin-manager): understand ordering, dependency resolution, and assembly.
+4. [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem): choose modules by capability area.
+5. [Framework Architecture](/docs/intro/arch): understand the layered runtime model.
 
-### 贡献者列表
+## Community
+
+If you run into problems while using or extending Go-Lynx, the community channels are the best next step:
+
+- [Discord](https://discord.gg/2vq2Zsqq)
+- DingTalk / WeChat groups (see below)
+
+### Contributor List
 
 <a href="https://github.com/go-lynx/lynx/graphs/contributors">
- <img src="https://contrib.rocks/image?repo=go-lynx/lynx"  alt="贡献者列表"/>
+ <img src="https://contrib.rocks/image?repo=go-lynx/lynx" alt="Contributor List"/>
 </a>
 
-### 钉钉群
+### DingTalk Group
 
 <img alt="dingtalk" src="/img/dingtalk.png" width="400"/>

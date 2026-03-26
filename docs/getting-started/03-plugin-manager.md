@@ -1,17 +1,44 @@
 ---
 id: plugin-manager
-title: 插件管理
+title: Plugin Management
 ---
 
-# 插件管理
+# Plugin Management
 
-在 go-lynx 中，所有功能都是基于插件的思维方式设计的。这种方法提供了高度的模块化和灵活性，使您能够轻松定制应用程序以满足特定需求。
+In Go-Lynx, plugin management is not a side feature. It is one of the core mechanisms of the framework.
 
-## 当前提供的插件
+The framework is not only loading plugins. It is also answering questions like:
 
-Go-Lynx 提供多种插件：配置中心（Polaris、Nacos）、服务注册发现、链路追踪、分布式事务（Seata、DTM）、消息队列（Kafka、RabbitMQ、RocketMQ、Pulsar）、数据库（MySQL、PostgreSQL、SQL Server、MongoDB、Redis、Elasticsearch）、HTTP/gRPC 服务、TLS 证书管理、流控（Sentinel）、API 文档（Swagger）等。完整列表与各插件说明见 [插件生态](/docs/existing-plugin/plugin-ecosystem)。列表会持续更新以覆盖更多业务场景。
+- which plugins should be enabled for this startup
+- what depends on what
+- what must initialize first and what can initialize later
+- which resources are private and which are shared
+- how those resources should be released on shutdown
 
-## 自定义插件
+## What The Plugin Manager Actually Does
+
+From a user-facing perspective, the plugin manager is mainly responsible for:
+
+- determining which plugins are needed based on configuration and registration
+- resolving dependencies and producing a valid startup order
+- initializing plugins, assembling them, and registering resources
+- unwinding resources in a reasonable order during shutdown
+
+That is why plugin management is not just a list of plugins; it is the center of runtime assembly.
+
+## Why Ordering Matters
+
+A typical real-world chain looks like this:
+
+- a business-facing plugin may depend on Redis
+- Redis-related plugins may depend on configuration already being available
+- HTTP / gRPC services may depend on earlier plugins having registered resources
+
+If the order is wrong, the result is not merely “one missing feature”. The application can enter an invalid startup state. Go-Lynx therefore treats ordering as a framework responsibility instead of a detail left to business code.
+
+## Common Shape Of A Custom Plugin
+
+A typical plugin abstraction looks roughly like this:
 
 ```go
 type Plugin interface {
@@ -32,32 +59,49 @@ type SupportPlugin interface {
 }
 ```
 
-实现以上接口，即可实现自定义插件。LoaderPlugin 是插件装载和卸载的能力，SupportPlugin 是插件依赖和名称以及配置文件匹配的相关接口。
+You may not write custom plugins every day, but understanding these interfaces helps you read:
 
-## 插件注册
+- how a plugin declares its identity and config prefix
+- how it expresses dependencies
+- how it is loaded and unloaded inside the runtime
 
-您需要将插件注册到全局插件工厂来扩展插件支持。以下是一个示例，展示了如何执行此操作：
+## What Registration Means In Practice
+
+A plugin is not recognized only because a config section exists. It also needs to be registered into the plugin system.
+
+A typical registration pattern looks like:
 
 ```go
 func init() {
-	factory.GlobalPluginFactory().Register(name, confPrefix, func() plugin.Plugin {
-		return Db()
-	})
+    factory.GlobalPluginFactory().Register(name, confPrefix, func() plugin.Plugin {
+        return Db()
+    })
 }
 ```
 
-如果您对此过程不确定，可以参考 go-lynx 源代码中官方插件的实现方式。
+That is why some plugins must be imported explicitly even when your business code does not call them directly.
 
-## 插件管理机制
+## A Practical Mental Model
 
-Go-Lynx 的插件管理机制通过自动拓扑排序解决依赖关系：插件通过 `DependsOn` 声明依赖，框架按合法顺序加载（有向无环图），确保插件所依赖的资源（如配置中心、链路）在其初始化前已就绪。加载顺序由启动时的配置与已注册插件集合共同决定。
+In real usage, plugin management is easiest to think of as this chain:
 
-## 未来的增强功能
+1. the plugin module exists
+2. the module registers itself
+3. configuration declares which capabilities should be enabled
+4. the plugin manager resolves dependencies and assembles them
+5. the runtime exposes resources for the application layer
 
-对插件管理的未来增强计划包括以下几个方面：
+Once you internalize that chain, it becomes much easier to debug questions such as:
 
-1. **实例管理**：设计支持多实例或单实例的插件，并管理多个实例的能力。
-2. **热更新**：能够在不对应用程序产生明显影响的情况下更新某些插件的配置文件，实现无缝的插件更新。
-3. **状态管理**：需要一个状态机来管理插件的状态，在特定情况下实现全局动态关闭和开启插件。
+- why a plugin did not activate
+- why a resource is missing
+- why startup order looks wrong
 
-通过这些增强功能，go-lynx 将继续提高其提供强大、灵活和用户友好的微服务管理和部署平台的能力。go-lynx 的插件导向设计使其成为构建和管理微服务的多功能工具。通过已经提供的各种插件以及即将推出的更多插件，您可以根据自己的需要定制应用程序，同时也可以从 go-lynx 平台的持续改进和增强中受益。
+## Next Steps
+
+After this page, continue with:
+
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Framework Architecture](/docs/intro/arch)

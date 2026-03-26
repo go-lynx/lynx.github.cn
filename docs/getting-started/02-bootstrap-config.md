@@ -1,85 +1,96 @@
 ---
 id: bootstrap-config
-title: 引导配置
+title: Bootstrap Configuration
 ---
 
-# 引导配置
+# Bootstrap Configuration
 
-在 Go-Lynx 中，应用配置通过 YAML 文件进行插件管理。启动时可通过 `-conf` 指定配置目录（如 `-conf configs`，即包含 YAML 的目录）；未指定时，应用会按项目布局查找默认路径（如 `configs/config.yaml`）。通过 YAML 中的配置项与所用插件对应，框架会在启动时加载相应插件。可使用仅含配置中心信息的精简本地引导，或包含全部插件配置的完整本地 YAML。请记得在代码中导入所需插件的包，以便其向插件管理器注册。
+In Go-Lynx, “bootstrap configuration” is not your full business configuration. It is the **first layer of configuration read during startup**. Its job is to tell the framework:
 
-除 Polaris 外，也可使用 [Nacos](/docs/existing-plugin/nacos) 作为配置中心：配置 `lynx.nacos` 并在引导中启用 config 即可。
+- who this application is
+- which local capabilities must come up first
+- whether a config center / discovery backend / control-plane-facing module is needed
+- where the rest of the configuration should come from
 
-## 本地引导配置文件
+## Bootstrap vs Full Configuration
 
-如果您使用了配置中心相关组件，本地引导文件非常简单，只需要几行配置。主要包括远程配置中心的配置信息（以下以Polaris为案例）：
+It helps to think about configuration in two layers:
 
-```yaml
-lynx:
-  application:
-    name: svc-name
-    version: v1.0.0
-  polaris:
-    namespace: svc-namespace
-    token: token
-    weight: 100
-    ttl: 5
-    timeout: 1s
+- **bootstrap configuration**: enough to bring up the application and the base runtime
+- **full application configuration**: loaded or merged after the base runtime is available
+
+That is why bootstrap config should stay focused on startup-critical information instead of becoming a giant dump of every business setting.
+
+## Common Loading Pattern
+
+In the official template and common startup flows, `-conf` points to a config file or directory:
+
+```bash
+./your-service -conf ./configs
 ```
 
-## 完整配置
+If you do not specify it explicitly, the application usually falls back to the project’s conventional config path.
 
-go-lynx 的完整配置文件，展示了目前支持所有可用的插件配置。每个配置项对应一个插件。如果配置文件和插件匹配，框架将在启动时自动加载插件：
+## Minimal Example
+
+A current-style minimal bootstrap config can look like this:
 
 ```yaml
 lynx:
   application:
-    name: svc-name
-    version: v1.0.0
-    tls:
-      file_name: tls-service.yaml
-      group: svc-group
+    name: user-service
+    version: v0.1.0
   http:
     addr: 0.0.0.0:8000
     timeout: 5s
-    tls: true
-  grpc:
-    addr: 0.0.0.0:9000
-    timeout: 5s
-    tls: true
-  tracer:
-    addr: 127.0.0.1:4317
-    ratio: 1
-  polaris:
-    namespace: svc-namespace
-    token: token
-    weight: 100
-    ttl: 5
-    timeout: 5s
-  db:
-    driver: mysql
-    source: root:123@tcp(127.0.0.1:3306)/demo?parseTime=True
-    min_conn: 50
-    max_conn: 50
-    max_idle_time: 30s
-  redis:
-    addr: 127.0.0.1:6379
-    password: 123456
-    db: 0
-    dial_timeout: 3s
-    read_timeout: 1s
-    write_timeout: 1s
 ```
 
-## 插件注册
+This is enough to start the service locally and add more plugins incrementally afterwards.
 
-需要注意的是，要使用某个插件，必须导入相应插件的包到您的项目中。如果你导入了包，则只需编辑配置信息，插件将会自动注册到插件管理器中。如果未导入包，则配置文件将不会有任何作用。
+## Example With Config Center / Discovery
 
-## 启动加载
+If you want config-center or service-governance modules to participate during startup, add only the required entry information, for example:
 
-Go-Lynx 在启动时会优先加载本地引导配置文件，文件地址就是启动时的参数`-conf configs` 命令指定这些文件或目录，加载本地配置之后如果发现其中存在控制平面相关插件，会在控制平面插件初始化完成之后自动进行远程配置文件拉取，拉取的文件默认为 application-name.yaml 其中 application-name 就是启动时指定的应用名称。
+```yaml
+lynx:
+  application:
+    name: user-service
+    version: v0.1.0
+  polaris:
+    namespace: default
+    token: your-token
+  nacos:
+    server_configs:
+      - ip_addr: 127.0.0.1
+        port: 8848
+```
 
-## 服务治理
+The exact fields depend on the plugin documentation. The key rule is: **only put startup-critical remote entry information in bootstrap config.**
 
-目前 go-lynx 所实现的控制面相关插件是腾讯 Polaris 服务治理框架，如果您需要使用注册发现，配置管理，以及微服务限流等功能，您需要先部署 Polaris 服务治理框架。
+## Configuration Only Works If The Plugin Exists
 
-相关文档：[腾讯北极星官网文档](https://polarismesh.cn/docs)
+Writing configuration alone does not guarantee that a plugin will load. In practice, a plugin usually needs both:
+
+1. the plugin module dependency in your project
+2. registration into the runtime / plugin factory
+
+So:
+
+- **module without config** usually means no initialization
+- **config without module** usually means no effect
+
+## Recommended Organization
+
+In the current Go-Lynx workflow, a good rule of thumb is:
+
+- keep application identity, protocol listeners, and config-center/discovery entry info in bootstrap config
+- keep detailed business-facing plugin parameters in the full config layer
+- isolate environment differences through separate files or config-center data instead of one giant config file
+
+## Next Steps
+
+After this page, continue with:
+
+- [Plugin Management](/docs/getting-started/plugin-manager): understand how config becomes plugin ordering and assembly
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide): use a consistent integration flow for concrete plugins
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem): browse the current module family

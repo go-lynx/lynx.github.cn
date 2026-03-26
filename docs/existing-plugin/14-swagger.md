@@ -1,22 +1,19 @@
 ---
 id: swagger
-title: Swagger 插件
+title: Swagger Plugin
 ---
 
-# Swagger 插件
+# Swagger Plugin
 
-Swagger 插件为 Lynx HTTP 服务提供 **Swagger/OpenAPI** 文档与 **Swagger UI**，仅用于**开发与测试环境**，在生产环境会自动关闭。
+The Swagger plugin provides OpenAPI documentation and Swagger UI for Lynx HTTP services. It fits development and testing workflows and should not be treated as a default production capability.
 
-## 功能
+## What it is mainly for
 
-- **自动生成 API 文档**：基于 Go 注解。
-- **Swagger UI**：浏览与调试接口。
-- **文件监听**：文档随代码变更更新。
-- **安全**：生产环境禁用；防路径穿越与 XSS；安全头与 CORS 控制。
+- exposing an API documentation entry automatically
+- giving developers an interactive interface for browsing and testing APIs
+- keeping the documentation endpoint inside the same startup path as the HTTP service
 
-## 配置
-
-在 `lynx.swagger` 下配置示例：
+## Basic configuration
 
 ```yaml
 lynx:
@@ -30,18 +27,19 @@ lynx:
       - testing
 ```
 
-## 使用
+## Usage
 
-1. 导入插件：`import _ "github.com/go-lynx/lynx/plugins/swagger"`。
-2. 为 HTTP 接口添加注解（如注释或 OpenAPI 描述）。
-3. 在开发环境启动后访问 `http://localhost:<端口>/swagger` 使用 Swagger UI。
+1. import the plugin module: `import _ "github.com/go-lynx/lynx-swagger"`
+2. maintain annotations or OpenAPI descriptions at the API layer
+3. visit `http://localhost:<port>/swagger` in an allowed environment
 
-**注意**：请勿在生产环境启用。插件会根据环境变量（如 `ENV`、`GO_ENV`、`APP_ENV`）判断，在生产模式下不会提供 UI。
+## Practical guidance
 
-## 安装
+- do not enable Swagger UI by default in production
+- documentation is not a substitute for real authentication and access control
+- if the API changes frequently, annotations and spec descriptions must evolve with the code or the page becomes misleading quickly
 
-```bash
-go get github.com/go-lynx/lynx/plugins/swagger
-```
+## Related pages
 
-注解格式与更多选项请参阅该插件在 GitHub 上的 README。
+- Repo: [go-lynx/lynx-swagger](https://github.com/go-lynx/lynx-swagger)
+- [HTTP](/docs/existing-plugin/http)

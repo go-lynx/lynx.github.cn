@@ -5,22 +5,15 @@ title: MongoDB Plugin
 
 # MongoDB Plugin
 
-The MongoDB plugin provides **MongoDB** integration for the Lynx framework, including connection pool, TLS, read/write concern, health checks, and metrics.
+The MongoDB plugin brings a MongoDB client into the Lynx runtime. It handles connection initialization, pooling, health checks, and a stable injection entry. It does not try to replace how your application organizes collections or repositories.
 
-## Features
+## What it is for
 
-- **MongoDB client**: Full driver support.
-- **Connection pool**: Configurable min/max pool size.
-- **Authentication**: Multiple auth methods.
-- **TLS/SSL**: Secure connections.
-- **Read/Write concern**: Configurable read and write concern.
-- **Retries**: Automatic retry writes.
-- **Health checks**: Built-in health checks.
-- **Metrics**: Prometheus metrics and hot config updates.
+- initializing and owning MongoDB client connectivity
+- injecting database objects into the data layer
+- centralizing timeout, pool, TLS, and health behavior
 
-## Configuration
-
-Add under `lynx.mongodb` in your config file:
+## Basic configuration
 
 ```yaml
 lynx:
@@ -37,29 +30,30 @@ lynx:
     enable_metrics: true
     enable_health_check: true
     enable_tls: false
-    enable_compression: true
-    enable_retry_writes: true
 ```
 
-## Usage
+## Application integration
 
-Import the plugin and obtain the client and database via the plugin’s getters (e.g. `mongodb.GetMongoDB()`, `mongodb.GetMongoDBDatabase()`). Use them in your data layer with the official `go.mongodb.org/mongo-driver` APIs.
+The common path is to anonymous-import the plugin and obtain the client or database object through getters:
 
 ```go
 import (
-    "github.com/go-lynx/lynx/app/boot"
-    "github.com/go-lynx/lynx-mongodb"
+    mongodb "github.com/go-lynx/lynx-mongodb"
 )
 
-// After bootstrap
 client := mongodb.GetMongoDB()
 db := mongodb.GetMongoDBDatabase()
 ```
 
-## Installation
+Once you have `client` or `db`, keep the collection, index, and repository organization in your own data layer.
 
-```bash
-go get github.com/go-lynx/lynx-mongodb
-```
+## Practical guidance
 
-Note: The MongoDB plugin may live in a separate repo (`lynx-mongodb`). Use the module path indicated in the plugin’s README.
+- keep connection and TLS details in startup config
+- do not let business collection layout bleed back into the plugin layer
+- if all you need is Mongo connectivity, this plugin is enough; if you need higher abstractions, build them in the application layer
+
+## Related pages
+
+- [Database Plugin](/docs/existing-plugin/db)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)

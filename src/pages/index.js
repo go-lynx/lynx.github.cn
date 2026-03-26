@@ -12,7 +12,9 @@ import {oneDark} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import ArchDiagram from '@site/src/components/ArchDiagram';
 
 const code_lynx = `func main() {
-    boot.LynxApplication(wireApp).Run()
+    if err := boot.NewApplication(wireApp).Run(); err != nil {
+        panic(err)
+    }
 }`;
 
 const contentByLocale = {
@@ -20,7 +22,7 @@ const contentByLocale = {
     heroEyebrow: '面向插件化微服务的 Go 框架',
     heroTitle: '从脚手架到运行时，把微服务基础设施收进去',
     heroSignals: ['CLI 脚手架', 'Plugin Runtime', 'Service Governance'],
-    quickStartTitle: '三步开始使用 Go-Lynx',
+    quickStartTitle: '三步开始使用 Lynx',
     quickStartSteps: [
       {
         title: '1. 安装 CLI 工具',
@@ -32,7 +34,7 @@ const contentByLocale = {
       },
       {
         title: '3. 一行启动',
-        desc: 'boot.LynxApplication(wireApp).Run()',
+        desc: 'boot.NewApplication(wireApp).Run()',
       },
     ],
     heroSummary:
@@ -78,7 +80,7 @@ const contentByLocale = {
     heroEyebrow: 'A Plugin-Driven Go Framework for Microservices',
     heroTitle: 'Bring scaffolding, runtime, and service wiring into one system',
     heroSignals: ['CLI Scaffolding', 'Plugin Runtime', 'Service Governance'],
-    quickStartTitle: 'Three Steps to Start Go-Lynx',
+    quickStartTitle: 'Three Steps to Start Lynx',
     quickStartSteps: [
       {
         title: '1. Install CLI Tool',
@@ -90,7 +92,7 @@ const contentByLocale = {
       },
       {
         title: '3. Start with One Line',
-        desc: 'boot.LynxApplication(wireApp).Run()',
+        desc: 'boot.NewApplication(wireApp).Run()',
       },
     ],
     heroSummary:
@@ -167,22 +169,7 @@ function QuickStartSteps({copy}) {
 }
 
 function ArchitectureSection({copy}) {
-  const {i18n} = useDocusaurusContext();
-  const location = useLocation();
-  const defaultLocale = i18n?.defaultLocale ?? 'en';
-  const currentLocale =
-    i18n?.currentLocale === 'zh' || location.pathname.startsWith('/zh')
-      ? 'zh'
-      : i18n?.currentLocale;
   const archPath = useBaseUrl('/docs/intro/arch');
-  const archTo =
-    currentLocale &&
-    currentLocale !== defaultLocale &&
-    archPath &&
-    !archPath.startsWith(`/${currentLocale}/`) &&
-    archPath.startsWith('/')
-      ? `/${currentLocale}${archPath}`
-      : archPath;
 
   return (
     <section className={styles.archSection}>
@@ -193,7 +180,7 @@ function ArchitectureSection({copy}) {
         </div>
         <p className={styles.archDesc}>{copy.archDesc}</p>
         <div className={styles.archBtnWrap}>
-          <Link className={styles.archBtn} to={archTo}>
+          <Link className={styles.archBtn} to={archPath}>
             {copy.archCta}
           </Link>
         </div>
@@ -205,7 +192,6 @@ function ArchitectureSection({copy}) {
 function HomepageHeader() {
   const {i18n} = useDocusaurusContext();
   const location = useLocation();
-  const defaultLocale = i18n?.defaultLocale ?? 'en';
   const currentLocale =
     i18n?.currentLocale === 'zh' || location.pathname.startsWith('/zh')
       ? 'zh'
@@ -214,18 +200,6 @@ function HomepageHeader() {
   const overviewPath = useBaseUrl('/docs/intro/overview');
   const pluginPath = useBaseUrl('/docs/existing-plugin/plugin-ecosystem');
   const architecturePath = useBaseUrl('/docs/intro/design');
-  const normalizeLocalePath = (path) =>
-    currentLocale &&
-    currentLocale !== defaultLocale &&
-    path &&
-    !path.startsWith(`/${currentLocale}/`) &&
-    path.startsWith('/')
-      ? `/${currentLocale}${path}`
-      : path;
-  const overviewTo =
-    normalizeLocalePath(overviewPath);
-  const pluginTo = normalizeLocalePath(pluginPath);
-  const architectureTo = normalizeLocalePath(architecturePath);
 
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
@@ -241,13 +215,13 @@ function HomepageHeader() {
               </div>
             </div>
             <div className={styles.buttons}>
-              <Link className={styles.ctaPrimary} to={overviewTo}>
+              <Link className={styles.ctaPrimary} to={overviewPath}>
                 {copy.ctaPrimary}
               </Link>
-              <Link className={styles.ctaSecondary} to={pluginTo}>
+              <Link className={styles.ctaSecondary} to={pluginPath}>
                 {copy.ctaSecondary}
               </Link>
-              <Link className={styles.ctaGhost} to={architectureTo}>
+              <Link className={styles.ctaGhost} to={architecturePath}>
                 {copy.ctaTertiary}
               </Link>
               <a className={styles.ctaGhost} href="https://github.com/go-lynx/lynx" target="_blank" rel="noopener noreferrer">
@@ -332,8 +306,8 @@ export default function Home() {
   const copy = contentByLocale[currentLocale === 'en' ? 'en' : 'zh'];
   const description =
     currentLocale === 'zh'
-      ? 'Go-Lynx 是面向微服务的插件化 Go 框架，提供 CLI 脚手架、统一运行时、服务治理与常见中间件接入能力。'
-      : 'Go-Lynx is a plugin-driven Go framework for microservices with CLI scaffolding, a unified runtime, service governance, and common middleware integrations.';
+      ? 'Go-Lynx 是面向微服务的插件编排与运行时框架，提供 CLI 脚手架、统一运行时、服务治理与常见中间件接入能力。'
+      : 'Go-Lynx is a plugin orchestration and runtime framework for microservices with CLI scaffolding, a unified runtime, service governance, and common middleware integrations.';
   return (
     <Layout
       title={`${siteConfig.title}`}

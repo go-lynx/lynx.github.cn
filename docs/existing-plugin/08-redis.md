@@ -1,53 +1,68 @@
 ---
 id: redis
-title: redis 插件
+title: Redis Plugin
 ---
 
-# redis插件
+# Redis Plugin
 
-Go-Lynx 提供了redis连接插件，我们可以不用关心如何去编写连接redis的相关代码，只需要提供对应的redis配置文件即可自动进行redis连接初始化，目前部分配置参数还不够完整（例如：ssl加密通讯，多数据源配置），目前还在持续开发中，敬请期待。
+The Redis plugin brings a Redis client into the Lynx runtime. It moves connection initialization, timeout control, lifecycle ownership, and a stable injection entry into the plugin layer instead of having each business package create clients ad hoc.
 
-## redis配置
+## Common use cases
 
-指定redis需要在配置文件中进行配置，文件内容如下：
+- cache
+- shared session or state
+- lightweight message distribution
+- base resource for higher-level capabilities such as distributed locks
+
+## Basic configuration
 
 ```yaml
 lynx:
   redis:
     addr: 127.0.0.1:6379
-    password: 123456
+    password: ""
     db: 0
     dial_timeout: 3s
     read_timeout: 1s
     write_timeout: 1s
 ```
 
-其中的 `lynx.redis` 相关内容就是redis配置信息。目前默认是使用的 `go-redis` 进行redis连接，后面会持续支持更多的连接包。
-配置完成之后，应用程序一旦启动就会根据插件顺序进行加载redis。
+Once configured, the Redis client is initialized during application startup and managed by the runtime.
 
-如何获取redis客户端？
+## How to obtain the client in application code
 
 ```go
 import (
-  lynxRedis "github.com/go-lynx/lynx/plugin/redis"
-  "github.com/redis/go-redis/v9"
+    lynxRedis "github.com/go-lynx/lynx/plugin/redis"
+
+    "github.com/google/wire"
+    "github.com/redis/go-redis/v9"
 )
 
 var ProviderSet = wire.NewSet(
     NewData,
-    lynxRedis.GetRedis
+    lynxRedis.GetRedis,
 )
 
 type Data struct {
-    rdb   *redis.Client
+    rdb *redis.Client
 }
 
-func NewData(rdb *redis.Client,logger log.Logger) (*Data, error) {
-    d := &Data{
-        rdb:  rdb
-    }
-    return d, nil
+func NewData(rdb *redis.Client, logger log.Logger) (*Data, error) {
+    return &Data{rdb: rdb}, nil
 }
 ```
 
-我们提供了 `lynxRedis.GetRedis` 方法，该方法会从插件中返回连接对象信息，再配合 `wire` 框架帮助我们进行方法调用生成即可。以上就是如何完整的使用redis插件的方式。
+`lynxRedis.GetRedis` returns the `*redis.Client` already created by the plugin, which you can inject directly into the data or repository layer.
+
+## Integration steps
+
+1. add the plugin module `github.com/go-lynx/lynx/plugin/redis`
+2. add `lynx.redis` configuration
+3. anonymous-import the plugin in `main`
+4. include `lynxRedis.GetRedis` in your Wire set
+
+## Related pages
+
+- [Redis Lock](/docs/existing-plugin/redis-lock)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)

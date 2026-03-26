@@ -1,91 +1,31 @@
 ---
 id: etcd-lock
-title: Etcd Distributed Lock Plugin
+title: Etcd Lock Plugin
 ---
 
-# Etcd Distributed Lock Plugin
+# Etcd Lock Plugin
 
-The Go-Lynx Etcd distributed lock plugin provides strongly consistent distributed locking based on etcd, with automatic renewal, retries, and graceful shutdown. It depends on the [Etcd Plugin](/docs/existing-plugin/etcd) for connectivity.
+The Etcd Lock plugin provides distributed locking with stronger consistency semantics on top of Etcd. It fits systems that need higher lock correctness and already accept Etcd as coordination infrastructure.
 
-## Features
+## What it is mainly for
 
-- **Strong consistency** — Distributed lock backed by etcd
-- **Automatic renewal** — Optional renewal so long-held locks do not expire
-- **Retry strategy** — Configurable retries and delay
-- **Health & metrics** — Health checks and Prometheus metrics
-- **Graceful shutdown** — Proper resource cleanup
+- distributed locking through Etcd lease and watch behavior
+- stronger coordination semantics than lighter alternatives
+- bringing lock lifecycle into the Lynx runtime
 
-## Prerequisites
+## When to use it
 
-Configure and load the [Etcd Plugin](/docs/existing-plugin/etcd); set `lynx.etcd` with `endpoints` and related options. Lock options are primarily set in code.
+- your correctness requirement is higher than a typical Redis-lock case
+- your team already uses Etcd for config or registry behavior
+- you accept the heavier coordination cost
 
-## How to use
+## Practical guidance
 
-### 1. Add dependency
+- lock-path naming should map clearly to business resources
+- lease lifetime and business timeout should be designed together
+- if you only need simple mutual exclusion and your main infrastructure is Redis, start with [Redis Lock](/docs/existing-plugin/redis-lock)
 
-```bash
-go get github.com/go-lynx/lynx-etcd-lock
-```
+## Related pages
 
-### 2. Simple lock and run
-
-```go
-import (
-    "context"
-    "time"
-    "github.com/go-lynx/lynx/plugin/etcd-lock"
-)
-
-err := etcdlock.Lock(ctx, "my-lock-key", 30*time.Second, func() error {
-    // business logic that needs the lock
-    return nil
-})
-if err != nil {
-    log.Printf("lock failed: %v", err)
-}
-```
-
-### 3. With options (renewal, retry)
-
-```go
-options := etcdlock.LockOptions{
-    Expiration:     30 * time.Second,
-    RenewalEnabled: true,
-    RetryStrategy: etcdlock.RetryStrategy{
-        MaxRetries: 3,
-        RetryDelay: 100 * time.Millisecond,
-    },
-}
-err := etcdlock.LockWithOptions(ctx, "my-lock-key", options, func() error {
-    return nil
-})
-```
-
-### 4. Lock with retry strategy
-
-```go
-strategy := etcdlock.RetryStrategy{MaxRetries: 5, RetryDelay: 200 * time.Millisecond}
-err := etcdlock.LockWithRetry(ctx, "my-lock-key", 20*time.Second, fn, strategy)
-```
-
-### 5. Reusable lock instance
-
-```go
-lock, err := etcdlock.NewLockFromClient(ctx, "my-lock-key", options)
-if err != nil {
-    return err
-}
-// then Acquire/Release as needed (see repo API)
-```
-
-## API summary
-
-- `Lock(ctx, key, expiration, fn)` — Acquire, run callback, release.
-- `LockWithOptions(ctx, key, options, fn)` — Full options.
-- `LockWithRetry(ctx, key, expiration, fn, strategy)` — With retry.
-- `NewLockFromClient(ctx, key, options)` — Create reusable lock instance.
-
-## See also
-
-- Repo: [go-lynx/lynx-etcd-lock](https://github.com/go-lynx/lynx-etcd-lock)
-- [Etcd Plugin](/docs/existing-plugin/etcd) | [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Etcd](/docs/existing-plugin/etcd)
+- [Redis Lock](/docs/existing-plugin/redis-lock)

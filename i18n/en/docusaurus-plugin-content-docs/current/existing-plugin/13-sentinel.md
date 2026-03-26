@@ -5,19 +5,16 @@ title: Sentinel Plugin
 
 # Sentinel Plugin
 
-The Sentinel plugin provides **traffic control**, **circuit breaking**, and **system protection** for the Lynx framework, so you can protect services from overload and failures.
+The Sentinel plugin brings flow control, circuit breaking, and system protection into Lynx. It fits services that already have clear resource boundaries and want protection rules to live inside one runtime configuration path.
 
-## Features
+## What it is mainly for
 
-- **Flow control**: QPS and concurrency limiting.
-- **Circuit breaking**: Open circuit on errors and recover automatically.
-- **System protection**: Load and CPU-based system rules.
-- **Monitoring**: Real-time metrics.
-- **Dashboard**: Web console for rules and monitoring (optional).
+- rate limiting
+- circuit breaking and degradation
+- system-load protection
+- unified rule and metrics integration
 
-## Configuration
-
-Configure under `lynx.sentinel`:
+## Basic configuration
 
 ```yaml
 lynx:
@@ -29,37 +26,30 @@ lynx:
     flow_rules:
       - resource: "/api/users"
         threshold: 100
-        token_calculate_strategy: "direct"
-        control_behavior: "reject"
         enabled: true
     circuit_breaker_rules:
       - resource: "/api/orders"
         strategy: "error_ratio"
         threshold: 0.5
-        min_request_amount: 10
-        retry_timeout_ms: 5000
         enabled: true
-    system_rules:
-      - metric_type: "load"
-        threshold: 2.0
-        strategy: "bbr"
-        enabled: true
-    metrics:
-      enabled: true
-      interval: "1s"
-    dashboard:
-      enabled: true
-      port: 8719
 ```
 
-## Usage
+## How to read these rules
 
-After the plugin is loaded, Sentinel will apply flow and circuit breaker rules to the configured resources. Use the plugin’s API or middleware to mark resources and integrate with HTTP/gRPC handlers.
+- `resource` is the business boundary you actually want to protect
+- `flow_rules` are for rate limiting
+- `circuit_breaker_rules` are for degradation based on error ratio, slow calls, and similar signals
 
-## Installation
+If resource boundaries are poorly defined, even complex rules will not protect the system effectively.
 
-```bash
-go get github.com/go-lynx/lynx-sentinel
-```
+## Practical guidance
 
-Use the exact module path from the plugin’s repository.
+- define resource boundaries before tuning thresholds
+- do not treat Sentinel as a patch for poor capacity design; it protects, but it does not replace architecture work
+- rule changes should be coordinated with business owners, or you may end up with correct protection logic but confusing product behavior
+
+## Related pages
+
+- Repo: [go-lynx/lynx-sentinel](https://github.com/go-lynx/lynx-sentinel)
+- [HTTP](/docs/existing-plugin/http)
+- [gRPC](/docs/existing-plugin/grpc)

@@ -5,22 +5,15 @@ title: Kafka Plugin
 
 # Kafka Plugin
 
-The Kafka plugin provides **Apache Kafka** integration for the Lynx framework, including producers and consumers with batching, retries, SASL/TLS, and Prometheus metrics.
+The Kafka plugin brings Kafka production and consumption into the Lynx runtime. It fits systems that need one place to manage broker connectivity, producer/consumer instances, and security or retry behavior.
 
-## Features
+## What it is for
 
-- **Producer/Consumer**: Full producer and consumer API support.
-- **Batch processing**: Configurable batch size and timeout for throughput.
-- **Retries**: Retry with exponential backoff.
-- **SASL**: SASL/PLAIN, SASL/SCRAM, SASL/GSSAPI.
-- **TLS**: Encrypted connections.
-- **Compression**: gzip, snappy, lz4, zstd.
-- **Dead letter queue**: Built-in DLQ support.
-- **Metrics**: Prometheus metrics and health checks.
+- managing Kafka broker connections
+- configuring multiple producers and consumers
+- centralizing SASL, TLS, batching, and retry behavior
 
-## Configuration
-
-Example configuration under `lynx.kafka`:
+## Basic configuration
 
 ```yaml
 lynx:
@@ -34,10 +27,6 @@ lynx:
       - name: "default-producer"
         enabled: true
         topic: "default-topic"
-        max_retries: 3
-        retry_backoff: "100ms"
-        batch_size: 16384
-        compression: "gzip"
     consumers:
       - name: "default-consumer"
         enabled: true
@@ -48,12 +37,21 @@ lynx:
 
 ## Usage
 
-After configuration, import the plugin and use the Kafka plugin’s getters (e.g. producer/consumer managers) in your wire sets. The plugin registers resources with the Lynx runtime so you can inject the Kafka client or consumer/producer instances where needed.
+Kafka is usually best treated as a runtime capability during startup and assembly. What business code should really care about is:
 
-## Installation
+- which topics belong to which workflows
+- which consumer groups represent which delivery semantics
+- how retries, ordering, and idempotency are designed
 
-```bash
-go get github.com/go-lynx/lynx/plugins/kafka
-```
+The concrete client instances are then provided by the plugin layer.
 
-For full options (SASL, TLS, schema registry, etc.), refer to the plugin’s README on GitHub.
+## Practical guidance
+
+- design topic and consumer-group boundaries explicitly
+- choose batching, compression, and retry settings around throughput and latency goals
+- do not hide the message contract only in config; keep it explicit in application code as well
+
+## Related pages
+
+- Repo: [go-lynx/lynx-kafka](https://github.com/go-lynx/lynx-kafka)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

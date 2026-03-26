@@ -1,38 +1,44 @@
 ---
 id: grpc
-title: grpc客户端
+title: gRPC Service
 ---
 
-# grpc客户端
+# gRPC Service
 
-Go-Lynx 提供了grpc协议客户端插件，我们可以不用关心如何去编写创建客户端的相关代码，只需要提供对应的配置文件即可自动进行grpc客户端初始化。
+The gRPC plugin brings a gRPC server into the Lynx runtime. Like the HTTP plugin, you do not have to hand-build the server initialization path. You provide listen configuration and register your business services onto the managed server.
 
-## 客户端配置
+Older versions of the docs described this as a "gRPC client", which is misleading. This page is about **gRPC server integration**.
 
-指定grpc客户端需要在配置文件中进行配置，文件内容如下：
+## Basic configuration
 
 ```yaml
 lynx:
   grpc:
-    addr: 0.0.0.0:8000
+    addr: 0.0.0.0:9000
     timeout: 5s
     tls: true
 ```
 
-其中的 `lynx.grpc` 相关内容就是grpc客户端配置信息。目前底层是使用的 `kratos.grpc` 模块。  
-`tls: true` 表示开启证书验证并加密通讯，需要配合 `cert` 插件模块进行使用。
+Where:
 
-配置完成之后，应用程序一旦启动就会根据插件顺序进行加载grpc客户端。
+- `addr`: gRPC listen address
+- `timeout`: request timeout
+- `tls`: whether certificate-related settings are enabled
+
+Once configured, the plugin initializes the gRPC server during application startup.
+
+## Service registration example
 
 ```go
 import (
-  bg "github.com/go-lynx/lynx/plugin/grpc"
+    bg "github.com/go-lynx/lynx/plugin/grpc"
 )
 
 func NewGRPCServer(
-login *service.LoginService,
-register *service.RegisterService,
-account *service.AccountService) *grpc.Server {
+    login *service.LoginService,
+    register *service.RegisterService,
+    account *service.AccountService,
+) *grpc.Server {
     g := bg.GetServer()
     loginV1.RegisterLoginServer(g, login)
     registerV1.RegisterRegisterServer(g, register)
@@ -41,4 +47,17 @@ account *service.AccountService) *grpc.Server {
 }
 ```
 
-我们初始化成功grpc客户端之后，需要自己去手动把对应业务模块的service注册到grpc客户端中，以便于进行路由匹配从而调用您的函数。
+`bg.GetServer()` returns the `*grpc.Server` already owned by the Lynx lifecycle. You only need to attach the generated protobuf service registrations.
+
+## Integration steps
+
+1. add the plugin module `github.com/go-lynx/lynx/plugin/grpc`
+2. add `lynx.grpc` configuration
+3. anonymous-import the plugin in `main`
+4. register gRPC services in the server layer through `GetServer()`
+
+## Related pages
+
+- [HTTP](/docs/existing-plugin/http)
+- [TLS Manager](/docs/existing-plugin/tls-manager)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)

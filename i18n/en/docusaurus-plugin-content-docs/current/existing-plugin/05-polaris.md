@@ -5,11 +5,17 @@ title: Polaris Service Governance
 
 # Polaris Service Governance
 
-Go-Lynx integrates seamlessly with `Polaris` for microservice governance, allowing users to leverage Polaris's service governance capabilities without any additional configuration. However, you must first write a Polaris connection configuration to enjoy these services.
+The Polaris plugin brings service registration, discovery, and governance into Lynx. It is usually not just one isolated config block. It enters the runtime together with service startup, instance registration, traffic governance, and control-plane-facing behavior.
 
-## Polaris Configuration
+If your service platform already relies on Polaris for registry or governance, this plugin is the standard Lynx integration path into that control plane.
 
-First, configure the connection to Polaris in your configuration file, with the content as follows:
+## What it is mainly for
+
+- service instance registration and discovery
+- governance features such as routing, rate limiting, and circuit breaking
+- connecting service metadata to the runtime startup flow
+
+## Basic configuration
 
 ```yaml
 lynx:
@@ -21,9 +27,13 @@ lynx:
     timeout: 5s
 ```
 
-Then, place this file, named `polaris.yaml`, in your local folder. This file is the official standard configuration file for Polaris, and the above configuration file should be used in conjunction with `polaris.yaml`.
+Besides `lynx.polaris`, you usually also need the official Polaris configuration file such as `polaris.yaml`, which describes server addresses and SDK-side behavior.
 
-The content of the `polaris.yaml` file (this is just a basic configuration example) is as follows:
+## Relationship with official Polaris config
+
+Lynx config explains how the application plugs Polaris into the runtime. `polaris.yaml` handles official SDK connectivity and behavior details.
+
+For example:
 
 ```yaml
 global:
@@ -31,19 +41,24 @@ global:
     protocol: grpc
     addresses:
       - 127.0.0.1:8091
-  statReporter:
-    enable: true
-    chain:
-      - prometheus
-    plugin:
-      prometheus:
-        type: push
-        address: 127.0.0.1:9091
-        interval: 10s
 config:
   configConnector:
     addresses:
       - 127.0.0.1:8093
 ```
 
-For detailed information on the `polaris.yaml` file and specific deployment, please refer to the [Tencent Polaris Official Documentation](https://polarismesh.cn/docs). After integrating with Polaris, your Go-Lynx application will have capabilities such as service discovery, service routing, service configuration, service metadata management, service rate limiting and degradation, telemetry, and canary releases.
+For the full field set and deployment model, follow the Polaris documentation:
+
+- [Polaris official docs](https://polarismesh.cn/docs)
+
+## Typical scenarios
+
+- your service needs to register into Polaris
+- downstream addressing depends on Polaris discovery
+- you want routing, canary, rate limiting, or circuit breaking to stay in one framework path
+
+## Related pages
+
+- [Nacos](/docs/existing-plugin/nacos)
+- [Etcd](/docs/existing-plugin/etcd)
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)

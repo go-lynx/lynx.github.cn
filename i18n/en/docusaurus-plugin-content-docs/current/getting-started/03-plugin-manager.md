@@ -5,13 +5,40 @@ title: Plugin Management
 
 # Plugin Management
 
-In Go-Lynx, all functionalities are designed with a plugin-centric approach. This method provides a high degree of modularity and flexibility, allowing you to easily customize your application to meet specific needs.
+In Go-Lynx, plugin management is not a side feature. It is one of the core mechanisms of the framework.
 
-## Current Plugins Available
+The framework is not only loading plugins. It is also answering questions like:
 
-Go-Lynx offers a wide range of plugins covering configuration centers (Polaris, Nacos), service registration and discovery, tracing, distributed transactions (Seata, DTM), message queues (Kafka, RabbitMQ, RocketMQ, Pulsar), databases (MySQL, PostgreSQL, SQL Server, MongoDB, Redis, Elasticsearch), HTTP/gRPC services, TLS certificate management, flow control (Sentinel), and API documentation (Swagger). For the complete list with descriptions and links to each plugin's documentation, see [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem). The list is constantly growing to accommodate various business scenarios.
+- which plugins should be enabled for this startup
+- what depends on what
+- what must initialize first and what can initialize later
+- which resources are private and which are shared
+- how those resources should be released on shutdown
 
-## Custom Plugins
+## What The Plugin Manager Actually Does
+
+From a user-facing perspective, the plugin manager is mainly responsible for:
+
+- determining which plugins are needed based on configuration and registration
+- resolving dependencies and producing a valid startup order
+- initializing plugins, assembling them, and registering resources
+- unwinding resources in a reasonable order during shutdown
+
+That is why plugin management is not just a list of plugins; it is the center of runtime assembly.
+
+## Why Ordering Matters
+
+A typical real-world chain looks like this:
+
+- a business-facing plugin may depend on Redis
+- Redis-related plugins may depend on configuration already being available
+- HTTP / gRPC services may depend on earlier plugins having registered resources
+
+If the order is wrong, the result is not merely “one missing feature”. The application can enter an invalid startup state. Go-Lynx therefore treats ordering as a framework responsibility instead of a detail left to business code.
+
+## Common Shape Of A Custom Plugin
+
+A typical plugin abstraction looks roughly like this:
 
 ```go
 type Plugin interface {
@@ -32,11 +59,17 @@ type SupportPlugin interface {
 }
 ```
 
-By implementing the above interfaces, you can create custom plugins. LoaderPlugin provides the ability to load and unload plugins, while SupportPlugin is related to plugin dependencies, names, and configuration file matching.
+You may not write custom plugins every day, but understanding these interfaces helps you read:
 
-## Plugin Registration
+- how a plugin declares its identity and config prefix
+- how it expresses dependencies
+- how it is loaded and unloaded inside the runtime
 
-You need to register your plugins with the global plugin factory to extend plugin support. Here's an example of how to do this:
+## What Registration Means In Practice
+
+A plugin is not recognized only because a config section exists. It also needs to be registered into the plugin system.
+
+A typical registration pattern looks like:
 
 ```go
 func init() {
@@ -46,18 +79,29 @@ func init() {
 }
 ```
 
-If you are unsure about this process, you can refer to the implementation of official plugins in the Go-Lynx source code.
+That is why some plugins must be imported explicitly even when your business code does not call them directly.
 
-## Plugin Management Mechanism
+## A Practical Mental Model
 
-Go-Lynx's plugin management mechanism supports automatic topological sorting to resolve dependency issues: plugins declare dependencies via `DependsOn`, and the framework loads them in a valid order (directed acyclic graph). This ensures that resources a plugin needs (e.g. config center, tracer) are available before the plugin is initialized. The loading order is determined at startup from the configuration and the set of registered plugins.
+In real usage, plugin management is easiest to think of as this chain:
 
-## Future Enhancements
+1. the plugin module exists
+2. the module registers itself
+3. configuration declares which capabilities should be enabled
+4. the plugin manager resolves dependencies and assembles them
+5. the runtime exposes resources for the application layer
 
-The future enhancement plans for plugin management include the following aspects:
+Once you internalize that chain, it becomes much easier to debug questions such as:
 
-1. **Instance Management**: Design support for plugins with multiple instances or single instances, and manage the ability to handle multiple instances.
-2. **Hot Updates**: The ability to update the configuration files of certain plugins without significantly impacting the application, achieving seamless plugin updates.
-3. **State Management**: A state machine is needed to manage the state of plugins, enabling global dynamic shutdown and activation of plugins under specific circumstances.
+- why a plugin did not activate
+- why a resource is missing
+- why startup order looks wrong
 
-With these enhanced features, Go-Lynx will continue to improve its capabilities as a powerful, flexible, and user-friendly microservice management and deployment platform. Go-Lynx's plugin-oriented design makes it a versatile tool for building and managing microservices. With the various plugins already provided and more to come, you can customize your application as needed and also benefit from the continuous improvements and enhancements of the Go-Lynx platform.
+## Next Steps
+
+After this page, continue with:
+
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Framework Architecture](/docs/intro/arch)
