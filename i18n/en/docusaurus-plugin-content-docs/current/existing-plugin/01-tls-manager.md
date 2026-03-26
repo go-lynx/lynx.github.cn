@@ -1,7 +1,6 @@
 ---
 id: tls-manager
 title: Certificate Management
-slug: existing-plugin/tls-manager
 ---
 
 # Certificate Management

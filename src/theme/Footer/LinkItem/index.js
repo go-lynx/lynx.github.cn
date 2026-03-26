@@ -14,7 +14,7 @@ export default function FooterLinkItem({item}) {
   const {to, href, label, prependBaseUrlToHref, className, ...props} = item;
   const {i18n} = useDocusaurusContext();
   const currentLocale = i18n?.currentLocale;
-  const defaultLocale = i18n?.defaultLocale ?? 'zh';
+  const defaultLocale = i18n?.defaultLocale ?? 'en';
 
   const toUrl = useBaseUrl(to);
   const normalizedHref = useBaseUrl(href, {forcePrependBaseUrl: true});

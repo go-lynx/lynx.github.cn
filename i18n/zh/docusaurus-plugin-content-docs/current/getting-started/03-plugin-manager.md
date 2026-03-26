@@ -1,7 +1,6 @@
 ---
 id: plugin-manager
 title: 插件管理
-slug: getting-started/plugin-manager
 ---
 
 # 插件管理
@@ -10,7 +9,7 @@ slug: getting-started/plugin-manager
 
 ## 当前提供的插件
 
-Go-Lynx 提供多种插件：配置中心（Polaris、Nacos）、服务注册发现、链路追踪、分布式事务（Seata、DTM）、消息队列（Kafka、RabbitMQ、RocketMQ、Pulsar）、数据库（MySQL、PostgreSQL、SQL Server、MongoDB、Redis、Elasticsearch）、HTTP/gRPC 服务、TLS 证书管理、流控（Sentinel）、API 文档（Swagger）等。完整列表与各插件说明见 [插件生态](/zh/docs/existing-plugin/plugin-ecosystem)。列表会持续更新以覆盖更多业务场景。
+Go-Lynx 提供多种插件：配置中心（Polaris、Nacos）、服务注册发现、链路追踪、分布式事务（Seata、DTM）、消息队列（Kafka、RabbitMQ、RocketMQ、Pulsar）、数据库（MySQL、PostgreSQL、SQL Server、MongoDB、Redis、Elasticsearch）、HTTP/gRPC 服务、TLS 证书管理、流控（Sentinel）、API 文档（Swagger）等。完整列表与各插件说明见 [插件生态](/docs/existing-plugin/plugin-ecosystem)。列表会持续更新以覆盖更多业务场景。
 
 ## 自定义插件
 

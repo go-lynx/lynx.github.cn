@@ -1,7 +1,6 @@
 ---
 id: elasticsearch
 title: Elasticsearch Plugin
-slug: existing-plugin/elasticsearch
 ---
 
 # Elasticsearch Plugin

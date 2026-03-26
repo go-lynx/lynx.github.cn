@@ -1,7 +1,6 @@
 ---
 id: pulsar
 title: Pulsar Plugin
-slug: existing-plugin/pulsar
 ---
 
 # Pulsar Plugin

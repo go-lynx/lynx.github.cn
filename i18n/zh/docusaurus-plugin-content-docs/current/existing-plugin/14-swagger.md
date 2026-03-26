@@ -1,7 +1,6 @@
 ---
 id: swagger
 title: Swagger 插件
-slug: existing-plugin/swagger
 ---
 
 # Swagger 插件

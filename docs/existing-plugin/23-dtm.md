@@ -1,7 +1,6 @@
 ---
 id: dtm
 title: DTM 分布式事务 Plugin
-slug: existing-plugin/dtm
 ---
 
 # DTM 分布式事务 Plugin

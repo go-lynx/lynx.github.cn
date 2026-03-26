@@ -1,7 +1,6 @@
 ---
 id: mongodb
 title: MongoDB 插件
-slug: existing-plugin/mongodb
 ---
 
 # MongoDB 插件

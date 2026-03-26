@@ -1,7 +1,6 @@
 ---
 id: kafka
 title: Kafka Plugin
-slug: existing-plugin/kafka
 ---
 
 # Kafka Plugin

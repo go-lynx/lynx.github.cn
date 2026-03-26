@@ -1,7 +1,6 @@
 ---
 id: dtm
 title: DTM Distributed Transaction Plugin
-slug: existing-plugin/dtm
 ---
 
 # DTM Distributed Transaction Plugin

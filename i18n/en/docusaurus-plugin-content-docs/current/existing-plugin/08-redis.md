@@ -1,7 +1,6 @@
 ---
 id: redis
 title: Redis Plugin
-slug: existing-plugin/redis
 ---
 
 # Redis Plugin

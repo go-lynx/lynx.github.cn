@@ -1,7 +1,6 @@
 ---
 id: overview
 title: 简介
-slug: intro/overview
 ---
 
 # 简介

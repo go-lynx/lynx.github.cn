@@ -1,7 +1,6 @@
 ---
 id: http
 title: HTTP 服务
-slug: existing-plugin/http
 ---
 
 # HTTP 服务
@@ -40,4 +39,4 @@ return h
 }
 ```
 
-插件加载后，通过 `bh.GetServer()` 获取服务端实例，将你的 HTTP 服务模块（如 `RegisterLoginHTTPServer`、`RegisterRegisterHTTPServer`）注册上去，即可完成路由与处理函数的绑定。其他服务与插件说明见 [插件生态](/zh/docs/existing-plugin/plugin-ecosystem)。
+插件加载后，通过 `bh.GetServer()` 获取服务端实例，将你的 HTTP 服务模块（如 `RegisterLoginHTTPServer`、`RegisterRegisterHTTPServer`）注册上去，即可完成路由与处理函数的绑定。其他服务与插件说明见 [插件生态](/docs/existing-plugin/plugin-ecosystem)。

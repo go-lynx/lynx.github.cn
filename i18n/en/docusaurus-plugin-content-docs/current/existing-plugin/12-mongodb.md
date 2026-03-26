@@ -1,7 +1,6 @@
 ---
 id: mongodb
 title: MongoDB Plugin
-slug: existing-plugin/mongodb
 ---
 
 # MongoDB Plugin

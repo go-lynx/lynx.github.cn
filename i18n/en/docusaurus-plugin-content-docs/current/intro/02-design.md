@@ -1,7 +1,6 @@
 ---
 id: design
 title: Design Philosophy
-slug: intro/design
 ---
 
 # Design Philosophy

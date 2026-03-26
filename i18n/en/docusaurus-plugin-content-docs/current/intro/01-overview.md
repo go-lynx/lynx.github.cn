@@ -1,7 +1,6 @@
 ---
 id: overview
 title: Overview
-slug: intro/overview
 ---
 
 # Overview

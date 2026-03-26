@@ -1,7 +1,6 @@
 ---
 id: plugin-manager
 title: Plugin Management
-slug: getting-started/plugin-manager
 ---
 
 # Plugin Management

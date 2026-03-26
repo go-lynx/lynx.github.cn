@@ -1,7 +1,6 @@
 ---
 id: quick-start
 title: 快速启动
-slug: getting-started/quick-start
 ---
 
 # 快速入门
@@ -210,7 +209,7 @@ Lynx 自动暴露：
 
 ## 下一步
 
-- **[引导配置](/zh/docs/getting-started/bootstrap-config)** — 配置 `-conf`、本地与远程配置、Polaris/Nacos。
-- **[插件管理](/zh/docs/getting-started/plugin-manager)** — 插件加载、依赖与自定义插件。
-- **[插件生态](/zh/docs/existing-plugin/plugin-ecosystem)** — 插件完整列表及各插件文档链接。
-- **[框架架构](/zh/docs/intro/arch)** — 分层运行时、启动流程与性能特性。
+- **[引导配置](/docs/getting-started/bootstrap-config)** — 配置 `-conf`、本地与远程配置、Polaris/Nacos。
+- **[插件管理](/docs/getting-started/plugin-manager)** — 插件加载、依赖与自定义插件。
+- **[插件生态](/docs/existing-plugin/plugin-ecosystem)** — 插件完整列表及各插件文档链接。
+- **[框架架构](/docs/intro/arch)** — 分层运行时、启动流程与性能特性。

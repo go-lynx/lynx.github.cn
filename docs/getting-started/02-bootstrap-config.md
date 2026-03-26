@@ -1,14 +1,13 @@
 ---
 id: bootstrap-config
 title: 引导配置
-slug: getting-started/bootstrap-config
 ---
 
 # 引导配置
 
 在 Go-Lynx 中，应用配置通过 YAML 文件进行插件管理。启动时可通过 `-conf` 指定配置目录（如 `-conf configs`，即包含 YAML 的目录）；未指定时，应用会按项目布局查找默认路径（如 `configs/config.yaml`）。通过 YAML 中的配置项与所用插件对应，框架会在启动时加载相应插件。可使用仅含配置中心信息的精简本地引导，或包含全部插件配置的完整本地 YAML。请记得在代码中导入所需插件的包，以便其向插件管理器注册。
 
-除 Polaris 外，也可使用 [Nacos](/zh/docs/existing-plugin/nacos) 作为配置中心：配置 `lynx.nacos` 并在引导中启用 config 即可。
+除 Polaris 外，也可使用 [Nacos](/docs/existing-plugin/nacos) 作为配置中心：配置 `lynx.nacos` 并在引导中启用 config 即可。
 
 ## 本地引导配置文件
 
