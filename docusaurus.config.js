@@ -6,6 +6,27 @@
 
 import {themes as prismThemes} from 'prism-react-renderer';
 
+function getSearchPlugins() {
+  try {
+    require('@node-rs/jieba');
+    return [
+      [
+        require.resolve('@easyops-cn/docusaurus-search-local'),
+        {
+          hashed: true,
+          language: ['en', 'zh'],
+        },
+      ],
+    ];
+  } catch (error) {
+    console.warn(
+      '[docusaurus] Local search disabled because @node-rs/jieba is unavailable:',
+      error instanceof Error ? error.message : String(error),
+    );
+    return [];
+  }
+}
+
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -32,7 +53,7 @@ const config = {
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'zh',
+    defaultLocale: 'en',
     locales: ['zh', 'en'],
     localeConfigs: {
       zh: {
@@ -43,15 +64,7 @@ const config = {
       },
     },
   },
-  plugins: [
-    [
-      require.resolve("@easyops-cn/docusaurus-search-local"),
-      {
-        hashed: true,
-        language: ['en', 'zh'],
-      },
-    ],
-  ],
+  plugins: getSearchPlugins(),
   presets: [
     [
       '@docusaurus/preset-classic',

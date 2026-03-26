@@ -1,7 +1,6 @@
 ---
 id: nacos
 title: Nacos 插件
-slug: existing-plugin/nacos
 ---
 
 # Nacos 插件

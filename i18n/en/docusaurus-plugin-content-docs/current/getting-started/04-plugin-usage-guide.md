@@ -1,7 +1,6 @@
 ---
 id: plugin-usage-guide
 title: Plugin Usage Guide
-slug: getting-started/plugin-usage-guide
 ---
 
 # Plugin Usage Guide

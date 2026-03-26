@@ -1,7 +1,6 @@
 ---
 id: sql-sdk
 title: SQL SDK / Multi-datasource Plugin
-slug: existing-plugin/sql-sdk
 ---
 
 # SQL SDK / Multi-datasource Plugin

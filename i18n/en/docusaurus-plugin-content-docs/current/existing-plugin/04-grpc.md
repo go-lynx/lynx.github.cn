@@ -1,7 +1,6 @@
 ---
 id: grpc
 title: Grpc Client
-slug: existing-plugin/grpc
 ---
 
 # Grpc Client

@@ -1,7 +1,6 @@
 ---
 id: rabbitmq
 title: RabbitMQ Plugin
-slug: existing-plugin/rabbitmq
 ---
 
 # RabbitMQ Plugin

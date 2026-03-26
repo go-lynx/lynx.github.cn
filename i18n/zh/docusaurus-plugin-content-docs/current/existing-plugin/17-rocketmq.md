@@ -1,7 +1,6 @@
 ---
 id: rocketmq
 title: RocketMQ Plugin
-slug: existing-plugin/rocketmq
 ---
 
 # RocketMQ Plugin

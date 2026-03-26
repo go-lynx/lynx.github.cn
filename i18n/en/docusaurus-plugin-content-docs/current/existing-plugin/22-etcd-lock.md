@@ -1,7 +1,6 @@
 ---
 id: etcd-lock
 title: Etcd Distributed Lock Plugin
-slug: existing-plugin/etcd-lock
 ---
 
 # Etcd Distributed Lock Plugin

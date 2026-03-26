@@ -1,7 +1,6 @@
 ---
 id: redis-lock
 title: Redis Distributed Lock Plugin
-slug: existing-plugin/redis-lock
 ---
 
 # Redis Distributed Lock Plugin

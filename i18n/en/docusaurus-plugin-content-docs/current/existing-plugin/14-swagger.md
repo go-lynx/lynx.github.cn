@@ -1,7 +1,6 @@
 ---
 id: swagger
 title: Swagger Plugin
-slug: existing-plugin/swagger
 ---
 
 # Swagger Plugin

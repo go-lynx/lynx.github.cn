@@ -9,6 +9,8 @@ tags: [go-lynx, introduction, docusaurus]
 
 Go-Lynx is a revolutionary open-source microservices framework that offers a seamless plug-and-play experience for developers. Built on the solid foundations of Seata, Polaris, and Kratos, Go-Lynx's primary goal is to simplify the development process of microservices. It allows developers to focus on writing business logic rather than getting entangled in the complexity of microservices infrastructure.
 
+<!-- truncate -->
+
 ## Key Features
 
 Go-Lynx comes with a comprehensive set of microservices capabilities, including:

@@ -1,7 +1,6 @@
 ---
 id: plugin-usage-guide
 title: 插件使用指南
-slug: getting-started/plugin-usage-guide
 ---
 
 # 插件使用指南

@@ -1,7 +1,6 @@
 ---
 id: sql-sdk
 title: SQL SDK / 多数据源 Plugin
-slug: existing-plugin/sql-sdk
 ---
 
 # SQL SDK / 多数据源 Plugin

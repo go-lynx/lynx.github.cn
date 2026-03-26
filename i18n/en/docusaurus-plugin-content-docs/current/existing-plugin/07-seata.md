@@ -1,7 +1,6 @@
 ---
 id: seata
 title: Distributed Transaction Plugin
-slug: existing-plugin/seata
 ---
 
 # seata

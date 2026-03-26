@@ -1,7 +1,6 @@
 ---
 id: layout
 title: Lynx Project Template (Layout)
-slug: existing-plugin/layout
 ---
 
 # Lynx Project Template (Layout)

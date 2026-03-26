@@ -1,7 +1,6 @@
 ---
 id: etcd
 title: Etcd Plugin
-slug: existing-plugin/etcd
 ---
 
 # Etcd Plugin

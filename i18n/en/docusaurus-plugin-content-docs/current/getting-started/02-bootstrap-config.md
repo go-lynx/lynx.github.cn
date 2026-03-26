@@ -1,7 +1,6 @@
 ---
 id: bootstrap-config
 title: Bootstrap Configuration
-slug: getting-started/bootstrap-config
 ---
 
 # Bootstrap Configuration

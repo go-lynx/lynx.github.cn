@@ -1,7 +1,6 @@
 ---
 id: apollo
 title: Apollo Plugin
-slug: existing-plugin/apollo
 ---
 
 # Apollo Plugin

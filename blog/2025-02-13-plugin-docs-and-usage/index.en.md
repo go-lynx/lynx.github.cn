@@ -1,5 +1,5 @@
 ---
-slug: plugin-docs-and-usage-guide
+slug: plugin-docs-and-usage-guide-en
 title: Go-Lynx Plugin Docs and Usage Guide
 authors: [lynx-team]
 tags: [docs, plugins, guide, elasticsearch, rabbitmq, rocketmq, pulsar, apollo, etcd, dtm, redis-lock, layout]

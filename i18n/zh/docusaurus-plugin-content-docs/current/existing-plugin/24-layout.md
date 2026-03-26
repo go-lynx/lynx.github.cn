@@ -1,7 +1,6 @@
 ---
 id: layout
 title: Lynx 项目模板 (Layout)
-slug: existing-plugin/layout
 ---
 
 # Lynx 项目模板 (Layout)
