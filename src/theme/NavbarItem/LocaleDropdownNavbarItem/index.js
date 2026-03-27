@@ -1,37 +1,12 @@
 import React from 'react';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import {useAlternatePageUtils} from '@docusaurus/theme-common/internal';
 import {translate} from '@docusaurus/Translate';
 import {useLocation} from '@docusaurus/router';
 import DropdownNavbarItem from '@theme/NavbarItem/DropdownNavbarItem';
 import IconLanguage from '@theme/Icon/Language';
 
 import styles from './styles.module.css';
-
-function normalizeLocalePath(pathname) {
-  if (!pathname || pathname === '/') {
-    return pathname;
-  }
-
-  return pathname
-    .replace(/^(\/zh)+(?=\/)/, '/zh')
-    .replace(/^(\/en)+(?=\/)/, '/en');
-}
-
-function switchLocalePath(pathname, locale, defaultLocale) {
-  const normalizedPath = normalizeLocalePath(pathname || '/');
-  const withoutLocale =
-    normalizedPath.replace(/^\/(zh|en)(?=\/|$)/, '') || '/';
-
-  if (locale === defaultLocale) {
-    return withoutLocale;
-  }
-
-  if (withoutLocale === '/') {
-    return `/${locale}`;
-  }
-
-  return `/${locale}${withoutLocale}`;
-}
 
 export default function LocaleDropdownNavbarItem({
   mobile,
@@ -41,17 +16,17 @@ export default function LocaleDropdownNavbarItem({
   ...props
 }) {
   const {
-    i18n: {currentLocale, defaultLocale, locales, localeConfigs},
+    i18n: {currentLocale, locales, localeConfigs},
   } = useDocusaurusContext();
-  const {pathname, search, hash} = useLocation();
-  const normalizedCurrentPath = normalizeLocalePath(pathname);
+  const alternatePageUtils = useAlternatePageUtils();
+  const {search, hash} = useLocation();
 
   const localeItems = locales.map((locale) => {
-    const targetPath =
-      locale === currentLocale
-        ? normalizedCurrentPath
-        : switchLocalePath(normalizedCurrentPath, locale, defaultLocale);
-    const to = `pathname://${targetPath}${search}${hash}${queryString}`;
+    const baseTo = `pathname://${alternatePageUtils.createUrl({
+      locale,
+      fullyQualified: false,
+    })}`;
+    const to = `${baseTo}${search}${hash}${queryString}`;
 
     return {
       label: localeConfigs[locale].label,

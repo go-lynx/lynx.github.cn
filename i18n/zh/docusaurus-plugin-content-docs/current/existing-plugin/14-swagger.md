@@ -5,43 +5,74 @@ title: Swagger 插件
 
 # Swagger 插件
 
-Swagger 插件为 Lynx HTTP 服务提供 **Swagger/OpenAPI** 文档与 **Swagger UI**，仅用于**开发与测试环境**，在生产环境会自动关闭。
+`lynx-swagger` 是 Lynx HTTP 服务的文档与 Swagger UI 插件。当前实现不只是简单挂一个 `/swagger` 页面，而是支持扫描 Go 注解、合并外部 spec 文件、从 `lynx.http` 推导 API server 地址、落盘合并后的文档产物，并独立启动 UI 服务。
 
-## 功能
+## 运行时事实
 
-- **自动生成 API 文档**：基于 Go 注解。
-- **Swagger UI**：浏览与调试接口。
-- **文件监听**：文档随代码变更更新。
-- **安全**：生产环境禁用；防路径穿越与 XSS；安全头与 CORS 控制。
+| 项目 | 值 |
+| --- | --- |
+| Go 模块 | `github.com/go-lynx/lynx-swagger` |
+| 配置前缀 | `lynx.swagger` |
+| runtime 插件名 | `swagger` |
+| 主要 Getter | `GetSwagger()` |
 
-## 配置
+## 实现里实际提供了什么
 
-在 `lynx.swagger` 下配置示例：
+- 从 `lynx.swagger` 读取插件配置
+- 支持 `generator` 配置段，用于注解扫描、外部 spec 合并、watch 与输出文件持久化
+- 支持 `ui` 配置段，用于在指定端口和路径暴露 Swagger UI
+- 支持 `api_server` 配置段，让 Swagger UI 的 “Try it out” 请求打到真实 HTTP 服务
+- 当 `api_server.host` 为空时，会尝试从 `lynx.http.addr` 推导服务地址
+
+## 配置示例
 
 ```yaml
 lynx:
   swagger:
     enabled: true
-    path: "/swagger"
-    base_path: "/"
-    doc_path: "./api"
-    allowed_envs:
-      - development
-      - testing
+    generator:
+      enabled: true
+      scan_dirs:
+        - "./"
+      output_path: "./docs/openapi.yaml"
+      watch_enabled: true
+    ui:
+      enabled: true
+      port: 8080
+      path: "/swagger"
+      title: "API Documentation"
+    api_server:
+      host: "localhost:8080"
+      base_path: "/api/v1"
+    info:
+      title: "User Service API"
+      version: "1.0.0"
+      description: "HTTP API documentation"
 ```
 
-## 使用
+## 使用方式
 
-1. 导入插件：`import _ "github.com/go-lynx/lynx/plugins/swagger"`。
-2. 为 HTTP 接口添加注解（如注释或 OpenAPI 描述）。
-3. 在开发环境启动后访问 `http://localhost:<端口>/swagger` 使用 Swagger UI。
-
-**注意**：请勿在生产环境启用。插件会根据环境变量（如 `ENV`、`GO_ENV`、`APP_ENV`）判断，在生产模式下不会提供 UI。
-
-## 安装
-
-```bash
-go get github.com/go-lynx/lynx/plugins/swagger
+```go
+import swagger "github.com/go-lynx/lynx-swagger"
 ```
 
-注解格式与更多选项请参阅该插件在 GitHub 上的 README。
+插件会通过 `GetSwagger()` 暴露生成后的 Swagger 对象：
+
+```go
+plugin := swagger.GetSwagger()
+spec := plugin.GetSwagger()
+_ = spec
+```
+
+启动后访问类似 `http://localhost:8080/swagger` 的 UI 路径即可。
+
+## 实践建议
+
+- 适合默认开启在开发、测试或受控的内部环境
+- 如果你同时依赖外部 OpenAPI 文件，`generator.output_path` 最好和生成链路保持一致，避免文档产物漂移
+- 不要把 Swagger UI 当成安全边界，它只是文档入口
+
+## 相关页面
+
+- 仓库: [go-lynx/lynx-swagger](https://github.com/go-lynx/lynx-swagger)
+- [HTTP](/docs/existing-plugin/http)

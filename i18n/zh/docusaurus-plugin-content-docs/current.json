@@ -10,5 +10,9 @@
   "sidebar.docs.category.Existing-Plugin": {
     "message": "现有插件",
     "description": "The label for category existing-plugin in sidebar docs"
+  },
+  "version.label": {
+    "message": "当前版本",
+    "description": "The label for version current"
   }
 }

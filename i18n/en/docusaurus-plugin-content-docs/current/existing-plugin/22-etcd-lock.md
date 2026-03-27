@@ -5,27 +5,54 @@ title: Etcd Lock Plugin
 
 # Etcd Lock Plugin
 
-The Etcd Lock plugin provides distributed locking with stronger consistency semantics on top of Etcd. It fits systems that need higher lock correctness and already accept Etcd as coordination infrastructure.
+The Etcd Lock plugin is a distributed lock layer that depends on the Etcd plugin's client resource. It is not an independent storage connector.
 
-## What it is mainly for
+## Runtime Facts
 
-- distributed locking through Etcd lease and watch behavior
-- stronger coordination semantics than lighter alternatives
-- bringing lock lifecycle into the Lynx runtime
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-etcd-lock` |
+| Config prefix | `lynx.etcd-lock` |
+| Runtime plugin name | `etcd.distributed.lock` |
+| Dependency | runtime resource `etcd.config.center` |
+| Public APIs | `Lock`, `LockWithOptions`, `LockWithRetry`, `NewLockFromClient`, `GetStats()` |
 
-## When to use it
+## What The Implementation Provides
 
-- your correctness requirement is higher than a typical Redis-lock case
-- your team already uses Etcd for config or registry behavior
-- you accept the heavier coordination cost
+From the code, this plugin:
 
-## Practical guidance
+- resolves the Etcd client from the Etcd plugin during initialization
+- exposes helper APIs for lock acquisition and automatic release
+- supports retry strategy and operation timeout
+- supports automatic renewal for long-running locks
+- maintains global lock-manager stats
 
-- lock-path naming should map clearly to business resources
-- lease lifetime and business timeout should be designed together
-- if you only need simple mutual exclusion and your main infrastructure is Redis, start with [Redis Lock](/docs/existing-plugin/redis-lock)
+The lock helper API is intentionally business-facing; you do not need to work with raw Etcd leases for common cases.
 
-## Related pages
+## Usage Pattern
+
+```go
+err := etcdlock.Lock(ctx, "order:123", 15*time.Second, func() error {
+    return doBusinessWork()
+})
+```
+
+For more control:
+
+```go
+opts := etcdlock.DefaultLockOptions
+opts.RenewalEnabled = true
+opts.RetryStrategy.MaxRetries = 3
+
+err := etcdlock.LockWithOptions(ctx, "order:123", opts, fn)
+```
+
+## Important Constraint
+
+This plugin fails initialization if `etcd.config.center` is not loaded first, because it reads the shared Etcd client from that runtime resource.
+
+## Related Pages
 
 - [Etcd](/docs/existing-plugin/etcd)
 - [Redis Lock](/docs/existing-plugin/redis-lock)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

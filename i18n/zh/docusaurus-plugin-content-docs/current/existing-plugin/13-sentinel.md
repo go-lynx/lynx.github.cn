@@ -5,25 +5,32 @@ title: Sentinel 插件
 
 # Sentinel 插件
 
-Sentinel 插件为 Lynx 提供**流量控制**、**熔断降级**与**系统保护**能力，避免服务过载与故障扩散。
+`lynx-sentinel` 把流量控制、熔断降级、系统保护和内建监控接入 Lynx。当前实现比旧文档里那种“只会加载几条规则”的描述丰富得多，除了静态配置外，还暴露了受保护执行、动态规则更新、HTTP / gRPC 中间件封装，以及 dashboard 访问能力。
 
-## 功能
+## 运行时事实
 
-- **流控**：按 QPS、并发等限流。
-- **熔断**：异常时自动熔断并恢复。
-- **系统保护**：基于系统负载、CPU 等的系统级规则。
-- **监控**：实时指标。
-- **控制台**：可选 Web 控制台管理规则与查看监控。
+| 项目 | 值 |
+| --- | --- |
+| Go 模块 | `github.com/go-lynx/lynx-sentinel` |
+| 配置前缀 | `lynx.sentinel` |
+| runtime 插件名 | `sentinel.flow_control` |
+| 主要 Getter | `GetSentinel()`、`GetMetrics()`、`GetDashboardURL()` |
 
-## 配置
+## 实现里实际提供了什么
 
-在 `lynx.sentinel` 下配置：
+- 从 `lynx.sentinel` 加载 flow rules、circuit breaker rules、system rules、metrics、dashboard 配置
+- 提供 `Entry`、`EntryWithContext`、`Execute`、`ExecuteWithContext`、`CheckFlow` 等便捷 API
+- 支持运行时动态规则管理，包括 `AddFlowRule`、`RemoveFlowRule`、`AddCircuitBreakerRule`、`RemoveCircuitBreakerRule`、`ReloadRules`
+- 暴露 `GetMetrics`、`GetResourceStats`、`GetAllResourceStats`、`GetCircuitBreakerState` 等监控能力
+- 可以直接生成 `CreateHTTPMiddleware()` 和 `CreateGRPCInterceptor()` 供接入层使用
+
+## 配置示例
 
 ```yaml
 lynx:
   sentinel:
     enabled: true
-    app_name: "my-app"
+    app_name: "user-service"
     log_level: "info"
     log_dir: "./logs/sentinel"
     flow_rules:
@@ -52,14 +59,36 @@ lynx:
       port: 8719
 ```
 
-## 使用
+## 使用方式
 
-插件加载后，Sentinel 会对配置的资源应用流控与熔断规则。通过插件提供的 API 或中间件标记资源，并与 HTTP/gRPC 处理链集成。
+```go
+import sentinel "github.com/go-lynx/lynx-sentinel"
 
-## 安装
-
-```bash
-go get github.com/go-lynx/lynx-sentinel
+func guarded() error {
+    return sentinel.Execute("create-user", func() error {
+        return doBusiness()
+    })
+}
 ```
 
-具体模块路径以该插件仓库为准。
+HTTP 中间件和 gRPC interceptor 也是直接可用的公开能力：
+
+```go
+middleware, err := sentinel.CreateHTTPMiddleware(func(req interface{}) string {
+    return req.(*http.Request).URL.Path
+})
+
+interceptor, err := sentinel.CreateGRPCInterceptor()
+```
+
+## 实践建议
+
+- 先把 resource 命名边界定清楚，再去调阈值，否则规则只会越来越乱
+- 动态规则 API 适合有明确策略治理责任人的团队，不适合谁都能改
+- 如果开启 dashboard，要把它当成运维面板，而不是对外功能页面
+
+## 相关页面
+
+- 仓库: [go-lynx/lynx-sentinel](https://github.com/go-lynx/lynx-sentinel)
+- [HTTP](/docs/existing-plugin/http)
+- [gRPC](/docs/existing-plugin/grpc)

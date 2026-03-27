@@ -5,67 +5,84 @@ title: Certificate Management
 
 # Certificate Management
 
-The TLS manager plugin brings certificate loading into the Lynx runtime for encrypted HTTP and gRPC communication. Its value is that **certificate retrieval, default trust chain handling, and TLS enablement on servers** can follow one configuration path instead of every service implementing its own loading logic.
+The TLS capability in Lynx is a runtime certificate loader plugin inside the core repository. It is not configured under `lynx.application.tls`.
 
-## What it covers
+## Runtime Facts
 
-- a certificate-loading entry for HTTP and gRPC
-- default trust-chain integration for root certificates
-- bringing certificate material into the runtime during startup
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx/tls` |
+| Config prefix | `lynx.tls` |
+| Runtime plugin name | `tls` |
+| Public methods | `GetCertificate()`, `GetPrivateKey()`, `GetRootCACertificate()` |
 
-## Basic configuration
+## What The Implementation Actually Supports
+
+The current TLS loader supports multiple certificate sources:
+
+- `local_file`
+- `memory`
+- `control_plane`
+- `auto`
+
+It also supports:
+
+- file watching and hot reload
+- certificate-manager based loading
+- backward-compatible control-plane fallback
+- common TLS settings such as auth type, hostname verification, and minimum TLS version
+
+## Configuration
 
 ```yaml
 lynx:
-  application:
-    name: svc-name
-    version: v1.0.0
-    tls:
-      file_name: tls-service.yaml
-      group: svc-group
+  tls:
+    source_type: "local_file"
+    local_file:
+      cert_file: "/etc/ssl/certs/server.crt"
+      key_file: "/etc/ssl/private/server.key"
+      root_ca_file: "/etc/ssl/certs/ca.crt"
+      watch_files: true
+      reload_interval: "5s"
+    common:
+      auth_type: 4
+      verify_hostname: true
+      min_tls_version: "1.2"
 ```
 
-Here `lynx.application.tls` describes the certificate configuration entry. In the current docs model, it usually tells the application where to read certificate material from.
-
-## How it works with HTTP and gRPC
-
-Once certificates are configured, the HTTP and gRPC sides only need their TLS switches enabled:
+If you still rely on control-plane sourced certificates, the loader also supports:
 
 ```yaml
 lynx:
-  application:
-    name: svc-name
-    version: v1.0.0
-    tls:
-      file_name: tls-service.yaml
-      group: svc-group
+  tls:
+    source_type: "control_plane"
+    file_name: "tls-config"
+    group: "security"
+```
+
+## How It Connects To HTTP And gRPC
+
+The TLS loader publishes a certificate provider into the Lynx app. HTTP and gRPC then consume that provider when their own TLS switches are enabled:
+
+```yaml
+lynx:
+  tls:
+    source_type: "local_file"
+    local_file:
+      cert_file: "/etc/ssl/certs/server.crt"
+      key_file: "/etc/ssl/private/server.key"
   http:
-    addr: 0.0.0.0:8000
-    timeout: 5s
-    tls: true
+    addr: ":8080"
+    tls_enable: true
   grpc:
-    addr: 0.0.0.0:9000
-    timeout: 5s
-    tls: true
+    service:
+      addr: ":9090"
+      tls_enable: true
 ```
 
-When `lynx.http.tls` or `lynx.grpc.tls` is `true`, the corresponding plugin assembles certificate material during startup.
+The important correction is that current docs should refer to `lynx.tls`, `lynx.http.tls_enable`, and `lynx.grpc.service.tls_enable`.
 
-## What the certificate payload usually contains
-
-Whether certificates come from a config center or another source, the payload usually includes at least:
-
-- service certificate `crt`
-- private key `key`
-- root certificate `rootCA`
-
-## Practical guidance
-
-- self-signed certificates are fine for local development, but service names and SAN values must be correct
-- production environments should use your team's proper issuance and rotation process
-- this plugin page explains how Lynx loads certificates, not a full PKI design guide
-
-## Related pages
+## Related Pages
 
 - [HTTP](/docs/existing-plugin/http)
 - [gRPC](/docs/existing-plugin/grpc)

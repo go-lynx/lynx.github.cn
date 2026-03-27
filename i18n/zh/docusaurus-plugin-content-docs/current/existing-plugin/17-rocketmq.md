@@ -1,114 +1,66 @@
 ---
 id: rocketmq
-title: RocketMQ Plugin
+title: RocketMQ 插件
 ---
 
-# RocketMQ Plugin
+# RocketMQ 插件
 
-Go-Lynx 的 RocketMQ 插件用于集成 Apache RocketMQ，支持多实例生产者/消费者、健康检查、指标与重试，以及集群/广播消费模式。
+RocketMQ 插件是一个由 runtime 管理的客户端，内部维护命名 producer 和 consumer 实例。
 
-## 功能概览
+## Runtime 事实
 
-- **多实例**：多 Producer/Consumer 实例
-- **健康与指标**：连接与收发健康检查、Prometheus 指标
-- **重试与超时**：可配置重试、退避与发送超时
-- **消费模式**：CLUSTERING（集群）与 BROADCASTING（广播）
-- **消费顺序**：CONCURRENTLY / ORDERLY
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-rocketmq` |
+| 配置前缀 | `rocketmq` |
+| Runtime 插件名 | `rocketmq` |
+| 公开 API 形态 | 通过 plugin-manager 取 `rocketmq`，再使用 `rocketmq.ClientInterface` 方法 |
 
-## 配置说明
+## 实现支持什么
 
-在配置文件中增加 `lynx.rocketmq`（或项目实际使用的 `rocketmq`）段：
+代码里支持：
+
+- 多个命名 producer
+- 多个命名 consumer
+- 默认 producer 和默认 consumer 选择
+- producer / consumer 两侧独立的 connection manager
+- retry 处理
+- metrics 和 health check
+- 集群消费与广播消费模型
+- 顺序消费与并发消费模式
+
+## 配置
 
 ```yaml
-lynx:
-  rocketmq:
-    name_server:
-      - "127.0.0.1:9876"
-    access_key: "your-access-key"
-    secret_key: "your-secret-key"
-    dial_timeout: "3s"
-    request_timeout: "30s"
-
-    producers:
-      - name: "default-producer"
-        enabled: true
-        group_name: "lynx-producer-group"
-        max_retries: 3
-        retry_backoff: "100ms"
-        send_timeout: "3s"
-        enable_trace: false
-
-    consumers:
-      - name: "default-consumer"
-        enabled: true
-        group_name: "lynx-consumer-group"
-        consume_model: "CLUSTERING"
-        consume_order: "CONCURRENTLY"
-        max_concurrency: 1
-        pull_batch_size: 32
-        pull_interval: "100ms"
-        topics:
-          - "test-topic"
-        enable_trace: false
+rocketmq:
+  name_server:
+    - "127.0.0.1:9876"
+  producers:
+    - name: "order-producer"
+      enabled: true
+      group_name: "order-producer-group"
+      topics: ["orders"]
+  consumers:
+    - name: "order-consumer"
+      enabled: true
+      group_name: "order-consumer-group"
+      consume_model: "CLUSTERING"
+      consume_order: "CONCURRENTLY"
+      topics: ["orders"]
 ```
 
-`consume_model`：`CLUSTERING`（集群负载均衡）或 `BROADCASTING`（广播）。  
-`consume_order`：`CONCURRENTLY` 或 `ORDERLY`。
+和 RabbitMQ 一样，当前前缀是 `rocketmq`，不是 `lynx.rocketmq`。
 
 ## 如何使用
 
-### 1. 引入依赖
-
-```bash
-go get github.com/go-lynx/lynx-rocketmq
-```
-
-### 2. 从插件管理器获取客户端
-
 ```go
-import (
-    "context"
-    "github.com/go-lynx/lynx/plugin/rocketmq"
-)
-
-client := pluginManager.GetPlugin("rocketmq").(rocketmq.ClientInterface)
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("rocketmq")
+client := plugin.(rocketmq.ClientInterface)
 ```
 
-### 3. 发送消息
+之后再通过 client interface 里已有的命名 producer / consumer API 调用。
 
-```go
-err := client.SendMessage(ctx, "test-topic", []byte("Hello RocketMQ"))
-err = client.SendMessageWith(ctx, "default-producer", "test-topic", []byte("Hello"))
-```
+## 相关页面
 
-### 4. 消费消息
-
-```go
-import "github.com/apache/rocketmq-client-go/v2/primitive"
-
-handler := func(ctx context.Context, msg *primitive.MessageExt) error {
-    log.Printf("Received: %s", string(msg.Body))
-    return nil
-}
-err := client.Subscribe(ctx, []string{"test-topic"}, handler)
-// 指定 consumer 且多 topic
-err = client.SubscribeWith(ctx, "default-consumer", []string{"topic-a", "topic-b"}, handler)
-```
-
-### 5. 健康与指标
-
-```go
-if client.IsProducerReady("default-producer") { /* ... */ }
-if client.IsConsumerReady("default-consumer") { /* ... */ }
-metrics := client.GetMetrics()
-```
-
-## 注意事项
-
-- 多 Topic 订阅时，请确保配置与代码中传入的 `topics` 列表一致，插件会对每个 topic 分别调用 Subscribe。
-- 事务消息需在业务层或扩展插件中自行实现。
-
-## 相关链接
-
-- 仓库：[go-lynx/lynx-rocketmq](https://github.com/go-lynx/lynx-rocketmq)
-- [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- [RabbitMQ](/docs/existing-plugin/rabbitmq)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

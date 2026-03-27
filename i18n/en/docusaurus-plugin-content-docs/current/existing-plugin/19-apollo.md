@@ -5,53 +5,69 @@ title: Apollo Plugin
 
 # Apollo Plugin
 
-The Apollo plugin brings Apollo configuration-center capability into Lynx. It fits systems that want configuration loading, namespace merging, and config-change watching to live inside one startup and runtime model.
+Apollo is implemented as a configuration-center plugin, not just a one-off HTTP client wrapper.
 
-## What it is mainly for
+## Runtime Facts
 
-- loading application configuration from Apollo
-- supporting multi-namespace merge behavior
-- watching configuration changes and exposing them to the runtime
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-apollo` |
+| Config prefix | `lynx.apollo` |
+| Runtime plugin name | `apollo.config.center` |
+| Public APIs | `GetConfigSources()`, `GetConfigValue(namespace, key)`, `GetApolloConfig()`, `GetNamespace()`, `GetMetrics()` |
 
-## Basic configuration
+## What The Code Supports
+
+The plugin loads Apollo config into the Lynx runtime and includes:
+
+- primary namespace plus additional namespaces
+- merge strategy and priority
+- optional local cache
+- config notifications
+- retry and circuit-breaker logic
+- health checks and metrics
+- watcher helpers for config changes
+
+This is why the important integration question is usually "how does Apollo feed runtime config" rather than "how do I call Apollo by hand".
+
+## Configuration
 
 ```yaml
 lynx:
   apollo:
-    app_id: "your-app-id"
+    app_id: "demo-app"
     cluster: "default"
     namespace: "application"
-    meta_server: "http://localhost:8080"
-    token: "your-apollo-token"
+    meta_server: "http://apollo-config:8080"
     enable_cache: true
+    enable_notification: true
     service_config:
       namespace: "application"
       additional_namespaces:
-        - "shared-config"
-        - "feature-flags"
+        - "shared"
       merge_strategy: "override"
 ```
 
-## Usage
+## How To Consume It
 
-Apollo more often participates as a configuration source during startup than as a client your business code constantly manipulates directly.
+Typical runtime lookup:
 
-That means the critical questions are:
+```go
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("apollo.config.center")
+apolloPlugin := plugin.(*apollo.PlugApollo)
 
-- is the config-center entry correct
-- is the namespace merge strategy sane
-- which capabilities are actually safe to update dynamically
+value, err := apolloPlugin.GetConfigValue("application", "feature.flag")
+sources, err := apolloPlugin.GetConfigSources()
+```
 
-If business code truly needs direct config reads, use the plugin API exposed for that purpose.
+## Practical Notes
 
-## Practical guidance
+- Use `GetConfigSources()` when Apollo should feed the application's config loading pipeline.
+- Use `GetConfigValue()` for targeted reads, not as a replacement for a coherent config model.
+- Namespace design is a real architecture decision because merge priority affects runtime behavior.
 
-- separate startup-critical config from large mutable business config
-- keep clear boundaries between shared namespaces and service-private namespaces
-- be cautious with hot updates; not every capability should change dynamically
+## Related Pages
 
-## Related pages
-
-- Repo: [go-lynx/lynx-apollo](https://github.com/go-lynx/lynx-apollo)
 - [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
-- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Etcd](/docs/existing-plugin/etcd)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

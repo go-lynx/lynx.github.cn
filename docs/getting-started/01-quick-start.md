@@ -5,7 +5,7 @@ title: Quick Start
 
 # Quick Start
 
-The goal of this page is not to list every feature. It is to help you get a **running, extensible** Go-Lynx service using the current workflow.
+The goal of this page is not to list every feature. It is to help you get a **running, extensible** Lynx service using the current workflow.
 
 ## Prerequisites
 
@@ -74,9 +74,17 @@ lynx run --watch
 
 That is enough to validate the scaffold and the bootstrap path before you start layering in more capabilities.
 
+If you want to run the generated binary directly, the common bootstrap entry is still:
+
+```bash
+./bin/server -conf ./configs
+```
+
+The point of this step is simple: confirm that `boot.NewApplication(wireApp).Run()` can read bootstrap config and bring the base runtime up before you add more plugins.
+
 ## 4. Understand the generated project
 
-The official template follows a Kratos-style layered structure, adapted for Go-Lynx. The most important parts to understand first are:
+The official template follows a Kratos-style layered structure, adapted for Lynx. The most important parts to understand first are:
 
 - `cmd/`: application entry point
 - `configs/`: local bootstrap configuration
@@ -89,12 +97,38 @@ The important idea is not the folder names by themselves. The important idea is 
 
 ## 5. How plugin integration works
 
-The current Go-Lynx module family already covers services, config, storage, messaging, governance, observability, and distributed capabilities. The common integration path is:
+The current Lynx module family already covers services, config, storage, messaging, governance, observability, and distributed capabilities. The common integration path is:
 
 1. add the plugin module dependency
-2. configure `lynx.<plugin>` in bootstrap/config
-3. import or consume the module as required by that plugin
-4. let the unified runtime initialize and wire it
+2. configure the real prefix used by that plugin
+3. anonymous-import the module if it self-registers through `init()`
+4. let `boot.NewApplication(wireApp).Run()` assemble the unified runtime
+5. obtain the capability through a Getter or the plugin manager
+
+For example, a realistic starter path looks like:
+
+```bash
+go get github.com/go-lynx/lynx-http
+go get github.com/go-lynx/lynx-redis
+```
+
+```yaml
+lynx:
+  http:
+    addr: 0.0.0.0:8000
+  redis:
+    addrs:
+      - 127.0.0.1:6379
+```
+
+```go
+import (
+    _ "github.com/go-lynx/lynx-http"
+    _ "github.com/go-lynx/lynx-redis"
+)
+```
+
+That is the actual runtime path. Config alone is not enough, and import alone is not enough.
 
 Official modules currently include:
 
@@ -104,6 +138,14 @@ Official modules currently include:
 - Distributed capabilities: Seata, DTM, Redis Lock, Etcd Lock, Eon ID
 
 Each plugin page explains its own configuration, getters, usage pattern, and caveats.
+
+If you are choosing modules for the first time, the safest order is:
+
+1. HTTP or gRPC
+2. one datastore such as Redis or MongoDB
+3. one observability or governance module such as Tracer or Polaris
+
+That keeps startup troubleshooting manageable.
 
 ## 6. Recommended next steps
 

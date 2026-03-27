@@ -5,15 +5,25 @@ title: Elasticsearch Plugin
 
 # Elasticsearch Plugin
 
-The Elasticsearch plugin brings search capability into the Lynx runtime. Its job is to handle client initialization, connection parameters, health state, and a stable integration entry. It does not try to own your query DSL or index design.
+`lynx-elasticsearch` integrates the official Elasticsearch client into Lynx runtime startup. Its role is to own client initialization, connection policy, metrics and health settings, and index-prefix handling, while leaving your query DSL and index mapping design in application code.
 
-## What it is for
+## Runtime facts
 
-- managing Elasticsearch client connectivity
-- providing one client entry for search, indexing, and aggregation workflows
-- centralizing retry, timeout, health, and metrics behavior
+| Item | Value |
+| --- | --- |
+| Go module | `github.com/go-lynx/lynx-elasticsearch` |
+| Config prefix | `lynx.elasticsearch` |
+| Runtime plugin name | `elasticsearch.client` |
+| Main getters | `GetElasticsearch()`, `GetElasticsearchPlugin()`, `GetIndexName(name)` |
 
-## Basic configuration
+## What the implementation actually provides
+
+- initializes the Elasticsearch client from `lynx.elasticsearch`
+- supports multiple node addresses, auth fields, retries, timeouts, health checks, and metrics
+- exposes the raw client through `GetElasticsearch()`
+- exposes plugin-level helpers such as `GetConnectionStats()` and prefixed index name generation
+
+## Configuration
 
 ```yaml
 lynx:
@@ -23,31 +33,34 @@ lynx:
       - "http://localhost:9201"
     username: "elastic"
     password: "changeme"
-    max_retries: 3
     connect_timeout: "30s"
+    max_retries: 3
     enable_metrics: true
     enable_health_check: true
+    health_check_interval: "30s"
     index_prefix: "myapp"
 ```
 
-## Basic usage
+## Usage
 
 ```go
-import (
-    elasticsearch "github.com/go-lynx/lynx-elasticsearch"
-)
+import elasticsearch "github.com/go-lynx/lynx-elasticsearch"
 
 client := elasticsearch.GetElasticsearch()
+plugin := elasticsearch.GetElasticsearchPlugin()
 indexName := elasticsearch.GetIndexName("documents")
-```
+stats := plugin.GetConnectionStats()
 
-Once you have the client, index creation, document writes, and searches still use the official Elasticsearch client APIs.
+_ = client
+_ = indexName
+_ = stats
+```
 
 ## Practical guidance
 
-- configure multiple `addresses` for multi-node clusters
-- use `index_prefix` when environments or apps share one cluster
-- keep query models and index structure in the application layer instead of forcing them into plugin config
+- use `index_prefix` when multiple apps or environments share one cluster
+- keep schema, aliases, and query composition in your own service layer, not in plugin config
+- if you need runtime introspection, prefer `GetConnectionStats()` over inventing ad hoc health probes
 
 ## Related pages
 

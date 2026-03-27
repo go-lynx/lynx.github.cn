@@ -11,7 +11,7 @@ tags: [release, v1.2.3, production-ready, microservices]
 **版本类型**: 生产就绪版本  
 **生产可信度**: 95%
 
-我们很高兴地宣布 **Lynx Framework v1.2.3** 的正式发布，这标志着我们**首个生产就绪版本**的重要里程碑。此版本带来了企业级稳定性、全面的监控能力和完整的插件生态系统，完全可用于生产环境部署。
+我们很高兴地宣布 **Lynx Framework v1.2.3** 正式发布。这是我们迈向**首个生产就绪版本**的重要里程碑。这个版本带来了企业级稳定性、更完整的监控能力，以及可直接用于生产环境部署的插件生态。
 
 <!--truncate-->
 
@@ -30,7 +30,7 @@ tags: [release, v1.2.3, production-ready, microservices]
 - **PostgreSQL** - 高级功能包括JSONB支持和监听/通知
 - **SQL Server** - 企业级身份验证和批量操作支持
 
-#### NoSQL插件
+#### NoSQL 插件
 - **Redis** - 集群支持、流水线、162K+操作/秒性能
 - **MongoDB** - 变更流、聚合管道、GridFS支持
 - **Elasticsearch** - 全文搜索、聚合、批量索引
@@ -43,8 +43,8 @@ tags: [release, v1.2.3, production-ready, microservices]
 
 #### 服务治理
 - **Polaris** - 服务发现、熔断、限流
-- **HTTP服务** - RESTful API与中间件链
-- **gRPC服务** - 流式处理、拦截器、服务反射
+- **HTTP 服务** - RESTful API 与中间件链
+- **gRPC 服务** - 流式处理、拦截器、服务反射
 
 #### 分布式事务
 - **Seata** - 支持AT/TCC/SAGA/XA模式
@@ -56,13 +56,13 @@ tags: [release, v1.2.3, production-ready, microservices]
 
 ## 企业级监控与可观测性
 
-### Prometheus指标
-- **52+个Lynx特定指标**，标准化命名（`lynx_`前缀）
+### Prometheus 指标
+- **52+ 个 Lynx 专属指标**，采用标准化命名（`lynx_` 前缀）
 - 按插件的性能指标（延迟、吞吐量、错误）
 - 资源利用率跟踪
 - 业务指标支持
 
-### Grafana仪表板
+### Grafana 仪表板
 - **多面板仪表板**，每个插件专用视图
 - 实时性能监控
 - 可配置阈值的告警就绪
@@ -70,7 +70,7 @@ tags: [release, v1.2.3, production-ready, microservices]
 
 ## 开发者体验改进
 
-### 增强的CLI工具（`lynx`）
+### 增强的 CLI 工具（`lynx`）
 ```bash
 # 使用最佳实践创建新项目
 lynx new my-service
@@ -86,7 +86,7 @@ lynx plugin create my-plugin
 ```
 
 ### 改进的文档
-- 15,000+行全面文档
+- 15,000+ 行完整文档
 - 生产部署指南
 - 性能调优建议
 - 安全最佳实践
@@ -95,27 +95,27 @@ lynx plugin create my-plugin
 
 | 组件 | 性能 | 改进 |
 |------|------|------|
-| Redis操作 | 162,113 ops/sec | +15% |
-| RabbitMQ吞吐量 | 175,184 msg/sec | +20% |
-| Kafka吞吐量 | 30,599 msg/sec | +10% |
-| HTTP路由 | 1.2M req/sec | +25% |
+| Redis 操作 | 162,113 ops/sec | +15% |
+| RabbitMQ 吞吐量 | 175,184 msg/sec | +20% |
+| Kafka 吞吐量 | 30,599 msg/sec | +10% |
+| HTTP 路由 | 1.2M req/sec | +25% |
 | 事件总线 | 1M+ events/sec | +30% |
 
 ## 迁移指南
 
-### 从v1.2.x到v1.2.3
+### 从 v1.2.x 到 v1.2.3
 无破坏性更改，支持直接升级：
 
 ```bash
 go get -u github.com/go-lynx/lynx@v1.2.3
 ```
 
-### 从v1.1.x到v1.2.3
+### 从 v1.1.x 到 v1.2.3
 需要少量配置更新。详细信息请参考官方文档。
 
 ## 安装
 
-### 使用Go模块
+### 使用 Go 模块
 ```bash
 go get github.com/go-lynx/lynx@v1.2.3
 ```
@@ -125,7 +125,7 @@ go get github.com/go-lynx/lynx@v1.2.3
 docker pull golynx/lynx:v1.2.3
 ```
 
-### 安装CLI工具
+### 安装 CLI 工具
 ```bash
 go install github.com/go-lynx/lynx/cmd/lynx@v1.2.3
 ```
@@ -143,10 +143,10 @@ import (
 )
 
 func main() {
-    // 初始化Lynx应用
+    // 初始化 Lynx 应用
     lynxApp := app.NewLynx()
     
-    // 使用配置启动
+    // 使用配置进行引导
     boot.Bootstrap(lynxApp, "config.yaml")
     
     // 启动应用
@@ -154,20 +154,20 @@ func main() {
 }
 ```
 
-## 下一步计划（v1.3.0路线图）
+## 下一步计划（v1.3.0 路线图）
 
 - [ ] 原生Kubernetes Operator
-- [ ] GraphQL插件
-- [ ] WebSocket支持与扩展
+- [ ] GraphQL 插件
+- [ ] WebSocket 支持与扩展
 - [ ] 增强的分布式事务支持
 - [ ] 多区域部署模板
-- [ ] AI驱动的性能优化
+- [ ] AI 驱动的性能优化
 
 ---
 
-**感谢您选择Lynx Framework！**
+**感谢您选择 Lynx Framework！**
 
-我们致力于为Go生态系统提供生产就绪、高性能的微服务框架。欢迎您的反馈和贡献！
+我们致力于为 Go 生态系统提供生产就绪、高性能的微服务框架。欢迎反馈和贡献。
 
 获取生产支持，请联系：support@lynx.dev
 

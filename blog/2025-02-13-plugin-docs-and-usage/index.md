@@ -9,7 +9,7 @@ tags: [docs, plugins, guide, elasticsearch, rabbitmq, rocketmq, pulsar, apollo, 
 
 **发布日期**: 2025年2月13日
 
-本站对 Go-Lynx 的**插件文档**做了一轮补充与整理：新增十余个插件的独立说明页，并增加了统一的**插件使用指南**，方便你从配置到上手指南一站查全。
+本站对 Go-Lynx 的**插件文档**做了一轮补充与整理：新增十余个插件的独立说明页，并补上统一的**插件使用指南**，方便你从配置入口一路查到接入方式。
 
 <!--truncate-->
 
@@ -17,28 +17,28 @@ tags: [docs, plugins, guide, elasticsearch, rabbitmq, rocketmq, pulsar, apollo, 
 
 ### 新增插件文档页
 
-以下插件此前仅在 [插件生态](/docs/existing-plugin/plugin-ecosystem) 中提供 GitHub 链接，现已在本站拥有独立文档，包含**配置说明**与**如何使用**：
+以下插件此前仅在 [插件生态](/docs/existing-plugin/plugin-ecosystem) 中提供 GitHub 链接，现已在本站拥有独立文档，重点覆盖**配置说明**与**接入方式**：
 
 - **[Elasticsearch](/docs/existing-plugin/elasticsearch)** — 全文检索、索引与聚合，健康检查与指标
 - **[RabbitMQ](/docs/existing-plugin/rabbitmq)** — 多实例生产者/消费者、Exchange 类型与健康指标
 - **[RocketMQ](/docs/existing-plugin/rocketmq)** — 集群/广播消费、多 Topic 订阅与健康检查
 - **[Pulsar](/docs/existing-plugin/pulsar)** — 生产/消费、批处理、Schema、多租户与 TLS
-- **[Apollo](/docs/existing-plugin/apollo)** — 配置中心、多 Namespace、监听与熔断
+- **[Apollo](/docs/existing-plugin/apollo)** — 配置中心、多命名空间、监听与缓存能力
 - **[Etcd](/docs/existing-plugin/etcd)** — 配置中心与服务注册发现
-- **[Redis 分布式锁](/docs/existing-plugin/redis-lock)** — 基于 Redis 的分布式锁、续期与可重入
+- **[Redis 分布式锁](/docs/existing-plugin/redis-lock)** — 基于 Redis 的分布式锁、续约与协调语义
 - **[Etcd 分布式锁](/docs/existing-plugin/etcd-lock)** — 基于 Etcd 的强一致分布式锁
 - **[DTM](/docs/existing-plugin/dtm)** — 分布式事务（SAGA、TCC、XA、二阶段消息）
-- **[Layout](/docs/existing-plugin/layout)** — 官方项目模板与本地无 Polaris 开发
-- **[SQL SDK](/docs/existing-plugin/sql-sdk)** — SQL 公共能力与多数据源
+- **[Layout](/docs/existing-plugin/layout)** — 官方项目模板与本地开发路径
+- **[SQL SDK](/docs/existing-plugin/sql-sdk)** — SQL 公共基础层与扩展入口
 
-上述页面中均包含：**功能概览**、**配置项说明**、**依赖与引入**、**代码示例**（获取客户端、发送/消费、健康与指标）以及**相关链接**。
+上述页面统一围绕：**能力定位**、**基础配置**、**接入方式**、**使用建议**和**相关链接** 来组织，方便先理解插件在 Lynx 运行时中的职责，再决定是否接入。
 
 ### 新增「插件使用指南」
 
-在 [入门](/docs/getting-started/quick-start) 中新增 **[插件使用指南](/docs/getting-started/plugin-usage-guide)**，统一说明：
+在 [快速开始](/docs/getting-started/quick-start) 体系下新增 **[插件使用指南](/docs/getting-started/plugin-usage-guide)**，统一说明：
 
 1. **添加依赖** — 如何通过 `go get` 引入插件
-2. **在配置中声明** — `lynx.<插件名>` 的配置方式与依赖关系
+2. **在配置中声明** — `lynx.<plugin>` 的配置方式与依赖关系
 3. **注册插件** — 匿名导入与启动时加载
 4. **在业务中注入使用** — Getter 与插件管理器的使用方式
 
@@ -46,13 +46,13 @@ tags: [docs, plugins, guide, elasticsearch, rabbitmq, rocketmq, pulsar, apollo, 
 
 ### 插件生态页更新
 
-[插件生态](/docs/existing-plugin/plugin-ecosystem) 中的表格已更新：原先仅链到 GitHub 的插件，现已改为链到本站对应文档，并补充了简短描述，方便在站内完成从选型到配置、使用的闭环。
+[插件生态](/docs/existing-plugin/plugin-ecosystem) 中的表格也已更新：原先只链到 GitHub 的插件，现在都能直接跳到站内文档，并附有简短说明，方便在站内完成从选型到配置、接入的闭环。
 
 ## 如何使用插件（速览）
 
 - 打开 **[插件生态](/docs/existing-plugin/plugin-ecosystem)** 按类别找到目标插件。
-- 阅读该插件的独立文档（配置 + 如何使用）。
-- 若不熟悉通用流程，可先看 **[插件使用指南](/docs/getting-started/plugin-usage-guide)** 中的四步用法与场景速查。
+- 阅读该插件的独立文档（能力定位 + 配置 + 接入方式）。
+- 若不熟悉通用流程，可先看 **[插件使用指南](/docs/getting-started/plugin-usage-guide)** 中的四步接入流程与场景速查。
 
 ## 后续计划
 
@@ -67,4 +67,4 @@ tags: [docs, plugins, guide, elasticsearch, rabbitmq, rocketmq, pulsar, apollo, 
 - **文档首页**: [go-lynx.cn](https://go-lynx.cn)
 - **插件生态**: [插件生态一览](/docs/existing-plugin/plugin-ecosystem)
 - **插件使用指南**: [插件使用指南](/docs/getting-started/plugin-usage-guide)
-- **快速开始**: [Quick Start](/docs/getting-started/quick-start)
+- **快速开始**: [快速开始](/docs/getting-started/quick-start)

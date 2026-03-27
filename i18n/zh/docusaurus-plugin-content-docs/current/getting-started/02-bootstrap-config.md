@@ -5,81 +5,113 @@ title: 引导配置
 
 # 引导配置
 
-在 Go-Lynx 中，应用配置通过 YAML 文件进行插件管理。启动时可通过 `-conf` 指定配置目录（如 `-conf configs`，即包含 YAML 的目录）；未指定时，应用会按项目布局查找默认路径（如 `configs/config.yaml`）。通过 YAML 中的配置项与所用插件对应，框架会在启动时加载相应插件。可使用仅含配置中心信息的精简本地引导，或包含全部插件配置的完整本地 YAML。请记得在代码中导入所需插件的包，以便其向插件管理器注册。
+在 Lynx 里，“引导配置”不是完整业务配置。它是**启动时最先读取的第一层配置**，作用是告诉框架：
 
-除 Polaris 外，也可使用 [Nacos](/docs/existing-plugin/nacos) 作为配置中心：配置 `lynx.nacos` 并在引导中启用 config 即可。
+- 这个应用是谁
+- 哪些本地能力必须优先启动
+- 是否需要配置中心、服务发现后端或面向控制面的模块
+- 剩余配置应该从哪里来
 
-## 本地引导配置文件
+## 引导配置与完整配置
 
-如果您使用了配置中心相关组件，本地引导文件非常简单，只需要几行配置。主要包括远程配置中心的配置信息（以下以Polaris为案例）：
+可以把配置理解为两层：
 
-```yaml
-lynx:
-  application:
-    name: svc-name
-    version: v1.0.0
-  polaris:
-    namespace: svc-namespace
-    token: token
-    weight: 100
-    ttl: 5
-    timeout: 1s
+- **引导配置**：只保留把应用和基础运行时拉起来所需的信息
+- **完整应用配置**：在基础运行时可用之后，再加载或合并的配置
+
+这也是为什么引导配置应该聚焦启动关键项，而不是变成装满所有业务参数的超大配置文件。
+
+## 常见加载方式
+
+在官方模板和常见启动流程里，`-conf` 会指向一个配置文件或配置目录：
+
+```bash
+./your-service -conf ./configs
 ```
 
-## 完整配置
+如果你没有显式指定，应用通常会回退到项目约定的默认配置路径。
 
-go-lynx 的完整配置文件，展示了目前支持所有可用的插件配置。每个配置项对应一个插件。如果配置文件和插件匹配，框架将在启动时自动加载插件：
+在实践里，可以把引导配置理解为：插件管理器开始准备 runtime 插件之前，必须先读到的那一层配置。
+
+## 最小示例
+
+一种当前风格的最小引导配置大致如下：
 
 ```yaml
 lynx:
   application:
-    name: svc-name
-    version: v1.0.0
-    tls:
-      file_name: tls-service.yaml
-      group: svc-group
+    name: user-service
+    version: v0.1.0
   http:
     addr: 0.0.0.0:8000
     timeout: 5s
-    tls: true
-  grpc:
-    addr: 0.0.0.0:9000
-    timeout: 5s
-    tls: true
-  tracer:
-    addr: 127.0.0.1:4317
-    ratio: 1
-  polaris:
-    namespace: svc-namespace
-    token: token
-    weight: 100
-    ttl: 5
-    timeout: 5s
-  db:
-    driver: mysql
-    source: root:123@tcp(127.0.0.1:3306)/demo?parseTime=True
-    min_conn: 50
-    max_conn: 50
-    max_idle_time: 30s
-  redis:
-    addr: 127.0.0.1:6379
-    password: 123456
-    db: 0
-    dial_timeout: 3s
-    read_timeout: 1s
-    write_timeout: 1s
 ```
 
-## 插件注册
+这已经足够让服务在本地先跑起来，后续再逐步增加更多插件。
 
-需要注意的是，要使用某个插件，必须导入相应插件的包到您的项目中。如果你导入了包，则只需编辑配置信息，插件将会自动注册到插件管理器中。如果未导入包，则配置文件将不会有任何作用。
+通常应该放在这里的内容包括：
 
-## 启动加载
+- `lynx.application.name` / `version`
+- `lynx.http`、`lynx.grpc.service` 这类监听地址
+- `lynx.nacos`、`lynx.polaris`、`lynx.apollo`、`lynx.etcd` 这类远程控制面入口信息
+- 当监听器依赖运行时证书加载时，对应的 TLS 来源配置
 
-Go-Lynx 在启动时会优先加载本地引导配置文件，文件地址就是启动时的参数`-conf configs` 命令指定这些文件或目录，加载本地配置之后如果发现其中存在控制平面相关插件，会在控制平面插件初始化完成之后自动进行远程配置文件拉取，拉取的文件默认为 application-name.yaml 其中 application-name 就是启动时指定的应用名称。
+## 配置中心 / 服务发现示例
 
-## 服务治理
+如果你希望配置中心或服务治理模块在启动阶段参与进来，只放必要的接入信息即可，例如：
 
-目前 go-lynx 所实现的控制面相关插件是腾讯 Polaris 服务治理框架，如果您需要使用注册发现，配置管理，以及微服务限流等功能，您需要先部署 Polaris 服务治理框架。
+```yaml
+lynx:
+  application:
+    name: user-service
+    version: v0.1.0
+  polaris:
+    namespace: default
+    token: your-token
+  nacos:
+    server_configs:
+      - ip_addr: 127.0.0.1
+        port: 8848
+```
 
-相关文档：[腾讯北极星官网文档](https://polarismesh.cn/docs)
+具体字段以对应插件文档为准。关键原则是：**只把启动阶段必需的远程入口信息放进引导配置。**
+
+通常**不应该**塞进这里的内容包括：
+
+- 大块业务参数树
+- 应用逻辑级 feature flags
+- 那些即使缺失也不影响进程启动的插件细节调优项
+
+## 只有配置不代表插件就会工作
+
+仅仅写了配置，并不保证插件一定会加载。实际中，一个插件通常至少需要两样东西：
+
+1. 你的项目里有对应的插件模块依赖
+2. 它已经注册进运行时 / 插件工厂
+
+所以：
+
+- **有模块没配置**，通常意味着不会初始化
+- **有配置没模块**，通常意味着不会生效
+
+还有第三种常见失败方式：
+
+- **模块和配置都有，但启动根本没进入 unified runtime 装配阶段**，能力通常一样不可用
+
+## 推荐的组织方式
+
+在当前 Lynx 工作流里，一条比较稳妥的经验是：
+
+- 把应用标识、协议监听、配置中心 / 服务发现入口信息放进引导配置
+- 把更详细的业务向插件参数放到完整配置层
+- 通过独立文件或配置中心数据隔离环境差异，而不是堆成一个巨大的配置文件
+
+一个很实用的规则是：引导配置最好小到让运维或开发一眼就能判断“这次启动为什么应该成功，或者为什么会失败”。
+
+## 下一步
+
+读完这页之后，建议继续看：
+
+- [插件管理](/docs/getting-started/plugin-manager)：理解配置如何变成插件排序和装配
+- [插件使用指南](/docs/getting-started/plugin-usage-guide)：掌握具体插件的一致接入流程
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)：浏览当前模块家族

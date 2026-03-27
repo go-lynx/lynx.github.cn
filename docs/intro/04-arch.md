@@ -5,7 +5,7 @@ title: Lynx Framework Architecture
 
 # Lynx Framework Architecture
 
-This page focuses on how Go-Lynx organizes applications, plugins, and resources **at runtime**.
+This page focuses on how Lynx organizes applications, plugins, and resources **at runtime**.
 
 If the design page answers “why Lynx is shaped this way”, the architecture page answers “what layers exist at runtime, and how those layers cooperate”.
 
@@ -83,6 +83,13 @@ sequenceDiagram
     Service-->>Main: Application enters running state
 ```
 
+In current code terms, this means:
+
+- plugin modules register themselves through `factory.GlobalTypedFactory().RegisterPlugin(...)`
+- `TypedPluginManager` prepares and initializes managed plugin instances
+- plugins implement lifecycle hooks such as `InitializeResources`, `StartupTasks`, and `CleanupTasks`
+- runtime-owned resources are then consumed by service layers or business code
+
 ## Why This Matters For The Plugin Ecosystem
 
 Without this runtime structure, plugins would quickly degrade into a collection of unrelated SDKs. What the Lynx architecture enforces is:
@@ -90,6 +97,8 @@ Without this runtime structure, plugins would quickly degrade into a collection 
 - plugins are initialized with ordering and dependency rules
 - plugins do not each own the entire world; resource boundaries are managed centrally
 - plugins do not need to hard-code direct coupling everywhere; they can collaborate through resource and event models
+
+This is also why some capabilities are exposed as plugin getters, while others are reached through plugin-manager names such as `http.server`, `grpc.service`, `apollo.config.center`, or `sentinel.flow_control`.
 
 That is the architectural basis for a growing official module family.
 

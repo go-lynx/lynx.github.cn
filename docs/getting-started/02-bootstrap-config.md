@@ -5,7 +5,7 @@ title: Bootstrap Configuration
 
 # Bootstrap Configuration
 
-In Go-Lynx, “bootstrap configuration” is not your full business configuration. It is the **first layer of configuration read during startup**. Its job is to tell the framework:
+In Lynx, “bootstrap configuration” is not your full business configuration. It is the **first layer of configuration read during startup**. Its job is to tell the framework:
 
 - who this application is
 - which local capabilities must come up first
@@ -31,6 +31,8 @@ In the official template and common startup flows, `-conf` points to a config fi
 
 If you do not specify it explicitly, the application usually falls back to the project’s conventional config path.
 
+In practice, bootstrap config is the config that must be readable before the plugin manager can prepare runtime plugins.
+
 ## Minimal Example
 
 A current-style minimal bootstrap config can look like this:
@@ -46,6 +48,13 @@ lynx:
 ```
 
 This is enough to start the service locally and add more plugins incrementally afterwards.
+
+Typical fields that belong here:
+
+- `lynx.application.name` / `version`
+- listener addresses such as `lynx.http` or `lynx.grpc.service`
+- remote control-plane entry information such as `lynx.nacos`, `lynx.polaris`, `lynx.apollo`, `lynx.etcd`
+- TLS source configuration when listeners depend on runtime-managed certificates
 
 ## Example With Config Center / Discovery
 
@@ -67,6 +76,12 @@ lynx:
 
 The exact fields depend on the plugin documentation. The key rule is: **only put startup-critical remote entry information in bootstrap config.**
 
+What usually does **not** belong here:
+
+- large business parameter trees
+- detailed feature flags for application logic
+- plugin tuning that is not required to make startup possible
+
 ## Configuration Only Works If The Plugin Exists
 
 Writing configuration alone does not guarantee that a plugin will load. In practice, a plugin usually needs both:
@@ -79,13 +94,19 @@ So:
 - **module without config** usually means no initialization
 - **config without module** usually means no effect
 
+There is also a third failure mode:
+
+- **module and config both exist, but startup never reaches the unified runtime** usually means the capability still will not be available
+
 ## Recommended Organization
 
-In the current Go-Lynx workflow, a good rule of thumb is:
+In the current Lynx workflow, a good rule of thumb is:
 
 - keep application identity, protocol listeners, and config-center/discovery entry info in bootstrap config
 - keep detailed business-facing plugin parameters in the full config layer
 - isolate environment differences through separate files or config-center data instead of one giant config file
+
+One practical rule is to keep bootstrap config small enough that an operator can tell, at a glance, why startup should succeed or fail.
 
 ## Next Steps
 

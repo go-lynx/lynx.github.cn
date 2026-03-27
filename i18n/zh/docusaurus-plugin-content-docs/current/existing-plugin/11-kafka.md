@@ -5,55 +5,73 @@ title: Kafka 插件
 
 # Kafka 插件
 
-Kafka 插件为 Lynx 提供 **Apache Kafka** 集成，包括生产者与消费者，支持批量、重试、SASL/TLS 以及 Prometheus 指标。
+Kafka 模块是一个由 runtime 管理的客户端插件，内部支持命名生产者和命名消费者实例，而不是只有一个全局 producer。
 
-## 功能
+## Runtime 事实
 
-- **生产者/消费者**：完整的生产者和消费者 API。
-- **批量处理**：可配置批量大小与超时，提高吞吐。
-- **重试**：支持指数退避重试。
-- **SASL**：SASL/PLAIN、SASL/SCRAM、SASL/GSSAPI。
-- **TLS**：加密连接。
-- **压缩**：gzip、snappy、lz4、zstd。
-- **死信队列**：内置 DLQ 支持。
-- **指标**：Prometheus 指标与健康检查。
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-kafka` |
+| 配置前缀 | `lynx.kafka` |
+| Runtime 插件名 | `kafka.client` |
+| 主要 API 形态 | 插件实例方法，例如 `ProduceWith`、`ProduceBatchWith`、`SubscribeWith` |
 
-## 配置
+## 代码实际支持什么
 
-在 `lynx.kafka` 下配置示例：
+从实现看，这个插件提供：
+
+- 多个命名 producer
+- 多个命名 consumer
+- 在 `SubscribeWith` 时延迟初始化 consumer
+- 每个 producer 独立的 retry handler
+- 每个 producer 独立的 circuit breaker
+- 可选 SASL 和 TLS
+- producer 批处理
+- 连接管理与健康状态上报
+
+第一个启用的 producer 会成为默认 producer，供未显式指定名称的方法使用。
+
+## 配置形态
 
 ```yaml
 lynx:
   kafka:
     brokers:
-      - "localhost:9092"
-      - "localhost:9093"
-    client_id: "lynx-kafka-client"
-    group_id: "lynx-consumer-group"
+      - "127.0.0.1:9092"
     producers:
-      - name: "default-producer"
+      - name: order-producer
         enabled: true
-        topic: "default-topic"
-        max_retries: 3
-        retry_backoff: "100ms"
-        batch_size: 16384
-        compression: "gzip"
+        topics: ["orders"]
+        batch_size: 1000
     consumers:
-      - name: "default-consumer"
+      - name: order-consumer
         enabled: true
-        topics:
-          - "default-topic"
-        group_id: "lynx-consumer-group"
+        group_id: order-group
+        topics: ["orders"]
+        max_concurrency: 10
 ```
 
-## 使用
+代码里的校验要求必须配置 brokers；如果开启 SASL 或 TLS，对应字段也必须合法；consumer group 配置也会被校验。
 
-配置完成后，在 main 中导入插件，并在 wire 中通过插件提供的 getter（如生产者/消费者管理器）注入。插件会向 Lynx 运行时注册资源，可在业务中注入 Kafka 客户端或消费者/生产者实例。
+## 如何使用
 
-## 安装
+通常通过 runtime 取出插件实例，再调用它的方法：
 
-```bash
-go get github.com/go-lynx/lynx/plugins/kafka
+```go
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("kafka.client")
+kafkaClient := plugin.(*kafka.Client)
+
+err := kafkaClient.ProduceWith(ctx, "order-producer", "orders", key, value)
+err = kafkaClient.SubscribeWith(ctx, "order-consumer", []string{"orders"}, handler)
 ```
 
-完整选项（SASL、TLS、Schema Registry 等）请参阅该插件在 GitHub 上的 README。
+## 实际注意点
+
+- producer 会在插件启动阶段初始化。
+- consumer 不会在启动时全部创建，而是在订阅时初始化。
+- `required_acks`、压缩、重试、批处理和 offset 策略都直接影响语义，不只是吞吐参数。
+
+## 相关页面
+
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)
+- [Tracer](/docs/existing-plugin/tracer)

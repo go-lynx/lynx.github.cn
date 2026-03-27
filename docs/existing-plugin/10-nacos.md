@@ -5,23 +5,37 @@ title: Nacos Plugin
 
 # Nacos Plugin
 
-The Nacos plugin brings service registry/discovery and configuration-center capability into Lynx. It fits systems that already use Nacos for naming or configuration and want both capabilities to enter one framework startup path.
+The Nacos module is implemented as a control-plane plugin that can provide naming, discovery, and config-center behavior inside one runtime.
 
-## What it is mainly for
+## Runtime Facts
 
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-nacos` |
+| Config prefix | `lynx.nacos` |
+| Runtime plugin name | `nacos.control.plane` |
+| Public API shape | plugin-manager lookup plus methods such as `GetConfig(...)`, `GetConfigSources()`, `GetNamespace()` |
+
+## What The Implementation Provides
+
+The code supports:
+
+- optional naming client
+- optional config client
 - service registration and discovery
-- configuration loading and watch behavior
-- configuration integration across namespaces, groups, and data IDs
+- config loading from `dataId` and `group`
+- config watchers
+- retry, metrics, and circuit breaker helpers
 
-## Basic configuration
+That is why Nacos belongs in the control-plane category, not in a narrow "config only" or "registry only" category.
+
+## Configuration
 
 ```yaml
 lynx:
   nacos:
     server_addresses: "127.0.0.1:8848"
     namespace: "public"
-    username: "nacos"
-    password: "nacos"
     enable_register: true
     enable_discovery: true
     enable_config: true
@@ -31,33 +45,20 @@ lynx:
       cluster: "DEFAULT"
 ```
 
-## Usage
-
-Anonymous-import the plugin in `main`, then let the application startup flow assemble it:
+## How To Consume It
 
 ```go
-import (
-    "github.com/go-lynx/lynx/boot"
-    _ "github.com/go-lynx/lynx/plugin/nacos"
-)
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("nacos.control.plane")
+nacosPlugin := plugin.(*nacos.PlugNacos)
 
-func main() {
-    if err := boot.NewApplication(wireApp).Run(); err != nil {
-        panic(err)
-    }
-}
+sources, err := nacosPlugin.GetConfigSources()
+source, err := nacosPlugin.GetConfig("app.yaml", "DEFAULT_GROUP")
 ```
 
-When `enable_config` is `true`, Nacos can also participate in main configuration loading. When `enable_register` and `enable_discovery` are enabled, registry and discovery behavior join the runtime as well.
+The old import examples using `github.com/go-lynx/lynx/plugin/nacos` are outdated for the current repository layout.
 
-## Practical guidance
-
-- decide early whether config-center and registry behavior should share the same namespace boundary
-- distinguish carefully which dynamic config changes are actually safe to apply at runtime
-- if your system already has another mature control plane, keep Nacos responsibilities clearly bounded
-
-## Related pages
+## Related Pages
 
 - [Apollo](/docs/existing-plugin/apollo)
 - [Etcd](/docs/existing-plugin/etcd)
-- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

@@ -1,91 +1,58 @@
 ---
 id: etcd-lock
-title: Etcd 分布式锁 Plugin
+title: Etcd Lock 插件
 ---
 
-# Etcd 分布式锁 Plugin
+# Etcd Lock 插件
 
-Go-Lynx 的 Etcd 分布式锁插件基于 etcd 实现强一致分布式锁，支持自动续期、重试与优雅关闭。依赖 [Etcd Plugin](/docs/existing-plugin/etcd) 提供连接。
+Etcd Lock 插件是一层构建在 Etcd 插件客户端资源之上的分布式锁能力，它不是一个独立的存储连接器。
 
-## 功能概览
+## Runtime 事实
 
-- **强一致**：基于 etcd 的分布式锁
-- **自动续期**：可选续期，避免长任务超时
-- **重试策略**：可配置重试次数与间隔
-- **健康与指标**：健康检查与 Prometheus 指标
-- **优雅关闭**：关闭时正确释放资源
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-etcd-lock` |
+| 配置前缀 | `lynx.etcd-lock` |
+| Runtime 插件名 | `etcd.distributed.lock` |
+| 依赖 | runtime 资源 `etcd.config.center` |
+| 公开 API | `Lock`、`LockWithOptions`、`LockWithRetry`、`NewLockFromClient`、`GetStats()` |
 
-## 前置条件
+## 实现里提供了什么
 
-需先配置并加载 [Etcd Plugin](/docs/existing-plugin/etcd)，在 `lynx.etcd` 中配置好 `endpoints` 等。etcd-lock 的锁参数主要通过代码选项设置。
+从代码看，这个插件会：
 
-## 如何使用
+- 在初始化阶段从 Etcd 插件解析出 Etcd Client
+- 暴露自动加锁与自动释放的 helper API
+- 支持 retry strategy 与 operation timeout
+- 支持长时间持锁下的自动续租
+- 维护全局 lock manager 统计
 
-### 1. 引入依赖
+所以它的 API 是明显面向业务调用的，你不必每次都直接操作原始 Etcd lease。
 
-```bash
-go get github.com/go-lynx/lynx-etcd-lock
-```
-
-### 2. 简单加锁执行
-
-```go
-import (
-    "context"
-    "time"
-    "github.com/go-lynx/lynx/plugin/etcd-lock"
-)
-
-err := etcdlock.Lock(ctx, "my-lock-key", 30*time.Second, func() error {
-    // 需要加锁的业务逻辑
-    return nil
-})
-if err != nil {
-    log.Printf("lock failed: %v", err)
-}
-```
-
-### 3. 使用选项（续期、重试）
+## 使用模式
 
 ```go
-options := etcdlock.LockOptions{
-    Expiration:     30 * time.Second,
-    RenewalEnabled: true,
-    RetryStrategy: etcdlock.RetryStrategy{
-        MaxRetries: 3,
-        RetryDelay: 100 * time.Millisecond,
-    },
-}
-err := etcdlock.LockWithOptions(ctx, "my-lock-key", options, func() error {
-    return nil
+err := etcdlock.Lock(ctx, "order:123", 15*time.Second, func() error {
+    return doBusinessWork()
 })
 ```
 
-### 4. 带重试策略的加锁
+需要更强控制时：
 
 ```go
-strategy := etcdlock.RetryStrategy{MaxRetries: 5, RetryDelay: 200 * time.Millisecond}
-err := etcdlock.LockWithRetry(ctx, "my-lock-key", 20*time.Second, fn, strategy)
+opts := etcdlock.DefaultLockOptions
+opts.RenewalEnabled = true
+opts.RetryStrategy.MaxRetries = 3
+
+err := etcdlock.LockWithOptions(ctx, "order:123", opts, fn)
 ```
 
-### 5. 可复用的锁实例
+## 重要约束
 
-```go
-lock, err := etcdlock.NewLockFromClient(ctx, "my-lock-key", options)
-if err != nil {
-    return err
-}
-// 随后可多次 Acquire/Release（具体 API 以仓库为准）
-```
+如果 `etcd.config.center` 没有先加载，这个插件会初始化失败，因为它必须从该 runtime 资源里取共享的 Etcd Client。
 
-## API 摘要
+## 相关页面
 
-- `Lock(ctx, key, expiration, fn)`：加锁后执行回调，结束后自动释放。
-- `LockWithOptions(ctx, key, options, fn)`：带完整选项的加锁执行。
-- `LockWithRetry(ctx, key, expiration, fn, strategy)`：带重试策略的加锁执行。
-- `NewLockFromClient(ctx, key, options)`：创建可复用的锁实例。
-
-## 相关链接
-
-- 仓库：[go-lynx/lynx-etcd-lock](https://github.com/go-lynx/lynx-etcd-lock)
-- [Etcd Plugin](/docs/existing-plugin/etcd) | [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- [Etcd](/docs/existing-plugin/etcd)
+- [Redis Lock](/docs/existing-plugin/redis-lock)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

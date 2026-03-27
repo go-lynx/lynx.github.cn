@@ -1,108 +1,73 @@
 ---
 id: apollo
-title: Apollo Plugin
+title: Apollo 插件
 ---
 
-# Apollo Plugin
+# Apollo 插件
 
-Go-Lynx 的 Apollo 插件用于对接 Apollo 配置中心，支持动态配置拉取、多 Namespace、本地缓存、配置变更监听与健康检查、指标和熔断。
+Apollo 在 Lynx 里是一个配置中心插件，而不是简单的 HTTP Client 包装层。
 
-## 功能概览
+## Runtime 事实
 
-- **配置管理**：从 Apollo 拉取并合并配置
-- **多 Namespace**：支持多个命名空间
-- **配置监听**：实时监听配置变更
-- **本地缓存**：可选缓存减少网络请求
-- **健康与指标**：健康检查与 Prometheus 指标
-- **熔断与重试**：可配置重试与熔断
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-apollo` |
+| 配置前缀 | `lynx.apollo` |
+| Runtime 插件名 | `apollo.config.center` |
+| 公开 API | `GetConfigSources()`、`GetConfigValue(namespace, key)`、`GetApolloConfig()`、`GetNamespace()`、`GetMetrics()` |
 
-## 配置说明
+## 代码支持的能力
 
-在 `config.yaml` 中增加 `lynx.apollo`：
+插件会把 Apollo 配置接入 Lynx runtime，并支持：
+
+- 主命名空间和附加命名空间
+- merge strategy 与 priority
+- 可选本地缓存
+- 配置变更通知
+- retry 和 circuit breaker
+- 健康检查与指标
+- 配置变更 watcher 辅助能力
+
+所以真正重要的问题通常不是“怎么手调 Apollo”，而是“Apollo 怎样进入 runtime 配置模型”。
+
+## 配置
 
 ```yaml
 lynx:
   apollo:
-    app_id: "your-app-id"
+    app_id: "demo-app"
     cluster: "default"
     namespace: "application"
-    meta_server: "http://localhost:8080"
-    token: "your-apollo-token"
-    timeout: "10s"
-    enable_notification: true
-    notification_timeout: "30s"
+    meta_server: "http://apollo-config:8080"
     enable_cache: true
-    cache_dir: "/tmp/apollo-cache"
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: "1s"
-    enable_circuit_breaker: true
-    circuit_breaker_threshold: 0.5
-    enable_graceful_shutdown: true
-    shutdown_timeout: "30s"
+    enable_notification: true
     service_config:
       namespace: "application"
       additional_namespaces:
-        - "shared-config"
-        - "feature-flags"
-      priority: 0
+        - "shared"
       merge_strategy: "override"
 ```
 
 ## 如何使用
 
-### 1. 引入依赖
-
-```bash
-go get github.com/go-lynx/lynx-apollo
-```
-
-### 2. 从插件管理器获取 Apollo 插件
+典型 runtime 访问方式：
 
 ```go
-import (
-    "github.com/go-lynx/lynx/app"
-    "github.com/go-lynx/lynx/plugin/apollo"
-)
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("apollo.config.center")
+apolloPlugin := plugin.(*apollo.PlugApollo)
 
-plugin := app.Lynx().GetPluginManager().GetPlugin("apollo.config.center")
-if plugin != nil {
-    apolloPlugin := plugin.(*apollo.PlugApollo)
-    // 使用插件
-}
+value, err := apolloPlugin.GetConfigValue("application", "feature.flag")
+sources, err := apolloPlugin.GetConfigSources()
 ```
 
-### 3. 读取配置
+## 实际注意点
 
-```go
-value, err := apolloPlugin.GetConfigValue("application", "config.key")
-if err != nil {
-    log.Errorf("get config failed: %v", err)
-}
-```
+- 当 Apollo 需要参与应用配置加载链路时，用 `GetConfigSources()`。
+- 当你只想按需读取单个配置项时，用 `GetConfigValue()`。
+- 命名空间划分是真正的架构设计问题，因为 merge priority 会直接影响 runtime 行为。
 
-### 4. 监听配置变更
+## 相关页面
 
-```go
-watcher, err := apolloPlugin.WatchConfig("application")
-if err != nil {
-    log.Errorf("watch config failed: %v", err)
-    return
-}
-watcher.SetOnConfigChanged(func(namespace, key, value string) {
-    log.Infof("Config changed - Namespace: %s, Key: %s, Value: %s", namespace, key, value)
-})
-watcher.SetOnError(func(err error) {
-    log.Errorf("watch error: %v", err)
-})
-watcher.Start()
-defer watcher.Stop()
-```
-
-当配置了 `service_config.additional_namespaces` 时，框架会按多配置源方式加载并合并这些命名空间。
-
-## 相关链接
-
-- 仓库：[go-lynx/lynx-apollo](https://github.com/go-lynx/lynx-apollo)
-- [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- [引导配置](/docs/getting-started/bootstrap-config)
+- [Etcd](/docs/existing-plugin/etcd)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

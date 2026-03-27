@@ -5,48 +5,87 @@ title: Sentinel Plugin
 
 # Sentinel Plugin
 
-The Sentinel plugin brings flow control, circuit breaking, and system protection into Lynx. It fits services that already have clear resource boundaries and want protection rules to live inside one runtime configuration path.
+`lynx-sentinel` brings flow control, circuit breaking, system protection, and built-in metrics into Lynx. The implementation is much richer than the old introductory doc: besides loading static rules, it exposes convenience APIs for guarded execution, dynamic rule updates, middleware/interceptor creation, and dashboard access.
 
-## What it is mainly for
+## Runtime facts
 
-- rate limiting
-- circuit breaking and degradation
-- system-load protection
-- unified rule and metrics integration
+| Item | Value |
+| --- | --- |
+| Go module | `github.com/go-lynx/lynx-sentinel` |
+| Config prefix | `lynx.sentinel` |
+| Runtime plugin name | `sentinel.flow_control` |
+| Main getters | `GetSentinel()`, `GetMetrics()`, `GetDashboardURL()` |
 
-## Basic configuration
+## What the implementation actually provides
+
+- loads flow rules, circuit breaker rules, system rules, metrics, and dashboard configuration from `lynx.sentinel`
+- exposes convenience APIs such as `Entry`, `EntryWithContext`, `Execute`, `ExecuteWithContext`, and `CheckFlow`
+- supports runtime rule management through `AddFlowRule`, `RemoveFlowRule`, `AddCircuitBreakerRule`, `RemoveCircuitBreakerRule`, and `ReloadRules`
+- exposes monitoring helpers including `GetMetrics`, `GetResourceStats`, `GetAllResourceStats`, and `GetCircuitBreakerState`
+- can create framework-facing guards through `CreateHTTPMiddleware()` and `CreateGRPCInterceptor()`
+
+## Configuration
 
 ```yaml
 lynx:
   sentinel:
     enabled: true
-    app_name: "my-app"
+    app_name: "user-service"
     log_level: "info"
     log_dir: "./logs/sentinel"
     flow_rules:
       - resource: "/api/users"
         threshold: 100
+        token_calculate_strategy: "direct"
+        control_behavior: "reject"
         enabled: true
     circuit_breaker_rules:
       - resource: "/api/orders"
         strategy: "error_ratio"
         threshold: 0.5
+        min_request_amount: 10
+        retry_timeout_ms: 5000
         enabled: true
+    system_rules:
+      - metric_type: "load"
+        threshold: 2.0
+        strategy: "bbr"
+        enabled: true
+    metrics:
+      enabled: true
+      interval: "1s"
+    dashboard:
+      enabled: true
+      port: 8719
 ```
 
-## How to read these rules
+## Usage
 
-- `resource` is the business boundary you actually want to protect
-- `flow_rules` are for rate limiting
-- `circuit_breaker_rules` are for degradation based on error ratio, slow calls, and similar signals
+```go
+import sentinel "github.com/go-lynx/lynx-sentinel"
 
-If resource boundaries are poorly defined, even complex rules will not protect the system effectively.
+func guarded() error {
+    return sentinel.Execute("create-user", func() error {
+        return doBusiness()
+    })
+}
+```
+
+HTTP middleware and gRPC interceptor are also first-class APIs:
+
+```go
+middleware, err := sentinel.CreateHTTPMiddleware(func(req interface{}) string {
+    return req.(*http.Request).URL.Path
+})
+
+interceptor, err := sentinel.CreateGRPCInterceptor()
+```
 
 ## Practical guidance
 
-- define resource boundaries before tuning thresholds
-- do not treat Sentinel as a patch for poor capacity design; it protects, but it does not replace architecture work
-- rule changes should be coordinated with business owners, or you may end up with correct protection logic but confusing product behavior
+- define stable resource names first, otherwise rule tuning becomes noise
+- use dynamic rule APIs only if your team has clear ownership over protection policy changes
+- if you enable the dashboard, treat it as an operational endpoint rather than a public feature
 
 ## Related pages
 

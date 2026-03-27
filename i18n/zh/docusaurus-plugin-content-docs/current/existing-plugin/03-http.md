@@ -5,38 +5,72 @@ title: HTTP 服务
 
 # HTTP 服务
 
-Go-Lynx 的 HTTP 插件为应用提供 **HTTP 服务端**。在 YAML 中配置监听地址、超时与 TLS 后，框架会在启动时初始化服务端；你只需将 HTTP 处理逻辑（如 Kratos HTTP 服务）注册到该服务端上，即可完成路由与业务的绑定。底层实现基于 Kratos HTTP 模块。
+HTTP 插件是 Lynx 持有的 runtime 级 HTTP 服务端，不是一个单纯帮你注册路由的轻量 helper。
 
-## 服务端配置
+## Runtime 事实
 
-在配置文件中增加 `lynx.http` 段，例如：
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-http` |
+| 配置前缀 | `lynx.http` |
+| Runtime 插件名 | `http.server` |
+| 公开 Getter | `http.GetHttpServer()` |
+
+## 实现里真正提供了什么
+
+插件会构建并持有一个 Kratos HTTP Server，同时把一整套运维行为包进来：
+
+- 配置加载与校验
+- 网络类型和监听地址初始化
+- 可选 TLS 集成
+- 指标采集
+- 限流与并发控制
+- 熔断支持
+- 优雅停机
+
+业务应用仍然负责注册路由和 handler，但服务端生命周期归 Lynx runtime 管。
+
+## 最小配置
 
 ```yaml
 lynx:
   http:
-    addr: 0.0.0.0:8000
-    timeout: 5s
-    tls: true
+    network: tcp
+    addr: ":8080"
+    timeout: 10s
+    tls_enable: false
 ```
 
-`lynx.http` 为 HTTP 服务端配置（地址、超时、TLS 等）。配置完成后，应用启动时会按插件顺序加载 HTTP 插件。
+代码里会对缺省字段补默认值，但 `lynx.http` 依然是服务端行为的唯一配置入口。
+
+## 如何使用
 
 ```go
 import (
-  bh "github.com/go-lynx/lynx/plugin/http"
+    lynxhttp "github.com/go-lynx/lynx-http"
+    kratoshttp "github.com/go-kratos/kratos/v2/transport/http"
 )
 
-func NewHTTPServer(
-login *service.LoginService,
-register *service.RegisterService,
-account *service.AccountService
-) *http.Server {
-    h := bh.GetServer()
-    loginV1.RegisterLoginHTTPServer(h, login)
-    registerV1.RegisterRegisterHTTPServer(h, register)
-    accountV1.RegisterAccountHTTPServer(h, account)
-return h
+func NewHTTPServer(login *service.LoginService) (*kratoshttp.Server, error) {
+    srv, err := lynxhttp.GetHttpServer()
+    if err != nil {
+        return nil, err
+    }
+    v1.RegisterLoginHTTPServer(srv, login)
+    return srv, nil
 }
 ```
 
-插件加载后，通过 `bh.GetServer()` 获取服务端实例，将你的 HTTP 服务模块（如 `RegisterLoginHTTPServer`、`RegisterRegisterHTTPServer`）注册上去，即可完成路由与处理函数的绑定。其他服务与插件说明见 [插件生态](/docs/existing-plugin/plugin-ecosystem)。
+重点是获取 runtime 已经持有的 server，而不是在 Lynx 旁边再起一个新的 HTTP server。
+
+## 接入说明
+
+- 插件通过包级 `init()` 完成注册，因此导入 `github.com/go-lynx/lynx-http` 才会被发现。
+- 如果同时使用 Swagger，且未显式设置 `api_server`，Swagger 插件会读取 HTTP 地址。
+- 如果 TLS 由框架统一管理，应配合 [TLS Manager](/docs/existing-plugin/tls-manager) 理解，而不是在业务里重复拼证书逻辑。
+
+## 相关页面
+
+- [gRPC](/docs/existing-plugin/grpc)
+- [TLS Manager](/docs/existing-plugin/tls-manager)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

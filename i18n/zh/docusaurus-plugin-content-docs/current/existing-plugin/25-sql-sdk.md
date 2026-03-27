@@ -1,101 +1,62 @@
 ---
 id: sql-sdk
-title: SQL SDK / 多数据源 Plugin
+title: SQL SDK
 ---
 
-# SQL SDK / 多数据源 Plugin
+# SQL SDK
 
-Go-Lynx 的 SQL Base/SQL SDK 为 MySQL、PostgreSQL、MSSQL 等 SQL 插件提供**公共能力**：健康检查、Prometheus 指标、连接池与错误分类，并支持多数据源与自定义指标。
+`lynx-sql-sdk` 是 MySQL、PostgreSQL、MSSQL 等具体 SQL 插件共用的底层能力层，它本身不是 `plugins.json` 里的独立插件条目。
 
-## 功能概览
+## 它本质上是什么
 
-- **健康检查**：连接与查询健康、连接池状态
-- **指标**：Prometheus 指标（连接数、查询耗时、错误分类）
-- **连接管理**：统一连接池与超时配置
-- **错误分类**：连接失败、超时、约束冲突等标准化分类
-- **多数据源**：为不同 SQL 插件提供统一基座
+这个 SDK 提供：
 
-## 与具体数据库插件的关系
+- 共享的 `interfaces.SQLPlugin` 契约
+- 稳定的 `DBProvider` 抽象
+- SQL 插件通用配置字段
+- 可复用的 `base.SQLPlugin` 基类实现
 
-- 引入任一 SQL 插件（如 MySQL、PostgreSQL、MSSQL）时会自动带入 SQL Base 能力。
-- 无需单独 “安装” SQL SDK；它是 MySQL/PGSQL/MSSQL 插件的共同依赖与行为基础。
+具体 SQL 插件会嵌入这层基础能力，再补上各自 driver 的差异化逻辑。
 
-## 配置说明
+## 共享的 Runtime 能力
 
-在 `config.yaml` 中可通过 `lynx.sql` 配置公共项（具体键名以各 SQL 插件为准）：
+从基类实现来看，具体 SQL 插件会继承这些行为：
 
-```yaml
-lynx:
-  sql:
-    health_check:
-      enabled: true
-      interval: "30s"
-      timeout: "5s"
-    metrics:
-      enabled: true
-      namespace: "lynx_sql"
-    connection_pool:
-      max_open_conns: 100
-      max_idle_conns: 10
-      conn_max_lifetime: "1h"
-      conn_max_idle_time: "30m"
-```
+- 启动期连接与校验
+- 连接重试
+- 连接池监控与阈值告警
+- 健康检查
+- 自动重连
+- 连接预热
+- 慢查询监控
+- 连接泄漏检测
 
-## 如何使用
+这些都是真实的 runtime 行为，不只是若干辅助类型定义。
 
-### 1. 通过具体 SQL 插件间接使用
+## 关键接口
 
-```go
-import _ "github.com/go-lynx/lynx/plugin/sql/mysql"
-// 或
-import _ "github.com/go-lynx/lynx/plugin/sql/pgsql"
-import _ "github.com/go-lynx/lynx/plugin/sql/mssql"
-```
+`interfaces.SQLPlugin` 是插件化 SQL 访问的核心契约：
 
-业务代码主要使用各插件的 `GetDriver()` 或等价 API 获取 `*sql.DB` 或 ORM 所需驱动；健康检查与指标由框架与 SQL Base 在背后统一处理。
+- `GetDB()`
+- `GetDBWithContext(ctx)`
+- `GetValidatedConn(ctx)`
+- `GetDialect()`
+- `IsConnected()`
 
-### 2. 健康检查（若插件暴露 HealthChecker）
+`interfaces.DBProvider` 则是更稳妥的抽象，适合调用方动态解析当前连接池，而不是缓存一个过期的 `*sql.DB`。
 
-```go
-import "github.com/go-lynx/lynx/plugin/sql/base"
+## 什么时候该看这个页面
 
-healthChecker := base.GetHealthChecker()
-health, err := healthChecker.CheckHealth("mysql")
-if err != nil {
-    log.Errorf("health check failed: %v", err)
-    return
-}
-if health.IsHealthy {
-    log.Infof("database healthy: %s", health.Message)
-}
-```
+这个页面主要在以下场景有价值：
 
-### 3. 错误分类与统计（若插件暴露 ErrorHandler）
+- 你在实现或审查具体 SQL 插件
+- 你想理解 MySQL、PostgreSQL、MSSQL 插件到底共享了哪些语义
+- 你需要分析 SQL 栈里的重连与连接池行为
 
-```go
-errorHandler := base.GetErrorHandler()
-err := someDatabaseOperation()
-if err != nil {
-    errorType := errorHandler.CategorizeError(err)
-    errorHandler.RecordError(errorType)
-    // 根据 errorType 做重试或告警
-}
-```
+对于普通业务接入，应该先读具体数据库插件页面。
 
-### 4. 自定义指标（若插件暴露 MetricsCollector）
+## 相关页面
 
-```go
-metrics := base.GetMetricsCollector()
-customCounter := prometheus.NewCounterVec(
-    prometheus.CounterOpts{Name: "custom_sql_operations_total", Help: "..."},
-    []string{"operation", "status"},
-)
-metrics.RegisterCustomMetric("custom_operations", customCounter)
-```
-
-具体 API 以 [go-lynx/lynx-sql-sdk](https://github.com/go-lynx/lynx-sql-sdk) 或主仓库中 SQL 插件实现为准。
-
-## 相关链接
-
-- 仓库：[go-lynx/lynx-sql-sdk](https://github.com/go-lynx/lynx-sql-sdk)
-- [Database Plugin](/docs/existing-plugin/db) | [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- [数据库插件](/docs/existing-plugin/db)
+- [Layout](/docs/existing-plugin/layout)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

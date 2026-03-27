@@ -5,23 +5,37 @@ title: Etcd Plugin
 
 # Etcd Plugin
 
-The Etcd plugin can use Etcd as a Lynx configuration source, and it can also use Etcd as a registry/discovery backend. It fits systems that want direct control over config prefixes, registration paths, and lease behavior.
+The Etcd module is both a config-center plugin and a service registry or discovery backend.
 
-## What it is mainly for
+## Runtime Facts
 
-- bringing Etcd into the startup path as a configuration center
-- providing Etcd-based service registration and discovery
-- watching configuration or instance changes through watch semantics
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-etcd` |
+| Config prefix | `lynx.etcd` |
+| Runtime plugin name | `etcd.config.center` |
+| Public APIs | `GetClient()`, `GetEtcdConfig()`, `GetNamespace()`, `GetConfigSources()`, `GetConfigValue(prefix, key)` |
 
-## Basic configuration
+## What The Implementation Provides
+
+The code supports:
+
+- config loading from an Etcd prefix
+- multiple config prefixes with merge strategy
+- optional local cache
+- retry, graceful shutdown, metrics, and health checks
+- optional service registration
+- optional service discovery and watchers
+
+So this plugin is broader than "read a few keys from Etcd".
+
+## Configuration
 
 ```yaml
 lynx:
   etcd:
     endpoints:
       - "127.0.0.1:2379"
-    timeout: 10s
-    dial_timeout: 5s
     namespace: "lynx/config"
     enable_register: true
     enable_discovery: true
@@ -30,31 +44,31 @@ lynx:
     service_config:
       prefix: "lynx/config"
       additional_prefixes:
-        - "lynx/config/app"
+        - "lynx/config/shared"
       merge_strategy: "override"
 ```
 
-## How to read this kind of config
+## How To Consume It
 
-- `namespace` / `prefix`: the boundary for configuration lookup
-- `registry_namespace`: the path prefix for service instance registration
-- `ttl`: lease-related timing for registration
-- `additional_prefixes`: merge entry points for multiple config sources
+```go
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("etcd.config.center")
+etcdPlugin := plugin.(*etcd.PlugEtcd)
 
-## Typical scenarios
+client := etcdPlugin.GetClient()
+sources, err := etcdPlugin.GetConfigSources()
+value, err := etcdPlugin.GetConfigValue("lynx/config", "my.key")
+```
 
-- you want direct control over config hierarchy and registration paths
-- you need a more explicit watch and lease model
-- your infrastructure stack already uses Etcd broadly
+For service registration and discovery, the module also exposes registrar and discovery implementations such as `NewEtcdRegistrar` and `NewEtcdDiscovery`.
 
-## Practical guidance
+## Practical Notes
 
-- stabilize prefix design early, because migration later is expensive
-- registration paths and service naming should be designed together with governance strategy
-- if all you need is a mature control plane, direct Etcd integration may not always be the best first choice
+- `namespace` and `service_config.prefix` affect configuration lookup, while `registry_namespace` affects service instance paths.
+- Enabling register or discovery changes this plugin from pure config-center usage into control-plane infrastructure.
+- [Etcd Lock](/docs/existing-plugin/etcd-lock) depends on this plugin's runtime resource.
 
-## Related pages
+## Related Pages
 
-- Repo: [go-lynx/lynx-etcd](https://github.com/go-lynx/lynx-etcd)
-- [Nacos](/docs/existing-plugin/nacos)
-- [Polaris](/docs/existing-plugin/polaris)
+- [Apollo](/docs/existing-plugin/apollo)
+- [Etcd Lock](/docs/existing-plugin/etcd-lock)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

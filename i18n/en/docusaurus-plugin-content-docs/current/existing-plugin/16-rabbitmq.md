@@ -5,56 +5,66 @@ title: RabbitMQ Plugin
 
 # RabbitMQ Plugin
 
-The RabbitMQ plugin brings message publishing and consumption into the Lynx runtime. It fits systems that need stable connection ownership, configurable producer/consumer instances, and one lifecycle path for messaging infrastructure.
+The RabbitMQ plugin is a runtime-managed messaging client with named producer and consumer channels.
 
-## What it is for
+## Runtime Facts
 
-- managing RabbitMQ connections and channels
-- configuring multiple producer and consumer instances
-- bringing publish, subscribe, and health behavior into the runtime
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-rabbitmq` |
+| Config prefix | `rabbitmq` |
+| Runtime plugin name | `rabbitmq` |
+| Public API shape | plugin-manager lookup to `rabbitmq` and `rabbitmq.ClientInterface` methods |
 
-## Basic configuration
+## What The Implementation Supports
+
+From the code, the plugin provides:
+
+- one managed AMQP connection
+- named producer channels
+- named consumer channels
+- exchange and queue declaration during startup
+- health checker and connection manager
+- retry handling
+
+This is more specific than "publish and subscribe are available".
+
+## Configuration
 
 ```yaml
-lynx:
-  rabbitmq:
-    urls:
-      - "amqp://guest:guest@localhost:5672/"
-    virtual_host: "/"
-    dial_timeout: "3s"
-    heartbeat: "30s"
-    channel_pool_size: 10
-    producers:
-      - name: "default-producer"
-        enabled: true
-        exchange: "lynx.exchange"
-        exchange_type: "direct"
-        routing_key: "lynx.routing.key"
-    consumers:
-      - name: "default-consumer"
-        enabled: true
-        queue: "lynx.queue"
-        exchange: "lynx.exchange"
-        routing_key: "lynx.routing.key"
+rabbitmq:
+  urls:
+    - "amqp://guest:guest@localhost:5672/"
+  virtual_host: "/"
+  dial_timeout: 3s
+  heartbeat: 30s
+  channel_pool_size: 10
+  producers:
+    - name: "order-producer"
+      enabled: true
+      exchange: "orders.exchange"
+      exchange_type: "direct"
+      routing_key: "orders.create"
+  consumers:
+    - name: "order-consumer"
+      enabled: true
+      queue: "orders.queue"
+      exchange: "orders.exchange"
+      routing_key: "orders.create"
 ```
 
-## Usage
+Note that the current plugin prefix is `rabbitmq`, not `lynx.rabbitmq`.
 
-The common pattern is to let the plugin assemble itself during startup, then obtain the client capability in application code to publish or subscribe.
+## How To Consume It
 
 ```go
-client := pluginManager.GetPlugin("rabbitmq").(rabbitmq.ClientInterface)
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("rabbitmq")
+client := plugin.(rabbitmq.ClientInterface)
 ```
 
-After that, publish with a named producer or register handlers with a named consumer as needed.
+Then use the named producer or consumer APIs exposed by the client interface.
 
-## Practical guidance
+## Related Pages
 
-- treat Exchange, Queue, and Routing Key design as part of your business contract
-- if you have many producers or consumers, split instance names by responsibility instead of forcing everything into one default instance
-- retries, dead-letter handling, and idempotency still need application-level design; do not rely only on plugin defaults
-
-## Related pages
-
-- Repo: [go-lynx/lynx-rabbitmq](https://github.com/go-lynx/lynx-rabbitmq)
+- [RocketMQ](/docs/existing-plugin/rocketmq)
 - [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

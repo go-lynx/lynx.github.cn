@@ -5,17 +5,31 @@ title: Polaris Service Governance
 
 # Polaris Service Governance
 
-The Polaris plugin brings service registration, discovery, and governance into Lynx. It is usually not just one isolated config block. It enters the runtime together with service startup, instance registration, traffic governance, and control-plane-facing behavior.
+The Polaris module is a control-plane plugin that combines service registration, discovery, config access, watch capabilities, and governance features inside one Lynx runtime.
 
-If your service platform already relies on Polaris for registry or governance, this plugin is the standard Lynx integration path into that control plane.
+## Runtime Facts
 
-## What it is mainly for
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-polaris` |
+| Config prefix | `lynx.polaris` |
+| Runtime plugin name | `polaris.control.plane` |
+| Public APIs | `GetPolarisPlugin()`, `GetPolaris()`, `GetServiceInstances()`, `GetConfig(...)`, `WatchService(...)`, `WatchConfig(...)`, `CheckRateLimit(...)`, `GetMetrics()` |
 
-- service instance registration and discovery
-- governance features such as routing, rate limiting, and circuit breaking
-- connecting service metadata to the runtime startup flow
+## What The Implementation Provides
 
-## Basic configuration
+From the code, Polaris supports:
+
+- service registration and discovery
+- config loading and config-source integration
+- service watchers and config watchers
+- rate-limit checks
+- load-balancing and routing related helpers
+- retry, circuit breaker, metrics, and health checking
+
+This is broader than a simple registry adapter.
+
+## Configuration
 
 ```yaml
 lynx:
@@ -25,40 +39,24 @@ lynx:
     weight: 100
     ttl: 5
     timeout: 5s
+    enable_service_watch: true
+    enable_config_watch: true
+    enable_rate_limit: true
 ```
 
-Besides `lynx.polaris`, you usually also need the official Polaris configuration file such as `polaris.yaml`, which describes server addresses and SDK-side behavior.
+The plugin also expects the official Polaris SDK-side configuration file, usually referenced by `config_path`, for connector-level settings.
 
-## Relationship with official Polaris config
+## How To Consume It
 
-Lynx config explains how the application plugs Polaris into the runtime. `polaris.yaml` handles official SDK connectivity and behavior details.
-
-For example:
-
-```yaml
-global:
-  serverConnector:
-    protocol: grpc
-    addresses:
-      - 127.0.0.1:8091
-config:
-  configConnector:
-    addresses:
-      - 127.0.0.1:8093
+```go
+plugin, err := polaris.GetPolarisPlugin()
+instances, err := polaris.GetServiceInstances("user-service")
+content, err := polaris.GetConfig("application.yaml", "DEFAULT_GROUP")
+allowed, err := polaris.CheckRateLimit("user-service", labels)
 ```
 
-For the full field set and deployment model, follow the Polaris documentation:
-
-- [Polaris official docs](https://polarismesh.cn/docs)
-
-## Typical scenarios
-
-- your service needs to register into Polaris
-- downstream addressing depends on Polaris discovery
-- you want routing, canary, rate limiting, or circuit breaking to stay in one framework path
-
-## Related pages
+## Related Pages
 
 - [Nacos](/docs/existing-plugin/nacos)
 - [Etcd](/docs/existing-plugin/etcd)
-- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

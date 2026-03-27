@@ -21,7 +21,7 @@ const contentByLocale = {
   zh: {
     heroEyebrow: '面向插件化微服务的 Go 框架',
     heroTitle: '从脚手架到运行时，把微服务基础设施收进去',
-    heroSignals: ['CLI 脚手架', 'Plugin Runtime', 'Service Governance'],
+    heroSignals: ['CLI 脚手架', '插件运行时', '服务治理'],
     quickStartTitle: '三步开始使用 Lynx',
     quickStartSteps: [
       {
@@ -40,8 +40,8 @@ const contentByLocale = {
     heroSummary:
       'CLI 脚手架、插件注册、配置装配、服务治理与常见中间件接入，统一放进同一套开发体验里。',
     proofPoints: [
-      {label: '定位', value: 'Plugin Runtime'},
-      {label: '入口', value: 'CLI + Docs'},
+      {label: '定位', value: '插件运行时'},
+      {label: '入口', value: 'CLI + 文档'},
       {label: '场景', value: '治理型微服务'},
     ],
     runtimeCardTitle: '默认开发路径',
@@ -244,7 +244,9 @@ function HomepageHeader() {
           </div>
           <div className={styles.heroVisual}>
             <div className={styles.runtimeCard}>
-              <span className={styles.runtimeCardKicker}>Runtime</span>
+              <span className={styles.runtimeCardKicker}>
+                {currentLocale === 'zh' ? '运行时' : 'Runtime'}
+              </span>
               <h3>{copy.runtimeCardTitle}</h3>
               <ul className={styles.runtimeList}>
                 {copy.runtimeCardItems.map((item) => (

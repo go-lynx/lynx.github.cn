@@ -5,55 +5,64 @@ title: MongoDB Plugin
 
 # MongoDB Plugin
 
-The MongoDB plugin brings a MongoDB client into the Lynx runtime. It handles connection initialization, pooling, health checks, and a stable injection entry. It does not try to replace how your application organizes collections or repositories.
+The MongoDB plugin is a runtime-owned Mongo client with pool, timeout, metrics, and health-check management.
 
-## What it is for
+## Runtime Facts
 
-- initializing and owning MongoDB client connectivity
-- injecting database objects into the data layer
-- centralizing timeout, pool, TLS, and health behavior
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-mongodb` |
+| Config prefix | `lynx.mongodb` |
+| Runtime plugin name | `mongodb.client` |
+| Public APIs | `GetMongoDB()`, `GetMongoDBPlugin()`, `GetMongoDBDatabase()`, `GetMongoDBCollection()`, `GetMetricsGatherer()` |
 
-## Basic configuration
+## What The Implementation Actually Does
+
+The plugin initializes one managed MongoDB client and can enable:
+
+- pool sizing and timeout control
+- TLS configuration
+- read concern and write concern settings
+- Prometheus command and pool monitoring
+- periodic health checks
+
+This means the plugin is responsible for connectivity and operational behavior. Your repository layer remains responsible for collection structure and query design.
+
+## Configuration
 
 ```yaml
 lynx:
   mongodb:
     uri: "mongodb://localhost:27017"
-    database: "myapp"
-    username: "admin"
-    password: "password"
-    auth_source: "admin"
+    database: "app"
     max_pool_size: 100
     min_pool_size: 5
-    connect_timeout: "30s"
-    server_selection_timeout: "30s"
+    connect_timeout: 30s
+    server_selection_timeout: 30s
     enable_metrics: true
     enable_health_check: true
-    enable_tls: false
 ```
 
-## Application integration
-
-The common path is to anonymous-import the plugin and obtain the client or database object through getters:
+## How To Consume It
 
 ```go
-import (
-    mongodb "github.com/go-lynx/lynx-mongodb"
-)
+import mongodb "github.com/go-lynx/lynx-mongodb"
 
 client := mongodb.GetMongoDB()
 db := mongodb.GetMongoDBDatabase()
+orders := mongodb.GetMongoDBCollection("orders")
+gatherer := mongodb.GetMetricsGatherer()
 ```
 
-Once you have `client` or `db`, keep the collection, index, and repository organization in your own data layer.
+`GetMetricsGatherer()` matters if you want to merge plugin metrics into your application's `/metrics` endpoint.
 
-## Practical guidance
+## Practical Notes
 
-- keep connection and TLS details in startup config
-- do not let business collection layout bleed back into the plugin layer
-- if all you need is Mongo connectivity, this plugin is enough; if you need higher abstractions, build them in the application layer
+- The plugin tests connectivity during startup.
+- Background metrics and health-check goroutines are started only when enabled.
+- If you need higher-level repository abstractions, build them above this plugin rather than inside it.
 
-## Related pages
+## Related Pages
 
 - [Database Plugin](/docs/existing-plugin/db)
-- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

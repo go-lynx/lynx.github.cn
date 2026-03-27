@@ -5,142 +5,117 @@ title: Lynx 框架架构
 
 # Lynx 框架架构
 
-## 分层运行时架构
+本页聚焦 Lynx 在**运行时**如何组织应用、插件和资源。
 
-Lynx 采用面向插件编排的**分层运行时架构**，将应用入口、插件管理、运行时调度和资源管理拆分为清晰的职责边界：
+如果设计页回答的是“为什么 Lynx 会长成现在这样”，那么架构页回答的就是“运行时有哪些层，以及这些层如何协作”。
 
-### 架构层次
+## 当前架构视图
 
-1. **应用层** - LynxApp、Boot、控制面
-2. **插件管理层** - PluginManager、TypedPluginManager、PluginFactory  
-3. **运行时层** - Runtime 接口、TypedRuntimePlugin、SimpleRuntime
-4. **资源管理层** - 私有/共享资源、资源信息
+当前最有用的理解方式，已经不再是“围绕某套中间件堆起来的框架”，而更适合描述为四层：
 
-### 架构图
+1. **应用层**：应用入口、引导壳层、服务进程、面向控制面的辅助能力
+2. **插件编排层**：注册、依赖解析、拓扑排序、生命周期调度
+3. **运行时层**：资源暴露、事件流、上下文传播、统一装配
+4. **资源层**：私有资源、共享资源、外部客户端、面向治理的对象
+
+## 分层运行时视图
 
 ```mermaid
 graph TD
-    subgraph "应用层"
-        LynxApp[LynxApp]
-        Boot[启动系统]
-        Control[控制面]
+    subgraph "Application Layer"
+        App[Application]
+        Boot[Boot]
+        Service[HTTP / gRPC Service]
     end
-    
-    subgraph "插件管理层"
-        PluginMgr[插件管理器]
-        TypedMgr[类型化插件管理器]
-        Factory[插件工厂]
+
+    subgraph "Plugin Orchestration Layer"
+        Manager[Plugin Manager]
+        Resolver[Dependency Resolver]
+        Lifecycle[Lifecycle Orchestration]
     end
-    
-    subgraph "运行时层"
-        Runtime[运行时接口]
-        TypedRuntime[类型化运行时插件]
-        SimpleRuntime[简单运行时]
+
+    subgraph "Runtime Layer"
+        Runtime[Unified Runtime]
+        Events[Event System]
+        Context[Runtime Context]
     end
-    
-    subgraph "资源管理层"
-        PrivateRes[私有资源]
-        SharedRes[共享资源]
-        ResInfo[资源信息]
+
+    subgraph "Resource Layer"
+        Private[Private Resources]
+        Shared[Shared Resources]
+        External[External Clients / Integrations]
     end
-    
-    subgraph "插件生态系统"
-        Database[数据库插件<br/>MySQL, PostgreSQL, SQL Server]
-        NoSQL[NoSQL插件<br/>Redis (162K 操作/秒), MongoDB, Elasticsearch]
-        MQ[消息队列插件<br/>Kafka (30K 消息/秒), RabbitMQ (175K 消息/秒)]
-        Service[服务插件<br/>HTTP, gRPC, Polaris]
-        Tracing[可观测性<br/>Tracer (OpenTelemetry), Swagger]
-    end
-    
-    LynxApp --> PluginMgr
-    PluginMgr --> TypedMgr
-    TypedMgr --> Factory
-    Factory --> Runtime
-    Runtime --> TypedRuntime
-    TypedRuntime --> PrivateRes
-    TypedRuntime --> SharedRes
-    
-    PluginMgr --> Database
-    PluginMgr --> NoSQL
-    PluginMgr --> MQ
-    PluginMgr --> Service
-    PluginMgr --> Tracing
+
+    App --> Boot
+    Boot --> Manager
+    Manager --> Resolver
+    Resolver --> Lifecycle
+    Lifecycle --> Runtime
+    Runtime --> Events
+    Runtime --> Context
+    Runtime --> Private
+    Runtime --> Shared
+    Shared --> External
+    Runtime --> Service
 ```
 
-## 服务启动与生命周期
+## 启动流程
+
+从启动顺序的角度看，常见路径可以概括为：
 
 ```mermaid
 sequenceDiagram
-    participant User as 用户
     participant Main as main.go
-    participant Config as 配置系统
-    participant LynxApp as LynxApp
-    participant PluginMgr as 插件管理器
-    participant Runtime as 运行时层
-    participant Plugins as 插件生态系统
-    participant Monitor as 监控系统
-    participant Control as 控制面
-    participant Kratos as KratosApp
-    participant Service as HTTP/gRPC服务
+    participant Boot as Boot
+    participant Config as Bootstrap Config
+    participant Manager as Plugin Manager
+    participant Runtime as Runtime
+    participant Plugins as Plugins
+    participant Service as HTTP/gRPC
 
-    User->>Main: 启动应用
-    Main->>Config: 加载引导配置
-    Main->>LynxApp: 初始化 LynxApp
-    LynxApp->>Runtime: 初始化运行时层
-    Runtime->>PluginMgr: 初始化插件管理器
-    PluginMgr->>Plugins: 拓扑排序并加载插件
-    
-    Note over Plugins: 数据库、缓存、消息队列、配置中心
-    Note over Plugins: 服务发现、可观测性与分布式能力
-    
-    Plugins->>Runtime: 注册资源与能力
-    Runtime->>Monitor: 初始化监控（52+指标）
-    Monitor->>Service: 设置健康检查
-    
-    LynxApp->>Control: 初始化控制面
-    Control->>Kratos: 初始化 KratosApp
-    Kratos->>Service: 启动 HTTP/gRPC 服务
-    
-    Service-->>Monitor: 上报性能指标
-    Service-->>User: 提供微服务能力
-    
-    Note over Runtime,Service: 企业级功能: 熔断器、<br/>限流、分布式追踪、<br/>资源管理、事件系统
+    Main->>Boot: Start application
+    Boot->>Config: Read bootstrap config
+    Boot->>Manager: Determine required plugins
+    Manager->>Manager: Resolve dependencies and topology
+    Manager->>Plugins: Initialize plugins in order
+    Plugins->>Runtime: Register resources and capabilities
+    Runtime->>Service: Expose service endpoints and shared capabilities
+    Service-->>Main: Application enters running state
 ```
 
-## 关键架构特性
+如果对应到当前代码，这段流程大致意味着：
 
-### 类型安全的资源管理
-- **私有资源**: 每个插件独立的命名空间
-- **共享资源**: 所有插件可访问的全局资源
-- **泛型访问**: 使用 `GetTypedResource[T]` 的类型安全访问
-- **资源跟踪**: 完整的资源生命周期管理
+- 插件模块通过 `factory.GlobalTypedFactory().RegisterPlugin(...)` 完成注册
+- `TypedPluginManager` 负责准备和初始化受管理插件实例
+- 插件通过 `InitializeResources`、`StartupTasks`、`CleanupTasks` 等 hook 参与生命周期
+- 运行时持有的资源再被服务层或业务代码消费
 
-### 统一事件系统
-- **事件总线管理器**: 管理插件间通信
-- **事件隔离**: 插件命名空间防止冲突
-- **高性能**: 支持每秒100万+事件
-- **可观测性**: 事件过滤、历史和监控
+## 为什么这对插件生态重要
 
-### 插件生命周期管理
-- **热插拔**: 零停机时间插件更新
-- **依赖注入**: 自动资源装配
-- **健康监控**: 按插件健康状态
-- **错误恢复**: 带自动恢复的熔断器
+如果没有这样的运行时结构，插件很快就会退化成一堆互不关联的 SDK。Lynx 架构真正约束的是：
 
-### 生产就绪监控
-- **52+个 Prometheus 指标**: 标准化 `lynx_` 前缀
-- **Grafana 仪表板**: 每个插件的多面板视图
-- **健康端点**: `/health`、`/ready` 用于 Kubernetes
-- **分布式追踪**: OpenTelemetry 集成
+- 插件按顺序和依赖规则完成初始化
+- 插件不会各自“各管一摊”，资源边界由中心化运行时管理
+- 插件不需要到处写死直接耦合，可以通过资源和事件模型协作
 
-## 性能特性
+这也是为什么有些能力会暴露成插件 Getter，而另一些能力则需要通过 `http.server`、`grpc.service`、`apollo.config.center`、`sentinel.flow_control` 这样的 plugin-manager 名称来获取。
 
-| 组件 | 吐量 | 延迟 | 改进 |
-|------|------|------|------|
-| Redis操作 | 162K+ 操作/秒 | 小于1ms | +15% |
-| RabbitMQ消息 | 175K+ 消息/秒 | 小于5ms | +20% |
-| Kafka消息 | 30K+ 消息/秒 | 小于10ms | +10% |
-| HTTP请求 | 1.2M 请求/秒 | 小于1ms | +25% |
-| 事件总线 | 1M+事件/秒 | 小于100μs | +30% |
+这正是官方模块家族可以持续扩展的架构基础。
 
-Lynx 架构提供了清晰的启动和服务流程。插件机制让微服务能力灵活扩展，在保持企业级性能和可靠性的同时，极大提升开发效率与可维护性。 
+## 你在业务代码里通常感受到的是什么
+
+大多数团队不会以“图”的形式感知这套架构，而是以结果感知它：
+
+- 启动路径更稳定
+- 新增插件不需要再发明一套新的引导流程
+- 资源访问方式更一致
+- 一部分启动顺序和边界管理从应用代码中被抽离出来
+
+## 继续阅读
+
+如果你已经接受这套分层模型，接下来最有价值的页面是：
+
+- [设计理念](/docs/intro/design)
+- [引导配置](/docs/getting-started/bootstrap-config)
+- [插件管理](/docs/getting-started/plugin-manager)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)
