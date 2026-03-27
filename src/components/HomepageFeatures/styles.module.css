@@ -42,9 +42,17 @@
   border-radius: 24px;
   background:
     linear-gradient(135deg, rgba(201, 111, 74, 0.1), rgba(233, 140, 99, 0.03)),
-    rgba(255, 255, 255, 0.9);
+    var(--site-surface-1);
   border: 1px solid rgba(201, 111, 74, 0.12);
   box-shadow: 0 18px 40px rgba(201, 111, 74, 0.08);
+}
+
+[data-theme='dark'] .featuresIntro {
+  border-color: var(--site-border);
+  background:
+    linear-gradient(135deg, rgba(240, 160, 120, 0.1), rgba(240, 160, 120, 0.03)),
+    var(--site-surface-2);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
 }
 
 .sectionKicker {
@@ -86,7 +94,7 @@
 .featureCard {
   background:
     linear-gradient(180deg, rgba(201, 111, 74, 0.06), transparent 42%),
-    rgba(255, 255, 255, 0.94);
+    var(--site-surface-1);
   border: 1px solid rgba(201, 111, 74, 0.12);
   border-radius: 22px;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.06);
@@ -132,7 +140,11 @@
 }
 
 [data-theme='dark'] .featureCard {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background:
+    linear-gradient(180deg, rgba(240, 160, 120, 0.08), transparent 42%),
+    var(--site-surface-2);
+  border-color: var(--site-border);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
 }
 
 [data-theme='dark'] .featureCard:hover {
@@ -154,7 +166,7 @@
 }
 
 .featureCard p {
-  color: var(--ifm-color-emphasis-700);
+  color: var(--site-text-muted);
   word-break: break-word;
   overflow-wrap: break-word;
   flex: 1;
@@ -189,6 +201,12 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+}
+
+[data-theme='dark'] .featureIcon {
+  background: rgba(240, 160, 120, 0.1);
+  border-color: rgba(240, 160, 120, 0.18);
+  color: var(--ifm-color-primary-lightest);
 }
 
 .featureCard:hover .featureIcon {

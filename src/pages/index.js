@@ -204,10 +204,12 @@ function HomepageHeader() {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className={styles.heroInner}>
-        <div className={styles.heroLayout}>
+          <div className={styles.heroLayout}>
           <div className={styles.heroCopy}>
             <div className={styles.heroLead}>
-              <img className={styles.banner_logo} alt="Lynx" src="img/logo.png" />
+              <div className={styles.bannerLogoFrame}>
+                <img className={styles.banner_logo} alt="Lynx" src="img/logo.png" />
+              </div>
               <div className={styles.heroLeadText}>
                 <div className={styles.heroEyebrow}>{copy.heroEyebrow}</div>
                 <p className={styles.heroSubtitle}>{copy.heroSubtitle}</p>
