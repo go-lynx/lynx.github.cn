@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
-    "start": "docusaurus start",
+    "start": "docusaurus start --host 0.0.0.0 --port 3000 --locale en",
+    "start:zh": "docusaurus start --host 0.0.0.0 --port 3001 --locale zh",
     "build": "docusaurus build",
+    "preview": "docusaurus serve --dir build --host 0.0.0.0 --port 3000",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",

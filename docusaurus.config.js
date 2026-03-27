@@ -46,15 +46,18 @@ const config = {
   onBrokenMarkdownLinks: 'warn',
   deploymentBranch: 'gh-pages',
 
-  // GitHub Pages 对尾部斜杠处理不一，显式设置可避免 404
-  trailingSlash: false,
+  // Use directory-style routes so locale switches and direct opens resolve to
+  // .../index.html on static hosts instead of relying on .html fallback rules.
+  trailingSlash: true,
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['zh', 'en'],
+    // Keep the default locale first so `docusaurus start` serves the English
+    // root routes locally instead of booting the dev server in `/zh/` only.
+    locales: ['en', 'zh'],
     localeConfigs: {
       zh: {
         label: '中文',
