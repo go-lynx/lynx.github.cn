@@ -46,6 +46,27 @@ lynx:
 
 The plugin also expects the official Polaris SDK-side configuration file, usually referenced by `config_path`, for connector-level settings.
 
+## What The Official Template Uses
+
+The official template does not enable Polaris in `bootstrap.local.yaml`. It keeps local startup smaller there and moves Polaris into `configs/bootstrap.yaml`:
+
+```yaml
+lynx:
+  application:
+    name: user-service
+    version: v1.0.0
+
+  polaris:
+    config_path: "configs/polaris.yaml"
+    namespace: demo
+    token: "..."
+    weight: 100
+    ttl: 10
+    timeout: 5s
+```
+
+This is why Polaris often feels "different" from HTTP or Redis in the template. It is a control-plane plugin, so the official scaffold treats it as a governance-oriented layer rather than the smallest local runtime needed to boot the service.
+
 ## How To Consume It
 
 ```go

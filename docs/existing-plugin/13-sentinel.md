@@ -59,6 +59,16 @@ lynx:
       port: 8719
 ```
 
+## What The Official Template Uses
+
+The official template does not enable Sentinel by default.
+
+That matches the role of the plugin:
+
+- Sentinel is a runtime protection layer, not a minimum boot dependency
+- you normally add it after HTTP or gRPC resources and route names are stable
+- this page therefore needs to be read as "how to add guarded traffic control to a running service", not "what every new Lynx project starts with"
+
 ## Usage
 
 ```go

@@ -30,6 +30,18 @@ Lynx 的仓库族并不是一堆彼此无关的 SDK。核心 `lynx` 运行时会
 
 这也是为什么 runtime 插件名不是内部细节，而是插件管理器里的真实查找键。
 
+## 官方模板实际从什么开始
+
+`lynx-layout` 不会一上来把整个插件家族全部打开。按照当前脚手架，最容易理解的方式是把插件分成三类：
+
+| 模板状态 | 当前含义 | 当前示例 |
+|------|------|------|
+| 本地 bootstrap 默认启用 | 构成最小可运行本地服务的一部分 | `lynx.http`、`lynx.grpc.service`、`lynx.mysql`、`lynx.redis` |
+| 治理 bootstrap 使用 | 走控制面配置路径时启用 | `lynx.application`、`lynx.polaris` |
+| 默认不启用 | 受支持，但只在服务真正需要时再加 | `lynx.apollo`、`lynx.nacos`、`lynx.etcd`、`lynx.kafka`、`rabbitmq`、`rocketmq`、`lynx.pulsar`、`lynx.sentinel`、`lynx.swagger`、`lynx.tls` |
+
+这里还有一个值得单独指出的特例：`lynx-tracer` 已经被模板导入了，但它的配置没有在默认本地 bootstrap 里显式展开。所以更准确的理解是，它是一个已经预留好的可观测性接入点，而不是一个完全默认启用的功能。
+
 ## 核心示例
 
 | 模块 | Go module | 配置前缀 | Runtime 插件名 | 启动后公开 API |

@@ -66,7 +66,7 @@ go get github.com/go-lynx/lynx-etcd-lock
 这里有两个关键点：
 
 - 模块路径应以各插件仓库的 `go.mod` 为准
-- 少数能力仍然在主仓库内，例如 [`tls`](/docs/existing-plugin/tls-manager)，但大多数业务向插件已经是独立模块
+- 少数能力仍然在主仓库内，例如 [`TLS Manager`](/docs/existing-plugin/tls-manager)，但大多数业务向插件已经是独立模块
 
 ## 2. 添加对应的配置前缀
 
@@ -112,6 +112,46 @@ lynx:
     enable: true
     addr: "127.0.0.1:4317"
 ```
+
+## 2.1 把插件页和官方模板一起读
+
+一个反复出现的误区是：插件页按“单个能力”描述，而官方模板展示的是“多个插件如何组合成一个可运行服务”。
+
+当前 `lynx-layout/configs/bootstrap.local.yaml` 实际用了：
+
+- `lynx.http`
+- `lynx.grpc.service`
+- `lynx.mysql`
+- `lynx.redis`
+
+当前 `lynx-layout/configs/bootstrap.yaml` 实际用了：
+
+- `lynx.application`
+- `lynx.polaris`
+
+这很关键，因为模板是当前 Lynx 项目里“这些前缀和配置形状到底怎么一起出现”的最具体例子。
+
+当模板代码和插件页看起来不完全一样时，建议这样理解：
+
+- 模板配置回答的是“我现在要把项目跑起来，配置该怎么写？”
+- 插件页回答的是“这个单独插件完整支持哪些能力？”
+- 模板里的 Getter 调用回答的是“启动后业务代码到底该调用什么？”
+
+## 2.2 加插件前先理解模板分组
+
+当前官方模板最容易理解的方式，是先把插件分成三组：
+
+- 本地 bootstrap 默认启用：HTTP、gRPC 服务端、MySQL、Redis
+- 治理 bootstrap 启用：应用元数据和 Polaris
+- 默认不启用：大多数消息、配置中心、锁、保护、文档、TLS 插件
+
+这里还有一个夹在中间的特例：tracer 已经被模板导入了，但默认本地配置里没有把它显式展开。
+
+这个简单分组能减少很多误解：
+
+- 模板已经在用的，先对齐模板
+- 模板没在用的，把插件页当成后续可选接入路径
+- 模板只是预留接入点的，要预期还需要再补一层显式配置，效果才会真正出现
 
 ## 3. 通过匿名导入完成注册
 

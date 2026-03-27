@@ -68,6 +68,20 @@ Import the plugin so Lynx can register it:
 import _ "github.com/go-lynx/lynx-tracer"
 ```
 
+## What The Official Template Uses
+
+`lynx-layout` already imports tracer in `internal/data/data.go`:
+
+```go
+import _ "github.com/go-lynx/lynx-tracer"
+```
+
+But the template does not add a visible `lynx.tracer` block to `bootstrap.local.yaml` by default. In practice that means:
+
+- the scaffold is already ready for tracing-aware middleware and context propagation
+- exporting spans is still a conscious follow-up step
+- this page describes the runtime behavior you enable once you add explicit tracer configuration
+
 After startup, use the normal OpenTelemetry API. The plugin has already installed the global provider:
 
 ```go

@@ -68,6 +68,20 @@ lynx:
 import _ "github.com/go-lynx/lynx-tracer"
 ```
 
+## 官方模板实际怎么用
+
+`lynx-layout` 已经在 `internal/data/data.go` 里匿名导入了 tracer：
+
+```go
+import _ "github.com/go-lynx/lynx-tracer"
+```
+
+但模板默认不会在 `bootstrap.local.yaml` 里放一个显式的 `lynx.tracer` 配置块。实际含义是：
+
+- 脚手架已经为 tracing 上下文传播和相关中间件预留好了接入点
+- 是否真正导出 span 仍然是后续显式配置动作
+- 这页描述的是你补上 tracer 配置后会得到的 runtime 行为
+
 启动后，业务代码直接使用标准 OpenTelemetry API 即可，因为全局 provider 已经由插件安装完成：
 
 ```go

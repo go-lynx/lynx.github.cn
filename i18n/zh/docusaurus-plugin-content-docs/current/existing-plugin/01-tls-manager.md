@@ -60,6 +60,18 @@ lynx:
     group: "security"
 ```
 
+## 官方模板实际怎么用
+
+官方模板默认不会在 `bootstrap.local.yaml` 里启用 TLS。
+
+这也是为什么模板里的 HTTP 和 gRPC 示例一开始看起来都是明文监听。TLS 被当成后续叠加的运维层，接入时要组合这三部分：
+
+- `lynx.tls`
+- `lynx.http.tls_enable: true`
+- `lynx.grpc.service.tls_enable: true`
+
+所以这页应该被理解成 HTTP 和 gRPC 在开启传输层安全之后依赖的证书提供层，而不是一个独立的业务向服务插件。
+
 ## 它如何接到 HTTP 和 gRPC 上
 
 TLS loader 会把 certificate provider 挂到 Lynx app 上，HTTP 和 gRPC 在各自启用 TLS 时再消费这个 provider：

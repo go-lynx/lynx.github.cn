@@ -49,6 +49,16 @@ rocketmq:
       topics: ["orders"]
 ```
 
+## What The Official Template Uses
+
+The official template does not enable RocketMQ by default.
+
+That follows the same pattern as the other MQ plugins:
+
+- the scaffold avoids choosing one broker family for every new service
+- RocketMQ is something you layer in once the service has a concrete eventing or ordered-consumption requirement
+- this page therefore describes a supported messaging plugin, not a template default
+
 Like RabbitMQ, the current prefix is `rocketmq`, not `lynx.rocketmq`.
 
 ## How To Consume It

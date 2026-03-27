@@ -53,6 +53,16 @@ rabbitmq:
       routing_key: "orders.create"
 ```
 
+## What The Official Template Uses
+
+The official template does not enable RabbitMQ by default.
+
+That is intentional:
+
+- the scaffold does not assume AMQP infrastructure for every service
+- RabbitMQ should be added only when the service actually has queue or exchange semantics to own
+- this page is therefore an integration page for a later messaging decision, not a description of the default template runtime
+
 Note that the current plugin prefix is `rabbitmq`, not `lynx.rabbitmq`.
 
 ## How To Consume It

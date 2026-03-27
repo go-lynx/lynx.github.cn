@@ -45,6 +45,26 @@ lynx:
 
 The old `addr` examples are outdated. Current config is centered on `addrs`.
 
+## What The Official Template Uses
+
+`lynx-layout/configs/bootstrap.local.yaml` currently wires Redis like this:
+
+```yaml
+lynx:
+  redis:
+    network: tcp
+    addrs:
+      - 127.0.0.1:6379
+    password: lynx123456
+    db: 0
+```
+
+So the template is already aligned with the current plugin shape:
+
+- it uses `lynx.redis`
+- it uses `addrs`, not deprecated `addr`
+- it starts in standalone-friendly form, even though the plugin itself supports cluster and sentinel too
+
 ## How To Consume It
 
 ```go
@@ -55,6 +75,8 @@ singleNode := redisplug.GetRedis()
 ```
 
 Prefer `GetUniversalRedis()` unless you know you only run in standalone mode.
+
+The official template currently consumes `lynx-redis.GetRedis()` in `internal/data/data.go`, which is valid because that template's local config is single-node Redis.
 
 ## Related Pages
 

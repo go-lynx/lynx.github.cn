@@ -43,6 +43,16 @@ lynx:
     enable_health_check: true
 ```
 
+## What The Official Template Uses
+
+The official template does not wire MongoDB by default. It currently starts from MySQL plus Redis in `bootstrap.local.yaml`.
+
+That is intentional, not a documentation gap:
+
+- the template chooses one concrete SQL path first
+- MongoDB remains an optional datastore you add when the service actually needs document-style storage
+- this page therefore describes a supported plugin, not a default scaffold dependency
+
 ## How To Consume It
 
 ```go

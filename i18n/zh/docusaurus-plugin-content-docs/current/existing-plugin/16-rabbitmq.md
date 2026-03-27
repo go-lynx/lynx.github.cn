@@ -53,6 +53,16 @@ rabbitmq:
       routing_key: "orders.create"
 ```
 
+## 官方模板实际怎么用
+
+官方模板默认并不会启用 RabbitMQ。
+
+这是有意为之：
+
+- 脚手架不会预设每个服务都需要 AMQP 基础设施
+- 只有服务真正拥有 queue / exchange 语义时，才应该加 RabbitMQ
+- 所以这页是后续消息选型的接入页，不是默认模板 runtime 的描述
+
 要注意，当前插件前缀是 `rabbitmq`，不是 `lynx.rabbitmq`。
 
 ## 如何使用

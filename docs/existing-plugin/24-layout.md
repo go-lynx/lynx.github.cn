@@ -19,6 +19,50 @@ From the repository:
 - HTTP server wiring uses `github.com/go-lynx/lynx-http` and `GetHttpServer()`
 - gRPC server wiring uses `github.com/go-lynx/lynx-grpc` and `GetGrpcServer(nil)`
 - data wiring already depends on concrete plugins such as MySQL and Redis rather than abstract placeholder packages
+- service registry wiring uses `lynx.GetServiceRegistry()`
+
+## Template Configuration That Matches Real Code
+
+The template currently exposes two useful config views.
+
+`configs/bootstrap.local.yaml` is the practical local-dev shape:
+
+```yaml
+lynx:
+  http:
+    addr: 127.0.0.1:8000
+  grpc:
+    service:
+      addr: 127.0.0.1:9000
+  mysql:
+    driver: mysql
+    source: "..."
+  redis:
+    addrs:
+      - 127.0.0.1:6379
+```
+
+`configs/bootstrap.yaml` is the narrower governance-oriented shape:
+
+```yaml
+lynx:
+  application:
+    name: user-service
+  polaris:
+    config_path: "configs/polaris.yaml"
+```
+
+This is the key thing many plugin documents fail to make obvious: the template does not start by enabling every plugin. It starts from a small runnable combination, then layers in governance-oriented config separately.
+
+## Template Code Path
+
+The template also shows the real public integration entry points:
+
+- `internal/server/http.go` uses `lynx-http.GetHttpServer()`
+- `internal/server/grpc.go` uses `lynx-grpc.GetGrpcServer(nil)`
+- `internal/data/data.go` uses `lynx-redis.GetRedis()`
+- `internal/data/data.go` uses `lynx-mysql.GetProvider()`
+- `cmd/user/wire_gen.go` uses `lynx.GetServiceRegistry()`
 
 That makes `lynx-layout` the most direct reference for how the current plugin family is meant to be consumed in a real service.
 

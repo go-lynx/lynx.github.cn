@@ -48,6 +48,16 @@ lynx:
         subscription_name: "order-subscription"
 ```
 
+## What The Official Template Uses
+
+The official template does not enable Pulsar by default.
+
+That is deliberate:
+
+- the scaffold starts from transport and storage primitives first
+- Pulsar is an additional messaging layer you add when the service really needs topic-based async processing
+- this page should therefore be read as an opt-in integration reference, not a default project shape
+
 ## How To Consume It
 
 ```go

@@ -60,6 +60,18 @@ lynx:
     group: "security"
 ```
 
+## What The Official Template Uses
+
+The official template does not enable TLS by default in `bootstrap.local.yaml`.
+
+That is why the template's HTTP and gRPC examples look plain-text first. TLS is treated as an operational layer you add later by combining:
+
+- `lynx.tls`
+- `lynx.http.tls_enable: true`
+- `lynx.grpc.service.tls_enable: true`
+
+So this page should be read as the certificate-provider layer that HTTP and gRPC depend on once transport security is turned on, not as a separate business-facing service plugin.
+
 ## How It Connects To HTTP And gRPC
 
 The TLS loader publishes a certificate provider into the Lynx app. HTTP and gRPC then consume that provider when their own TLS switches are enabled:

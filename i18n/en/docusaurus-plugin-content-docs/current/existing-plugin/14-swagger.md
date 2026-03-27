@@ -50,6 +50,16 @@ lynx:
       description: "HTTP API documentation"
 ```
 
+## What The Official Template Uses
+
+The official template does not enable Swagger by default.
+
+That is also deliberate:
+
+- the scaffold starts with runnable HTTP and gRPC services first
+- Swagger becomes useful after the HTTP surface and annotation layout stabilize
+- the plugin can derive `api_server.host` from `lynx.http.addr`, so it fits naturally after the HTTP plugin is already in place
+
 ## Usage
 
 ```go

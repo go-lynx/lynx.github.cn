@@ -48,6 +48,17 @@ lynx:
       merge_strategy: "override"
 ```
 
+## What The Official Template Uses
+
+The official template does not enable Etcd by default. The current scaffold uses Polaris as its control-plane example instead.
+
+That is important because Etcd serves two very different roles in Lynx:
+
+- config-center and service-registry infrastructure
+- runtime dependency for higher-level features such as [Etcd Lock](/docs/existing-plugin/etcd-lock)
+
+So this page should be read as "how to bring Etcd into the runtime when your environment needs it", not as something the base template already wires.
+
 ## How To Consume It
 
 ```go

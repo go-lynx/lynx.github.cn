@@ -51,6 +51,16 @@ lynx:
         max_concurrency: 10
 ```
 
+## What The Official Template Uses
+
+The official template does not enable Kafka by default.
+
+That is consistent with how the scaffold is currently staged:
+
+- the template starts from synchronous HTTP / gRPC plus storage first
+- messaging infrastructure is added only when the service actually needs async workflows
+- this page therefore describes how to add a runtime-managed Kafka layer, not what `lynx-layout` boots with on day one
+
 Validation in code requires brokers, valid consumer group configuration, and valid SASL or TLS settings when those features are enabled.
 
 ## How To Consume It

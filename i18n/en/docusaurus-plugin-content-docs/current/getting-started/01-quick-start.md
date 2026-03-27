@@ -130,6 +130,67 @@ import (
 
 That is the actual runtime path. Config alone is not enough, and import alone is not enough.
 
+## 5.1 What the official template really configures
+
+The most useful correction to keep in mind is this: plugin pages describe one capability at a time, but `lynx-layout` shows the combination that a real service actually boots with.
+
+In `lynx-layout/configs/bootstrap.local.yaml`, the template currently wires:
+
+```yaml
+lynx:
+  http:
+    network: tcp
+    addr: 127.0.0.1:8000
+    timeout: 5s
+
+  grpc:
+    service:
+      network: tcp
+      addr: 127.0.0.1:9000
+      timeout: 5s
+
+  mysql:
+    driver: mysql
+    source: "lynx:lynx123456@tcp(127.0.0.1:3306)/lynx_test?charset=utf8mb4&parseTime=True&loc=Local"
+
+  redis:
+    addrs:
+      - 127.0.0.1:6379
+```
+
+That means the template is currently teaching these concrete facts:
+
+- HTTP uses `lynx.http`
+- gRPC server uses `lynx.grpc.service`, not a flat `lynx.grpc`
+- MySQL uses `lynx.mysql`
+- Redis uses `lynx.redis`
+- local template startup does not begin with every governance plugin enabled
+
+The companion `configs/bootstrap.yaml` is narrower: it mainly shows application metadata plus `lynx.polaris` for governance-oriented startup.
+
+If a plugin page looks more abstract than the template, trust the template's concrete shape first and then use the plugin page to understand the rest of that capability.
+
+You can summarize the template's current startup model like this:
+
+- local bootstrap defaults: HTTP, gRPC server, MySQL, Redis
+- governance bootstrap defaults: application metadata plus Polaris
+- later opt-in additions: most MQ, config-center, docs, protection, lock, and TLS plugins
+- special case: tracer is already imported, but not made explicit in default local config
+
+That simple split is usually enough to explain why a plugin page may be accurate even when the template does not show that plugin yet.
+
+## 5.2 What the template actually calls in code
+
+`lynx-layout` also shows the public API shape that business code really consumes:
+
+- HTTP server: `lynx-http.GetHttpServer()`
+- gRPC server: `lynx-grpc.GetGrpcServer(nil)`
+- Redis client: `lynx-redis.GetRedis()`
+- MySQL provider: `lynx-mysql.GetProvider()`
+- service registry: `lynx.GetServiceRegistry()`
+
+This is the missing link between "plugin configuration" and "how your app code obtains the runtime-owned object".
+
 Official modules currently include:
 
 - Service and governance: HTTP, gRPC, Polaris, Nacos, Etcd, Apollo, Sentinel, Swagger, Tracer
