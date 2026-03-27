@@ -45,6 +45,26 @@ lynx:
 
 旧文档里用 `addr` 的示例已经过时，当前配置中心是 `addrs`。
 
+## 官方模板实际怎么配
+
+`lynx-layout/configs/bootstrap.local.yaml` 当前对 Redis 的配置是：
+
+```yaml
+lynx:
+  redis:
+    network: tcp
+    addrs:
+      - 127.0.0.1:6379
+    password: lynx123456
+    db: 0
+```
+
+这说明模板已经和当前插件形状对齐了：
+
+- 用的是 `lynx.redis`
+- 用的是 `addrs`，不是过时的 `addr`
+- 本地模板从单机友好的形态起步，但插件本身依然支持 cluster 和 sentinel
+
 ## 如何使用
 
 ```go
@@ -55,6 +75,8 @@ singleNode := redisplug.GetRedis()
 ```
 
 除非你明确只跑单机模式，否则应该优先使用 `GetUniversalRedis()`。
+
+官方模板当前在 `internal/data/data.go` 里用的是 `lynx-redis.GetRedis()`，这在它的本地单机 Redis 配置下是成立的。
 
 ## 相关页面
 

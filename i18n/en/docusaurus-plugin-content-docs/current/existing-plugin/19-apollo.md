@@ -48,6 +48,16 @@ lynx:
       merge_strategy: "override"
 ```
 
+## What The Official Template Uses
+
+The official template does not enable Apollo by default. The current scaffold uses Polaris as its control-plane example instead.
+
+That distinction matters:
+
+- Apollo is a valid config-center plugin in the Lynx ecosystem
+- but `lynx-layout` currently demonstrates governance startup with `lynx.polaris`, not `lynx.apollo`
+- this page should therefore be read as "how to swap in or add Apollo-backed config loading", not "what the official template already configured"
+
 ## How To Consume It
 
 Typical runtime lookup:

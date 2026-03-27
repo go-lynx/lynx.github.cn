@@ -48,6 +48,17 @@ lynx:
       merge_strategy: "override"
 ```
 
+## 官方模板实际怎么用
+
+官方模板默认并不会启用 Etcd。当前脚手架拿 Polaris 作为控制面的示例。
+
+这一点很重要，因为 Etcd 在 Lynx 里有两层角色：
+
+- 配置中心 / 服务注册发现基础设施
+- 更高层能力的运行时依赖，比如 [Etcd Lock](/docs/existing-plugin/etcd-lock)
+
+所以这页应该被理解成“当你的环境需要 Etcd 时，如何把它接进 runtime”，而不是模板默认已经接好的能力。
+
 ## 如何使用
 
 ```go

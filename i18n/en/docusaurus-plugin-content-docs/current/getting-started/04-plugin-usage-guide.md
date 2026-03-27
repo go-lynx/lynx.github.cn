@@ -113,6 +113,46 @@ lynx:
     addr: "127.0.0.1:4317"
 ```
 
+## 2.1 Read plugin docs together with the official template
+
+One recurring source of confusion is that plugin pages describe a capability in isolation, while the official template shows how multiple plugins are composed in one runnable service.
+
+`lynx-layout/configs/bootstrap.local.yaml` currently uses:
+
+- `lynx.http`
+- `lynx.grpc.service`
+- `lynx.mysql`
+- `lynx.redis`
+
+`lynx-layout/configs/bootstrap.yaml` currently uses:
+
+- `lynx.application`
+- `lynx.polaris`
+
+That is important because the template is the most concrete example of which prefixes and shapes are actually used together in current Lynx projects.
+
+When template code and a plugin page feel different, read them this way:
+
+- template config answers "what do I put in a runnable project right now?"
+- plugin page answers "what does this one plugin support in full?"
+- getter examples in template code answer "what do I call after startup?"
+
+## 2.2 Understand the template buckets before adding plugins
+
+The current official template is easier to reason about when you treat plugins in three groups:
+
+- enabled in local bootstrap: HTTP, gRPC server, MySQL, Redis
+- enabled in governance bootstrap: application metadata plus Polaris
+- not enabled by default: most MQ, config-center, lock, protection, docs, and TLS plugins
+
+One special case sits between those groups: tracer is already imported by the template, but not made explicit in the default local config.
+
+This simple classification prevents a lot of confusion:
+
+- if the template already uses it, match the template first
+- if the template does not use it, read the plugin page as an opt-in integration path
+- if the template only pre-wires it, expect one more explicit config step before the behavior becomes visible
+
 ## 3. Register the plugin with an anonymous import
 
 Most plugins register themselves through `factory.GlobalTypedFactory().RegisterPlugin(...)` in `init()`. That means you usually need an anonymous import:

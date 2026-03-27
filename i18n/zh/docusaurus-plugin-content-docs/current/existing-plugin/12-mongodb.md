@@ -43,6 +43,16 @@ lynx:
     enable_health_check: true
 ```
 
+## 官方模板实际怎么用
+
+官方模板默认并不会接 MongoDB。它当前在 `bootstrap.local.yaml` 里是从 MySQL + Redis 起步的。
+
+这不是文档漏写，而是模板有意做的取舍：
+
+- 模板先选一条具体 SQL 路径
+- MongoDB 仍然是你在服务真正需要文档型存储时再补进去的可选数据层
+- 所以这页描述的是“受支持插件”，不是“默认脚手架依赖”
+
 ## 如何使用
 
 ```go

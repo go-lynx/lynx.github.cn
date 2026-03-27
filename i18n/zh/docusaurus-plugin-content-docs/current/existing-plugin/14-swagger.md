@@ -50,6 +50,16 @@ lynx:
       description: "HTTP API documentation"
 ```
 
+## 官方模板实际怎么用
+
+官方模板默认并不会启用 Swagger。
+
+这也是有意为之：
+
+- 脚手架先确保 HTTP 和 gRPC 服务本身能跑起来
+- 等 HTTP 接口面和注解布局基本稳定后，Swagger 才开始更有价值
+- 这个插件可以从 `lynx.http.addr` 推导 `api_server.host`，所以它天然适合在 HTTP 插件已经接好之后再加
+
 ## 使用方式
 
 ```go

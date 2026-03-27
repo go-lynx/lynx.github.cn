@@ -46,6 +46,27 @@ lynx:
 
 除此之外，插件通常还需要官方 Polaris SDK 侧配置文件，一般通过 `config_path` 指定连接器级别行为。
 
+## 官方模板实际怎么配
+
+官方模板不会在 `bootstrap.local.yaml` 里启用 Polaris。它会把本地启动先压小，再把 Polaris 放进 `configs/bootstrap.yaml`：
+
+```yaml
+lynx:
+  application:
+    name: user-service
+    version: v1.0.0
+
+  polaris:
+    config_path: "configs/polaris.yaml"
+    namespace: demo
+    token: "..."
+    weight: 100
+    ttl: 10
+    timeout: 5s
+```
+
+这也是为什么 Polaris 在模板里看起来会和 HTTP、Redis 不太一样。它是控制面插件，所以官方脚手架把它当成治理层能力，而不是最小本地运行时的一部分。
+
 ## 如何使用
 
 ```go

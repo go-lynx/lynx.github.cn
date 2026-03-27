@@ -45,6 +45,16 @@ lynx:
       cluster: "DEFAULT"
 ```
 
+## What The Official Template Uses
+
+The official template does not enable Nacos by default. The current scaffold uses Polaris as its control-plane example instead.
+
+That means:
+
+- Nacos is supported, but not the default governance backend shown by `lynx-layout`
+- you add it when your environment already standardizes on Nacos for naming, config, or both
+- this page should be read as a concrete replacement or extension path, not as the current template's built-in control plane
+
 ## How To Consume It
 
 ```go

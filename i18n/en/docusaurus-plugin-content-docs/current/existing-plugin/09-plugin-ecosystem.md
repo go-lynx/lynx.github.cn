@@ -30,6 +30,18 @@ Most official plugins follow the same path:
 
 That is why the runtime plugin name is not trivia. It is the real lookup key inside the plugin manager.
 
+## What The Official Template Actually Starts With
+
+`lynx-layout` does not try to enable the whole plugin family at once. Today, the scaffold is easier to read if you group plugins into three buckets:
+
+| Template status | What it means now | Current examples |
+|------|------|------|
+| Enabled in local bootstrap | part of the smallest runnable local service | `lynx.http`, `lynx.grpc.service`, `lynx.mysql`, `lynx.redis` |
+| Used in governance bootstrap | enabled in the control-plane oriented config path | `lynx.application`, `lynx.polaris` |
+| Not enabled by default | supported, but added only when the service actually needs it | `lynx.apollo`, `lynx.nacos`, `lynx.etcd`, `lynx.kafka`, `rabbitmq`, `rocketmq`, `lynx.pulsar`, `lynx.sentinel`, `lynx.swagger`, `lynx.tls` |
+
+There is also one special case worth calling out: `lynx-tracer` is already imported by the template, but its config is not made explicit in the default local bootstrap. So it is better understood as a pre-wired observability hook rather than a fully enabled default feature.
+
 ## Core Examples
 
 | Module | Go module | Config prefix | Runtime plugin name | Public API after startup |

@@ -48,6 +48,16 @@ lynx:
       merge_strategy: "override"
 ```
 
+## 官方模板实际怎么用
+
+官方模板默认并不会启用 Apollo。当前脚手架拿 Polaris 作为控制面的示例。
+
+这个差异很重要：
+
+- Apollo 是 Lynx 生态里有效的配置中心插件
+- 但 `lynx-layout` 当前展示的治理启动路径是 `lynx.polaris`，不是 `lynx.apollo`
+- 所以这页应该被理解成“如何换成或补上 Apollo 配置加载”，而不是“官方模板已经这样配好了”
+
 ## 如何使用
 
 典型 runtime 访问方式：

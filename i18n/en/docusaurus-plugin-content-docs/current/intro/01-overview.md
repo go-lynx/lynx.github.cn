@@ -55,15 +55,34 @@ The practical split is:
 - standalone plugin modules such as `lynx-http`, `lynx-grpc`, `lynx-redis`, `lynx-tracer`, `lynx-sentinel`
 - engineering tooling such as the Lynx CLI and `lynx-layout`
 
+## What The Official Template Actually Starts With
+
+If you are new to Lynx, one practical shortcut helps a lot: do not assume the official template enables the whole plugin family.
+
+Today, `lynx-layout` is easier to understand if you read it in three buckets:
+
+- local bootstrap defaults: `lynx.http`, `lynx.grpc.service`, `lynx.mysql`, `lynx.redis`
+- governance bootstrap defaults: `lynx.application`, `lynx.polaris`
+- not enabled by default: most MQ, config-center, lock, protection, docs, and TLS plugins
+
+There is one useful special case: tracer is already imported by the template, but not made explicit in the default local config. So it behaves more like a pre-wired observability hook than a visibly enabled default feature.
+
+That is why plugin pages now distinguish between:
+
+- what the plugin supports in full
+- what the official template actually enables
+- what still requires one more explicit config step
+
 ## Suggested Reading Path
 
 If you are new to Lynx, this order works well:
 
 1. [Quick Start](/docs/getting-started/quick-start): get the CLI, template, and bootstrap flow running.
 2. [Bootstrap Configuration](/docs/getting-started/bootstrap-config): understand local bootstrap config and remote config entry points.
-3. [Plugin Management](/docs/getting-started/plugin-manager): understand ordering, dependency resolution, and assembly.
-4. [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem): choose modules by capability area.
-5. [Framework Architecture](/docs/intro/arch): understand the layered runtime model.
+3. [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide): understand the common integration path before diving into individual plugins.
+4. [Plugin Management](/docs/getting-started/plugin-manager): understand ordering, dependency resolution, and assembly.
+5. [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem): choose modules by capability area.
+6. [Framework Architecture](/docs/intro/arch): understand the layered runtime model.
 
 ## Community
 

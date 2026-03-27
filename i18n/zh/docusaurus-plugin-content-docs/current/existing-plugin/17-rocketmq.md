@@ -49,6 +49,16 @@ rocketmq:
       topics: ["orders"]
 ```
 
+## 官方模板实际怎么用
+
+官方模板默认并不会启用 RocketMQ。
+
+这和其他 MQ 插件的定位是一致的：
+
+- 脚手架不会替所有新服务先选定一种 broker 家族
+- 只有当服务有明确事件流或顺序消费需求时，才再叠 RocketMQ
+- 所以这页描述的是受支持的消息插件，不是模板默认能力
+
 和 RabbitMQ 一样，当前前缀是 `rocketmq`，不是 `lynx.rocketmq`。
 
 ## 如何使用

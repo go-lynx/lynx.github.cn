@@ -130,6 +130,67 @@ import (
 
 这才是当前真实的 runtime 路径。只有配置不够，只有导入也不够。
 
+## 5.1 官方模板到底配置了什么
+
+这里最值得纠正的一点是：插件页通常一次只讲一个能力，但 `lynx-layout` 展示的是一个真实服务实际如何把这些能力组合起来启动。
+
+当前 `lynx-layout/configs/bootstrap.local.yaml` 里实际接了这些配置：
+
+```yaml
+lynx:
+  http:
+    network: tcp
+    addr: 127.0.0.1:8000
+    timeout: 5s
+
+  grpc:
+    service:
+      network: tcp
+      addr: 127.0.0.1:9000
+      timeout: 5s
+
+  mysql:
+    driver: mysql
+    source: "lynx:lynx123456@tcp(127.0.0.1:3306)/lynx_test?charset=utf8mb4&parseTime=True&loc=Local"
+
+  redis:
+    addrs:
+      - 127.0.0.1:6379
+```
+
+这意味着模板实际在告诉你这些更具体的事实：
+
+- HTTP 用的是 `lynx.http`
+- gRPC 服务端用的是 `lynx.grpc.service`，不是扁平的 `lynx.grpc`
+- MySQL 用的是 `lynx.mysql`
+- Redis 用的是 `lynx.redis`
+- 本地模板启动路径不会一开始就把所有治理插件全部打开
+
+与之配套的 `configs/bootstrap.yaml` 更窄一些，主要展示的是应用元数据和 `lynx.polaris` 这类治理启动配置。
+
+如果某个插件页看起来比模板更抽象，优先以模板里的具体配置形状为准，再回到插件页理解这个能力的完整边界。
+
+你也可以把模板当前启动模型简单记成这样：
+
+- 本地 bootstrap 默认项：HTTP、gRPC 服务端、MySQL、Redis
+- 治理 bootstrap 默认项：应用元数据和 Polaris
+- 后续按需叠加：大多数 MQ、配置中心、文档、保护、锁、TLS 插件
+- 一个特例：tracer 已被导入，但默认本地配置里没有显式展开
+
+这个简单划分，通常已经足够解释为什么某个插件页本身是准确的，但模板里暂时还没有把它展开出来。
+
+## 5.2 模板代码里实际怎么拿能力
+
+`lynx-layout` 还明确展示了业务代码真正会消费的公开 API 形态：
+
+- HTTP server：`lynx-http.GetHttpServer()`
+- gRPC server：`lynx-grpc.GetGrpcServer(nil)`
+- Redis client：`lynx-redis.GetRedis()`
+- MySQL provider：`lynx-mysql.GetProvider()`
+- service registry：`lynx.GetServiceRegistry()`
+
+这正是“插件配置”和“业务代码最终怎么拿到 runtime 对象”之间缺失的那一段。
+
 当前官方模块包括：
 
 - 服务与治理：HTTP、gRPC、Polaris、Nacos、Etcd、Apollo、Sentinel、Swagger、Tracer
