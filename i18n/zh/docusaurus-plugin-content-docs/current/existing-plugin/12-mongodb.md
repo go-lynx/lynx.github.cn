@@ -5,67 +5,64 @@ title: MongoDB 插件
 
 # MongoDB 插件
 
-MongoDB 插件为 Lynx 提供 **MongoDB** 集成，包括连接池、TLS、读写关注、健康检查与指标。
+MongoDB 插件是一个由 runtime 持有的 Mongo Client，同时负责连接池、超时、指标和健康检查。
 
-## 功能
+## Runtime 事实
 
-- **MongoDB 客户端**：完整驱动能力。
-- **连接池**：可配置最小/最大连接数。
-- **鉴权**：多种认证方式。
-- **TLS/SSL**：安全连接。
-- **读写关注**：可配置 read/write concern。
-- **重试**：自动重试写入。
-- **健康检查**：内置健康检查。
-- **指标**：Prometheus 指标与热更新配置。
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-mongodb` |
+| 配置前缀 | `lynx.mongodb` |
+| Runtime 插件名 | `mongodb.client` |
+| 公开 API | `GetMongoDB()`、`GetMongoDBPlugin()`、`GetMongoDBDatabase()`、`GetMongoDBCollection()`、`GetMetricsGatherer()` |
+
+## 实现里真正做了什么
+
+插件会初始化一个受管的 MongoDB Client，并可按配置启用：
+
+- 连接池和超时控制
+- TLS 配置
+- read concern 与 write concern
+- Prometheus command 与 pool 监控
+- 周期性健康检查
+
+也就是说，插件负责连接性和运行时行为；集合设计、索引设计和查询模型仍然归你的 repository 层。
 
 ## 配置
-
-在配置文件中增加 `lynx.mongodb` 段：
 
 ```yaml
 lynx:
   mongodb:
     uri: "mongodb://localhost:27017"
-    database: "myapp"
-    username: "admin"
-    password: "password"
-    auth_source: "admin"
+    database: "app"
     max_pool_size: 100
     min_pool_size: 5
-    connect_timeout: "30s"
-    server_selection_timeout: "30s"
+    connect_timeout: 30s
+    server_selection_timeout: 30s
     enable_metrics: true
     enable_health_check: true
-    enable_tls: false
-    enable_compression: true
-    enable_retry_writes: true
 ```
 
-## 使用
-
-导入插件后，可通过插件暴露的 getter 获取客户端与数据库，在数据层配合官方 `go.mongodb.org/mongo-driver` 使用。实际 API 名称以插件仓库 README 为准。
+## 如何使用
 
 ```go
-import (
-    "github.com/go-lynx/lynx/boot"
-    mongodb "<mongodb-plugin-module>"
-)
+import mongodb "github.com/go-lynx/lynx-mongodb"
 
-func main() {
-    if err := boot.NewApplication(wireApp).Run(); err != nil {
-        panic(err)
-    }
-}
-
-// 启动后在数据层获取资源
 client := mongodb.GetMongoDB()
 db := mongodb.GetMongoDBDatabase()
+orders := mongodb.GetMongoDBCollection("orders")
+gatherer := mongodb.GetMetricsGatherer()
 ```
 
-## 安装
+如果你想把插件指标并入应用自身的 `/metrics`，`GetMetricsGatherer()` 就很重要。
 
-```bash
-go get <mongodb-plugin-module>@latest
-```
+## 实际注意点
 
-注意：MongoDB 插件位于独立插件仓库时，请以该插件 README 中声明的模块路径与接入 API 为准。
+- 插件会在启动阶段测试连接。
+- 只有启用相关功能时，后台 metrics 和 health-check goroutine 才会启动。
+- 如果需要更高层的仓储抽象，应当构建在插件之上，而不是塞回插件内部。
+
+## 相关页面
+
+- [数据库插件](/docs/existing-plugin/db)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

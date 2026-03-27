@@ -1,44 +1,93 @@
 ---
 id: grpc
-title: grpc客户端
+title: gRPC 服务
 ---
 
-# grpc客户端
+# gRPC 服务
 
-Go-Lynx 提供了grpc协议客户端插件，我们可以不用关心如何去编写创建客户端的相关代码，只需要提供对应的配置文件即可自动进行grpc客户端初始化。
+`lynx-grpc` 仓库里同时包含 gRPC 服务端插件和 gRPC 客户端插件。过去不少文档只写了服务端，这其实是不完整的。
 
-## 客户端配置
+## Runtime 事实
 
-指定grpc客户端需要在配置文件中进行配置，文件内容如下：
+| 能力 | Go module | 配置前缀 | Runtime 插件名 | 公开 API |
+|------|------|------|------|------|
+| gRPC 服务端 | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.service` | `grpc.service` | `grpc.GetGrpcServer(nil)` |
+| gRPC 客户端 | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.client` | `grpc.client` | `grpc.GetGrpcClientPlugin(nil)`、`grpc.GetGrpcClientConnection(...)` |
+
+## 服务端行为
+
+服务端插件会构建并持有 Kratos gRPC Server。从实现看，服务端路径包括：
+
+- 配置校验和默认值补齐
+- 可选 TLS 与证书提供者集成
+- health service 注册与 readiness 轮询
+- recovery、tracing、validate 中间件
+- 可选限流
+- 可选 unary 并发上限
+- 可选服务端熔断
+
+业务代码应该把 protobuf service 注册到这个受管 server 上，而不是重新创建一套 gRPC server。
+
+## 服务端配置
 
 ```yaml
 lynx:
   grpc:
-    addr: 0.0.0.0:8000
-    timeout: 5s
-    tls: true
+    service:
+      network: tcp
+      addr: ":9090"
+      timeout: 10s
+      tls_enable: false
 ```
 
-其中的 `lynx.grpc` 相关内容就是grpc客户端配置信息。目前底层是使用的 `kratos.grpc` 模块。  
-`tls: true` 表示开启证书验证并加密通讯，需要配合 `cert` 插件模块进行使用。
-
-配置完成之后，应用程序一旦启动就会根据插件顺序进行加载grpc客户端。
+## 服务注册
 
 ```go
 import (
-  bg "github.com/go-lynx/lynx/plugin/grpc"
+    lynxgrpc "github.com/go-lynx/lynx-grpc"
+    grpcgo "github.com/go-kratos/kratos/v2/transport/grpc"
 )
 
-func NewGRPCServer(
-login *service.LoginService,
-register *service.RegisterService,
-account *service.AccountService) *grpc.Server {
-    g := bg.GetServer()
-    loginV1.RegisterLoginServer(g, login)
-    registerV1.RegisterRegisterServer(g, register)
-    accountV1.RegisterAccountServer(g, account)
-    return g
+func NewGRPCServer(login *service.LoginService) (*grpcgo.Server, error) {
+    srv, err := lynxgrpc.GetGrpcServer(nil)
+    if err != nil {
+        return nil, err
+    }
+    v1.RegisterLoginServer(srv, login)
+    return srv, nil
 }
 ```
 
-我们初始化成功grpc客户端之后，需要自己去手动把对应业务模块的service注册到grpc客户端中，以便于进行路由匹配从而调用您的函数。
+## 客户端行为
+
+同一个模块还会注册 `grpc.client`。这个插件负责管理出站连接，并支持：
+
+- 静态服务端点和订阅式服务
+- 重试与超时
+- 可选 TLS
+- 连接池
+- 健康检查
+- metrics 与 tracing 开关
+- 按服务配置负载均衡策略
+
+如果你把本页只理解成“怎么暴露 gRPC 服务”，其实漏掉了这个模块的一半能力。
+
+## 客户端配置
+
+```yaml
+lynx:
+  grpc:
+    client:
+      default_timeout: 10s
+      connection_pooling: true
+      pool_size: 8
+      subscribe_services:
+        - name: user-service
+          required: true
+```
+
+## 相关页面
+
+- [HTTP](/docs/existing-plugin/http)
+- [TLS Manager](/docs/existing-plugin/tls-manager)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

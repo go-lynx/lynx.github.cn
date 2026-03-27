@@ -5,59 +5,72 @@ title: HTTP Service
 
 # HTTP Service
 
-The HTTP plugin brings an HTTP server into the Lynx startup flow. You provide listen configuration, the plugin initializes the server, and your application registers business services onto that server.
+The HTTP plugin is the runtime-owned HTTP server for Lynx, not a thin helper around router registration.
 
-Its purpose is not to replace your routing design. Its purpose is to make **listen lifecycle, startup behavior, and configuration-driven initialization** follow one consistent path.
+## Runtime Facts
 
-## Basic configuration
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-http` |
+| Config prefix | `lynx.http` |
+| Runtime plugin name | `http.server` |
+| Public getter | `http.GetHttpServer()` |
+
+## What The Implementation Actually Provides
+
+The plugin constructs and owns a Kratos HTTP server, then attaches operational behavior around it:
+
+- config loading and validation
+- network and listen address setup
+- optional TLS integration
+- metrics collection
+- rate limiting and request concurrency controls
+- circuit-breaker support
+- graceful shutdown handling
+
+Your application still owns route and handler registration, but the server lifecycle belongs to Lynx.
+
+## Minimal Configuration
 
 ```yaml
 lynx:
   http:
-    addr: 0.0.0.0:8000
-    timeout: 5s
-    tls: true
+    network: tcp
+    addr: ":8080"
+    timeout: 10s
+    tls_enable: false
 ```
 
-The common fields are:
+The code sets defaults when fields are omitted, but `lynx.http` is still the single source of truth for server behavior.
 
-- `addr`: listen address
-- `timeout`: request timeout
-- `tls`: whether TLS is enabled
-
-Once configured, the HTTP plugin is assembled during application startup.
-
-## How to register business handlers
+## How To Consume It
 
 ```go
 import (
-    bh "github.com/go-lynx/lynx/plugin/http"
+    lynxhttp "github.com/go-lynx/lynx-http"
+    kratoshttp "github.com/go-kratos/kratos/v2/transport/http"
 )
 
-func NewHTTPServer(
-    login *service.LoginService,
-    register *service.RegisterService,
-    account *service.AccountService,
-) *http.Server {
-    h := bh.GetServer()
-    loginV1.RegisterLoginHTTPServer(h, login)
-    registerV1.RegisterRegisterHTTPServer(h, register)
-    accountV1.RegisterAccountHTTPServer(h, account)
-    return h
+func NewHTTPServer(login *service.LoginService) (*kratoshttp.Server, error) {
+    srv, err := lynxhttp.GetHttpServer()
+    if err != nil {
+        return nil, err
+    }
+    v1.RegisterLoginHTTPServer(srv, login)
+    return srv, nil
 }
 ```
 
-The key object here is `bh.GetServer()`. It returns the `*http.Server` already owned by the Lynx runtime, and you only need to register your HTTP services onto it.
+The important point is that you retrieve the runtime-owned server. You do not create a second HTTP server beside Lynx.
 
-## Integration steps
+## Integration Notes
 
-1. add the plugin module `github.com/go-lynx/lynx/plugin/http`
-2. add `lynx.http` configuration
-3. anonymous-import the plugin in `main`
-4. register routes in the server layer through `GetServer()`
+- The plugin is registered via package `init()`, so importing `github.com/go-lynx/lynx-http` is what makes it discoverable.
+- If you also use Swagger, that plugin reads the HTTP address when `api_server` is not set.
+- If you use TLS centrally, align this page with the [TLS Manager](/docs/existing-plugin/tls-manager) page rather than duplicating certificate logic in application code.
 
-## Related pages
+## Related Pages
 
 - [gRPC](/docs/existing-plugin/grpc)
-- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [TLS Manager](/docs/existing-plugin/tls-manager)
 - [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

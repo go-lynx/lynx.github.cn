@@ -5,27 +5,58 @@ title: SQL SDK
 
 # SQL SDK
 
-The SQL SDK is the shared base layer behind Lynx SQL-related plugins. It is closer to a common capability layer than to a standalone plugin you use directly for business access.
+`lynx-sql-sdk` is the shared SQL capability layer used by concrete SQL plugins such as MySQL, PostgreSQL, and MSSQL. It is not a standalone plugin entry in `plugins.json`.
 
-## What it is mainly for
+## What It Actually Is
 
-- providing shared abstractions for MySQL, PostgreSQL, MSSQL, and similar SQL integrations
-- unifying health checks, metrics, pooling, and base resource handling
-- reducing duplicated low-level logic across SQL plugins
+The SDK provides:
 
-## When you will care about it
+- the shared `interfaces.SQLPlugin` contract
+- a stable `DBProvider` abstraction
+- common config fields for SQL plugins
+- a reusable base plugin implementation in `base.SQLPlugin`
 
-- when you are reading implementation details or extension points of SQL plugins
-- when you need multi-datasource or platform-level data infrastructure
-- when you are extending the Lynx SQL ecosystem itself
+Concrete SQL plugins embed this base layer and then supply driver-specific behavior.
 
-## Practical guidance
+## Shared Runtime Capabilities
 
-- application teams should usually focus on the concrete SQL plugin rather than coding directly around SQL SDK
-- if you are building platform extensions, SQL SDK is the more relevant entry point
-- keep business repositories, ORM models, and the shared SQL base cleanly separated
+From the base implementation, concrete SQL plugins inherit support for:
 
-## Related pages
+- startup connection and validation
+- retry on connect
+- pool monitoring and alert thresholds
+- health checks
+- auto-reconnect
+- connection warmup
+- slow-query monitoring
+- leak detection
+
+Those are real runtime behaviors, not just helper types.
+
+## Important Interfaces
+
+`interfaces.SQLPlugin` is the contract for plugin-backed SQL access:
+
+- `GetDB()`
+- `GetDBWithContext(ctx)`
+- `GetValidatedConn(ctx)`
+- `GetDialect()`
+- `IsConnected()`
+
+`interfaces.DBProvider` is the safer abstraction when callers should resolve the current pool dynamically instead of caching an old `*sql.DB`.
+
+## When To Read This Page
+
+This page matters when:
+
+- you are building or reviewing a concrete SQL plugin
+- you need to understand what MySQL, PostgreSQL, and MSSQL plugins share
+- you want to reason about reconnect and pool semantics in the SQL stack
+
+For ordinary application integration, read the concrete plugin page first.
+
+## Related Pages
 
 - [Database Plugin](/docs/existing-plugin/db)
 - [Layout](/docs/existing-plugin/layout)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

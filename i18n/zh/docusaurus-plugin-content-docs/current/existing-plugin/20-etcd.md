@@ -1,40 +1,42 @@
 ---
 id: etcd
-title: Etcd Plugin
+title: Etcd 插件
 ---
 
-# Etcd Plugin
+# Etcd 插件
 
-Go-Lynx 的 Etcd 插件将 etcd 作为配置中心与服务注册发现后端，支持配置监听、多前缀、本地缓存、TLS、健康检查与指标。
+Etcd 模块既是配置中心插件，也是注册与发现后端。
 
-## 功能概览
+## Runtime 事实
 
-- **配置中心**：实现 ControlPlane 接口，作为 Lynx 配置源
-- **服务注册与发现**：基于 etcd 的注册与发现、租约续期
-- **配置监听**：配置变更自动更新
-- **多配置源**：多 prefix、本地缓存
-- **安全与可靠性**：TLS、重试、熔断、优雅关闭
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-etcd` |
+| 配置前缀 | `lynx.etcd` |
+| Runtime 插件名 | `etcd.config.center` |
+| 公开 API | `GetClient()`、`GetEtcdConfig()`、`GetNamespace()`、`GetConfigSources()`、`GetConfigValue(prefix, key)` |
 
-## 配置说明
+## 实现提供的能力
 
-在 `config.yaml` 中增加 `lynx.etcd`：
+代码里支持：
+
+- 从 Etcd 前缀加载配置
+- 多个配置前缀及 merge strategy
+- 可选本地缓存
+- retry、优雅停机、指标、健康检查
+- 可选服务注册
+- 可选服务发现与 watcher
+
+因此它绝不只是“从 Etcd 读几个 key”。
+
+## 配置
 
 ```yaml
 lynx:
   etcd:
     endpoints:
       - "127.0.0.1:2379"
-    timeout: 10s
-    dial_timeout: 5s
     namespace: "lynx/config"
-    enable_tls: false
-    enable_cache: true
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: 1s
-    enable_graceful_shutdown: true
-    shutdown_timeout: 10s
     enable_register: true
     enable_discovery: true
     registry_namespace: "lynx/services"
@@ -42,44 +44,31 @@ lynx:
     service_config:
       prefix: "lynx/config"
       additional_prefixes:
-        - "lynx/config/app"
-      priority: 0
+        - "lynx/config/shared"
       merge_strategy: "override"
 ```
 
-- `enable_register` / `enable_discovery`：开启时提供基于 etcd 的注册与发现。
-- `registry_namespace`：服务注册的 etcd 路径前缀。
-- `service_config`：配置中心多前缀与合并策略。
-
 ## 如何使用
 
-### 1. 引入依赖
-
-```bash
-go get github.com/go-lynx/lynx-etcd
-```
-
-### 2. 注册插件
-
-在应用启动时导入插件，Lynx 会将其作为配置中心（及可选的服务注册发现）加载：
-
 ```go
-import _ "github.com/go-lynx/lynx-etcd"
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("etcd.config.center")
+etcdPlugin := plugin.(*etcd.PlugEtcd)
+
+client := etcdPlugin.GetClient()
+sources, err := etcdPlugin.GetConfigSources()
+value, err := etcdPlugin.GetConfigValue("lynx/config", "my.key")
 ```
 
-配置加载、服务注册与发现由框架按配置自动完成；业务代码通过 Lynx 的服务发现接口获取下游实例，无需直接操作 etcd 客户端。
+如果需要服务注册和发现，这个模块还提供了 `NewEtcdRegistrar`、`NewEtcdDiscovery` 之类的实现。
 
-### 3. 服务注册与发现
+## 实际注意点
 
-当 `enable_register` 和 `enable_discovery` 为 `true` 时：
+- `namespace` 和 `service_config.prefix` 影响配置读取边界，`registry_namespace` 影响服务实例注册路径。
+- 开启 register 或 discovery 后，它就不再只是配置中心，而是控制面基础设施的一部分。
+- [Etcd Lock](/docs/existing-plugin/etcd-lock) 依赖这个插件暴露出来的 runtime 资源。
 
-- **注册**：服务启动后自动注册到 etcd，并维持租约续期。
-- **发现**：通过框架的服务发现接口查询实例列表，etcd 通过 Watch 提供实时更新。
-- **下线**：进程退出或租约过期后自动从 etcd 移除。
+## 相关页面
 
-具体调用方式以 Lynx 当前版本的服务发现 API 为准（如 gRPC/HTTP 的 Resolver、或统一的 Discovery 接口）。
-
-## 相关链接
-
-- 仓库：[go-lynx/lynx-etcd](https://github.com/go-lynx/lynx-etcd)
-- [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- [Apollo](/docs/existing-plugin/apollo)
+- [Etcd Lock](/docs/existing-plugin/etcd-lock)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

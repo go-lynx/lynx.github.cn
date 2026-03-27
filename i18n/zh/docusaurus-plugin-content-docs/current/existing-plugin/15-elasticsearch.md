@@ -1,24 +1,29 @@
 ---
 id: elasticsearch
-title: Elasticsearch Plugin
+title: Elasticsearch 插件
 ---
 
-# Elasticsearch Plugin
+# Elasticsearch 插件
 
-Go-Lynx 的 Elasticsearch 插件为应用提供完整的 Elasticsearch 集成能力，支持全文检索、索引、聚合等能力，并具备连接池、健康检查、指标监控与热更新。
+`lynx-elasticsearch` 把官方 Elasticsearch client 接入 Lynx 的 runtime 启动流程。它负责 client 初始化、连接策略、metrics / health 配置，以及 index prefix 处理；但查询 DSL、mapping 设计和索引治理仍然属于你的业务代码层。
 
-## 功能概览
+## 运行时事实
 
-- **完整 ES 客户端**：基于官方 go-elasticsearch/v8
-- **多种认证**：用户名/密码、API Key、Service Token
-- **TLS/SSL**：安全连接
-- **连接池与重试**：可配置连接超时与最大重试次数
-- **健康检查与指标**：Prometheus 指标与健康探针
-- **热配置更新**：支持运行时配置更新
+| 项目 | 值 |
+| --- | --- |
+| Go 模块 | `github.com/go-lynx/lynx-elasticsearch` |
+| 配置前缀 | `lynx.elasticsearch` |
+| runtime 插件名 | `elasticsearch.client` |
+| 主要 Getter | `GetElasticsearch()`、`GetElasticsearchPlugin()`、`GetIndexName(name)` |
 
-## 配置说明
+## 实现里实际提供了什么
 
-在 `config.yaml` 中增加 `lynx.elasticsearch` 配置：
+- 从 `lynx.elasticsearch` 初始化 Elasticsearch client
+- 支持多节点地址、认证字段、重试、超时、健康检查与 metrics 配置
+- 通过 `GetElasticsearch()` 暴露原始 client
+- 通过插件实例暴露 `GetConnectionStats()` 和带 prefix 的索引名生成能力
+
+## 配置示例
 
 ```yaml
 lynx:
@@ -28,87 +33,36 @@ lynx:
       - "http://localhost:9201"
     username: "elastic"
     password: "changeme"
-    max_retries: 3
     connect_timeout: "30s"
+    max_retries: 3
     enable_metrics: true
     enable_health_check: true
     health_check_interval: "30s"
-    compress_request_body: true
     index_prefix: "myapp"
 ```
 
-| 配置项 | 类型 | 默认值 | 说明 |
-|--------|------|--------|------|
-| `addresses` | `[]string` | `["http://localhost:9200"]` | ES 节点地址列表 |
-| `username` / `password` | string | 空 | 基础认证 |
-| `api_key` / `service_token` | string | 空 | API Key 或 Service Token |
-| `max_retries` | int | 3 | 最大重试次数 |
-| `connect_timeout` | string | "30s" | 连接超时 |
-| `enable_metrics` | bool | false | 是否开启 Prometheus 指标 |
-| `enable_health_check` | bool | false | 是否开启健康检查 |
-| `index_prefix` | string | 空 | 索引名前缀（如 `myapp` 则 GetIndexName("documents") => "myapp_documents"） |
-
-## 如何使用
-
-### 1. 引入依赖
-
-```bash
-go get github.com/go-lynx/lynx-elasticsearch
-```
-
-### 2. 注册插件
-
-在 `main.go` 中匿名导入插件（或通过 Lynx 的插件列表注册）：
+## 使用方式
 
 ```go
-import (
-    _ "github.com/go-lynx/lynx-elasticsearch"
-)
-```
+import elasticsearch "github.com/go-lynx/lynx-elasticsearch"
 
-### 3. 获取客户端并调用
-
-```go
-import (
-    "context"
-    "github.com/go-lynx/lynx-elasticsearch"
-    "github.com/elastic/go-elasticsearch/v8/esapi"
-)
-
-// 获取 ES 客户端
 client := elasticsearch.GetElasticsearch()
-if client == nil {
-    log.Fatal("failed to get elasticsearch client")
-}
-
-// 带前缀的索引名（若配置了 index_prefix）
-indexName := elasticsearch.GetIndexName("documents") // 如 "myapp_documents"
-
-// 创建索引、写入文档、搜索等均通过 esapi 与 client 完成
-req := esapi.IndexRequest{
-    Index:      indexName,
-    DocumentID: "1",
-    Body:       strings.NewReader(`{"title":"hello","content":"world"}`),
-    Refresh:    "true",
-}
-res, err := req.Do(context.Background(), client)
-```
-
-### 4. 通过 Plugin 获取统计与索引名
-
-```go
 plugin := elasticsearch.GetElasticsearchPlugin()
+indexName := elasticsearch.GetIndexName("documents")
 stats := plugin.GetConnectionStats()
-indexName := plugin.GetIndexName("documents")
+
+_ = client
+_ = indexName
+_ = stats
 ```
 
-## 使用建议
+## 实践建议
 
-- 生产环境建议开启 `enable_metrics`、`enable_health_check`，并合理设置 `connect_timeout`、`max_retries`。
-- 多节点时配置多个 `addresses` 以提升可用性。
-- 使用 `index_prefix` 便于多环境/多应用共用集群时区分索引。
+- 多应用或多环境共用一个集群时，优先使用 `index_prefix`
+- schema、alias 和 query 组合逻辑应保留在你的服务层，而不是塞进插件配置
+- 需要运行时观测时，优先使用 `GetConnectionStats()`，不要再自己拼一套临时探针
 
-## 相关链接
+## 相关页面
 
-- 仓库：[go-lynx/lynx-elasticsearch](https://github.com/go-lynx/lynx-elasticsearch)
-- [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- 仓库: [go-lynx/lynx-elasticsearch](https://github.com/go-lynx/lynx-elasticsearch)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

@@ -1,203 +1,172 @@
 ---
 id: quick-start
-title: 快速启动
+title: 快速开始
 ---
 
-# 快速入门
+# 快速开始
 
-本指南将帮助您快速上手当前版本的 Lynx。Lynx 提供了 CLI 脚手架、插件注册、配置装配与统一运行时，用于快速搭建治理型 Go 微服务项目。
+本页的目标不是罗列所有功能，而是帮助你按照当前工作流，先跑起一个**可运行、可扩展**的 Lynx 服务。
 
-## 安装
+## 前置要求
 
-### 前置要求
-- **Go 1.21+**（推荐 Go 1.24.3）
-- **Docker 20.10+**（用于容器化部署）
-- **最少 2GB 内存**（生产环境推荐 4GB+）
+- Go 1.24+
+- Git
+- 能访问 Go 模块和模板仓库的网络环境
 
-### 安装 Lynx CLI 工具
+如果你想立即试数据库、消息队列或配置中心插件，就按需提前准备这些服务。CLI 和项目脚手架并不要求你第一天就把整套基础设施全部接好。
 
-```shell
-# 安装最新的 Lynx CLI
+## 1. 安装 Lynx CLI
+
+```bash
 go install github.com/go-lynx/lynx/cmd/lynx@latest
-
-# 验证安装
 lynx --version
 ```
 
-### 创建您的第一个微服务
+当前 Lynx CLI 主要负责：
 
-```shell
-# 创建单个服务
+- 通过 `lynx new` 生成项目脚手架
+- 通过 `lynx run --watch` 支持本地开发
+- 提供 `lynx doctor` 之类的诊断和辅助流程
+
+## 2. 创建项目
+
+```bash
+# 创建一个服务
 lynx new my-service
 
 # 一次创建多个服务
 lynx new user-service order-service payment-service
-
-# 使用自定义模块路径创建
-lynx new demo --module github.com/acme/demo --post-tidy
 ```
 
-CLI 支持同时创建多个具有生产就绪模板的微服务模块。
+如果你希望创建时有更多控制，可以使用模块路径、模板引用、插件选择等参数：
 
-### 开发命令
-
-```shell
-# 使用热重载开发服务器运行
-lynx run --watch
-
-# 诊断并自动修复常见问题
-lynx doctor --fix
-
-# 生成插件脚手架
-lynx plugin create my-plugin
+```bash
+lynx new demo \
+  --module github.com/acme/demo \
+  --post-tidy \
+  --plugins http,grpc,redis
 ```
 
-按照这些步骤，您可以快速获得生产就绪的 Lynx 项目脚手架。项目模板来自于 [Go-Lynx-Layout](https://github.com/go-lynx/lynx-layout)。
+官方模板来自 [lynx-layout](https://github.com/go-lynx/lynx-layout)，它会跟当前 Lynx 运行时模型保持同步。
 
-## 了解 Lynx Framework
+## 3. 启动服务
 
-Lynx 是一个基于插件的 Go 微服务框架，构建在成熟的工程组件之上，并将脚手架、配置、插件接入和运行时启动整合到一条开发路径中。它提供的核心能力包括：
-
-- **服务发现与注册** - 自动服务网格集成
-- **配置管理** - 集中式配置与热重载
-- **熔断与限流** - 企业级容错能力
-- **分布式链路追踪** - OpenTelemetry 兼容的可观测性
-- **负载均衡与路由** - 智能流量管理
-
-### 当前插件生态
-
-Lynx 的插件家族覆盖数据库、缓存、消息队列、配置中心、服务发现、可观测性与分布式能力。实际可用插件与模块路径应以对应插件仓库或插件 README 为准。
-
-### 基于插件的架构
-
-类似于 Spring Boot 的方式，Lynx 使用 YAML 配置文件来自动加载和编排插件。框架会：
-
-1. **解析配置** 并加载所需插件
-2. **获取远程配置** 从配置中心（如果配置）
-3. **自动装配插件** 完成依赖注入
-4. **初始化服务** 配置监控和健康检查
-
-这使得 Lynx 成为构建企业级微服务的高度灵活且功能强大的框架。
-
-## 项目结构
-
-我们沿用了基于 go-kratos 的优秀项目结构，并增强了 Lynx 基于插件的架构。您无需编写样板初始化代码 - Lynx 插件管理器处理自动装配和依赖注入。
-
-```
-.
-├── api // 下面维护了微服务使用的proto文件以及根据它们所生成的go文件
-│   └── helloworld
-│       └── v1
-│           ├── error_reason.pb.go
-│           ├── error_reason.proto
-│           ├── error_reason.swagger.json
-│           ├── greeter.pb.go
-│           ├── greeter.proto
-│           ├── greeter.swagger.json
-│           ├── greeter_grpc.pb.go
-│           └── greeter_http.pb.go
-├── cmd  // 整个项目启动的入口文件
-│   └── server
-│       ├── main.go
-│       ├── wire.go  // 使用wire来维护依赖注入
-│       └── wire_gen.go
-├── configs  // 这里通常配置微服务本地引导配置文件
-│   └── config.yaml
-├── generate.go
-├── go.mod
-├── go.sum
-├── internal  // 该服务所有不对外暴露的代码，通常的业务逻辑都在这下面，使用internal避免错误引用
-│   ├── biz   // 业务逻辑的组装层，类似 DDD 的 domain 层，data 类似 DDD 的 repo，而 repo 接口在这里定义，使用依赖倒置的原则。
-│   │   ├── README.md
-│   │   ├── biz.go
-│   │   └── greeter.go
-│   ├── conf  // 内部使用的config的结构定义，使用proto格式生成
-│   │   ├── conf.pb.go
-│   │   └── conf.proto
-│   ├── data  // 业务数据访问，包含 cache、db 等封装，实现了 biz 的 repo 接口。我们可能会把 data 与 dao 混淆在一起，data 偏重业务的含义，它所要做的是将领域对象重新拿出来，我们去掉了 DDD 的 infra层。
-│   │   ├── README.md
-│   │   ├── data.go
-│   │   └── greeter.go
-│   ├── server  // http和grpc实例的模块注册以及创建和配置
-│   │   ├── grpc.go
-│   │   ├── http.go
-│   │   └── server.go
-│   └── service  // 实现了 api 定义的服务层，类似 DDD 的 application 层，处理 DTO 到 biz 领域实体的转换(DTO -> DO)，同时协同各类 biz 交互，但是不应处理复杂逻辑
-│       ├── README.md
-│       ├── greeter.go
-│       └── service.go
-└── third_party  // api 依赖的第三方proto
-    ├── README.md
-    ├── google
-    │   └── api
-    │       ├── annotations.proto
-    │       ├── http.proto
-    │       └── httpbody.proto
-    └── validate
-        ├── README.md
-        └── validate.proto
-```
-
-
-## 应用程序入口
-
-### 当前推荐的应用启动方式
+在官方模板中，入口通常长这样：
 
 ```go
 package main
 
-import (
-    "github.com/go-lynx/lynx/boot"
-    // 导入所需插件以完成注册
-    _ "github.com/go-lynx/plugins/mq/kafka"
-    _ "github.com/go-lynx/plugins/nosql/redis"
-    _ "github.com/go-lynx/plugins/service/http"
-)
+import "github.com/go-lynx/lynx/boot"
 
 func main() {
-    if err := boot.NewApplication(wireApp).Run(); err != nil {
-        panic(err)
-    }
+	err := boot.NewApplication(wireApp).Run()
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
-### 接入要点
+本地开发时，常见路径是：
 
-- 使用 CLI 初始化项目与目录骨架
-- 通过 YAML 配置声明插件能力
-- 在代码中匿名导入需要注册的插件包
-- 使用 `boot.NewApplication(wireApp).Run()` 启动应用
+```bash
+lynx run --watch
+```
 
-### 启动流程
+在开始叠加更多能力之前，这样就足够验证脚手架和引导路径是否正常。
 
-Lynx 启动时会执行完善的引导序列：
+如果你想直接运行生成出来的二进制，常见启动方式仍然是：
 
-1. **配置解析** - 加载本地引导配置并初始化插件
-2. **远程配置** - 从配置中心获取完整配置（如果启用）
-3. **插件编排** - 加载并装配所有插件及依赖注入
-4. **服务注册** - 自动向发现机制注册服务
-5. **健康检查** - 初始化监控端点和健康探针
-6. **流量管理** - 同步 HTTP/gRPC 路由和限流策略
+```bash
+./bin/server -conf ./configs
+```
 
-### 内置监控
+这一步的目标很直接：先确认 `boot.NewApplication(wireApp).Run()` 能正确读取引导配置，并把基础 runtime 拉起来，再去继续接插件。
 
-Lynx 自动暴露：
-- **52+个 Prometheus 指标** 标准化命名
-- **健康检查端点**（`/health`、`/ready`）
-- **所有插件性能监控**
-- **分布式链路追踪** 集成
+## 4. 理解生成出来的项目
 
-### 生产就绪
+官方模板采用了适配 Lynx 的 Kratos 风格分层结构。最值得先理解的部分是：
 
-默认接入完成后，应用通常会具备以下工程能力：
-- **错误恢复** 熔断器模式
-- **资源管理** 类型安全访问
-- **事件系统** 支持每秒100万+事件
-- **插件热插拔** 零停机时间
+- `cmd/`：应用入口
+- `configs/`：本地引导配置
+- `internal/server/`：HTTP / gRPC 服务暴露与注册
+- `internal/service/`：接口层
+- `internal/biz/`：业务编排
+- `internal/data/`：存储与外部集成
 
-## 下一步
+真正重要的不是文件夹名字本身，而是：**Lynx 负责运行时装配，你的业务代码则接入约定好的层次。**
 
-- **[引导配置](/docs/getting-started/bootstrap-config)** — 配置 `-conf`、本地与远程配置、Polaris/Nacos。
-- **[插件管理](/docs/getting-started/plugin-manager)** — 插件加载、依赖与自定义插件。
-- **[插件生态](/docs/existing-plugin/plugin-ecosystem)** — 插件完整列表及各插件文档链接。
-- **[框架架构](/docs/intro/arch)** — 分层运行时、启动流程与性能特性。
+## 5. 插件接入是怎么工作的
+
+当前 Lynx 模块家族已经覆盖服务、配置、存储、消息、治理、可观测性和分布式能力。常见接入路径是：
+
+1. 添加插件模块依赖
+2. 配置该插件实际使用的前缀
+3. 如果插件通过 `init()` 自注册，就匿名导入模块
+4. 让 `boot.NewApplication(wireApp).Run()` 完成统一运行时装配
+5. 启动后通过 Getter 或插件管理器获取能力
+
+例如，一个更真实的起步接法是：
+
+```bash
+go get github.com/go-lynx/lynx-http
+go get github.com/go-lynx/lynx-redis
+```
+
+```yaml
+lynx:
+  http:
+    addr: 0.0.0.0:8000
+  redis:
+    addrs:
+      - 127.0.0.1:6379
+```
+
+```go
+import (
+    _ "github.com/go-lynx/lynx-http"
+    _ "github.com/go-lynx/lynx-redis"
+)
+```
+
+这才是当前真实的 runtime 路径。只有配置不够，只有导入也不够。
+
+当前官方模块包括：
+
+- 服务与治理：HTTP、gRPC、Polaris、Nacos、Etcd、Apollo、Sentinel、Swagger、Tracer
+- 数据与存储：Redis、MongoDB、Elasticsearch、MySQL、PostgreSQL、SQL Server、SQL SDK
+- 消息与异步：Kafka、RabbitMQ、RocketMQ、Pulsar
+- 分布式能力：Seata、DTM、Redis Lock、Etcd Lock、Eon ID
+
+每个插件页面都会解释自己的配置、Getter、使用方式和注意事项。
+
+如果你是第一次选模块，最稳妥的顺序通常是：
+
+1. 先接 HTTP 或 gRPC
+2. 再接一个数据层模块，比如 Redis 或 MongoDB
+3. 最后再加一个可观测或治理模块，比如 Tracer 或 Polaris
+
+这样启动问题更容易定位。
+
+## 6. 推荐下一步
+
+当你的第一个服务已经能跑起来后，建议按这个顺序继续读：
+
+- [引导配置](/docs/getting-started/bootstrap-config)：理解本地和远程配置入口
+- [插件管理](/docs/getting-started/plugin-manager)：理解排序、依赖和装配
+- [插件使用指南](/docs/getting-started/plugin-usage-guide)：掌握适用于大多数插件的一致接入流程
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)：按能力域浏览模块
+- [框架架构](/docs/intro/arch)：理解运行时模型和启动链路
+
+## 常见误区
+
+- **项目还没跑起来，就想先把所有插件全接完**
+
+  更合理的路径是：先让脚手架跑通，再逐步增加能力。
+
+- **把 Lynx 只当成一个 HTTP 框架**
+
+  更准确的理解是：它是一层微服务基础设施编排层，HTTP 和 gRPC 只是其中两个插件。
+
+- **把插件当成互不相关的 SDK**
+
+  Lynx 的价值恰恰在于：这些插件共享同一套运行时模型，而不是变成彼此孤立的集成。

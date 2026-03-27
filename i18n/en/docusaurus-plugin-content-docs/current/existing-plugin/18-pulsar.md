@@ -5,51 +5,60 @@ title: Pulsar Plugin
 
 # Pulsar Plugin
 
-The Pulsar plugin brings Apache Pulsar production, consumption, and subscription capability into Lynx. It fits systems that need multiple subscription models, multi-tenant support, or more complex messaging semantics.
+The Pulsar plugin is a runtime-managed Pulsar client with named producer and consumer resources.
 
-## What it is for
+## Runtime Facts
 
-- managing Pulsar client connectivity in one place
-- configuring multiple producers and consumers
-- supporting subscription modes, batching, and security settings
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-pulsar` |
+| Config prefix | `lynx.pulsar` |
+| Runtime plugin name | `pulsar.client` |
+| Public APIs | `GetPulsarClient()`, `GetPulsarClientByName()` |
 
-## Basic configuration
+## What The Implementation Supports
+
+The current plugin includes:
+
+- one managed Pulsar client
+- multiple configured producers
+- multiple configured consumers
+- auth and TLS settings
+- connection manager
+- retry manager
+- health checks and metrics
+
+The `GetPulsarClientByName()` API exists, but the current implementation still returns the main client rather than truly separate runtime plugin instances.
+
+## Configuration
 
 ```yaml
 lynx:
   pulsar:
     service_url: "pulsar://localhost:6650"
     producers:
-      - name: "default-producer"
+      - name: "order-producer"
         enabled: true
-        topic: "default-topic"
+        topic: "orders"
     consumers:
-      - name: "default-consumer"
+      - name: "order-consumer"
         enabled: true
         topics:
-          - "default-topic"
-        subscription_name: "default-subscription"
+          - "orders"
+        subscription_name: "order-subscription"
 ```
 
-## Basic usage
+## How To Consume It
 
 ```go
-import (
-    "github.com/go-lynx/lynx/plugin/pulsar"
-)
+import pulsarplug "github.com/go-lynx/lynx-pulsar"
 
-pulsarClient := pulsar.GetPulsarClient()
+client, err := pulsarplug.GetPulsarClient()
 ```
 
-Once you have the client, keep topic, subscription, and handler organization in your application code.
+After retrieving the plugin object, use its producer, consumer, config, and stats methods rather than expecting the old `github.com/go-lynx/lynx/plugin/pulsar` package layout.
 
-## Practical guidance
+## Related Pages
 
-- define topic and subscription boundaries before deciding plugin instance layout
-- choose batching, compression, and subscription modes based on throughput, latency, and delivery semantics
-- if you rely on multi-tenant or richer schema rules, keep those constraints explicit in business contracts rather than only in config
-
-## Related pages
-
-- Repo: [go-lynx/lynx-pulsar](https://github.com/go-lynx/lynx-pulsar)
+- [Kafka](/docs/existing-plugin/kafka)
 - [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

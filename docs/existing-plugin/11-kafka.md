@@ -5,53 +5,73 @@ title: Kafka Plugin
 
 # Kafka Plugin
 
-The Kafka plugin brings Kafka production and consumption into the Lynx runtime. It fits systems that need one place to manage broker connectivity, producer/consumer instances, and security or retry behavior.
+The Kafka module is a runtime-managed client plugin with named producer and consumer instances. It is more than a single global producer.
 
-## What it is for
+## Runtime Facts
 
-- managing Kafka broker connections
-- configuring multiple producers and consumers
-- centralizing SASL, TLS, batching, and retry behavior
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-kafka` |
+| Config prefix | `lynx.kafka` |
+| Runtime plugin name | `kafka.client` |
+| Main API shape | plugin instance methods such as `ProduceWith`, `ProduceBatchWith`, `SubscribeWith` |
 
-## Basic configuration
+## What The Code Supports
+
+From the implementation, the plugin provides:
+
+- multiple named producers
+- multiple named consumers
+- lazy consumer initialization on `SubscribeWith`
+- per-producer retry handlers
+- per-producer circuit breakers
+- optional SASL and TLS
+- batch processing for producers
+- connection managers and health reporting
+
+The first enabled producer becomes the default producer when you call methods that do not specify a producer name.
+
+## Configuration Shape
 
 ```yaml
 lynx:
   kafka:
     brokers:
-      - "localhost:9092"
-      - "localhost:9093"
-    client_id: "lynx-kafka-client"
-    group_id: "lynx-consumer-group"
+      - "127.0.0.1:9092"
     producers:
-      - name: "default-producer"
+      - name: order-producer
         enabled: true
-        topic: "default-topic"
+        topics: ["orders"]
+        batch_size: 1000
     consumers:
-      - name: "default-consumer"
+      - name: order-consumer
         enabled: true
-        topics:
-          - "default-topic"
-        group_id: "lynx-consumer-group"
+        group_id: order-group
+        topics: ["orders"]
+        max_concurrency: 10
 ```
 
-## Usage
+Validation in code requires brokers, valid consumer group configuration, and valid SASL or TLS settings when those features are enabled.
 
-Kafka is usually best treated as a runtime capability during startup and assembly. What business code should really care about is:
+## How To Consume It
 
-- which topics belong to which workflows
-- which consumer groups represent which delivery semantics
-- how retries, ordering, and idempotency are designed
+You normally resolve the plugin through the runtime and then call its methods:
 
-The concrete client instances are then provided by the plugin layer.
+```go
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("kafka.client")
+kafkaClient := plugin.(*kafka.Client)
 
-## Practical guidance
+err := kafkaClient.ProduceWith(ctx, "order-producer", "orders", key, value)
+err = kafkaClient.SubscribeWith(ctx, "order-consumer", []string{"orders"}, handler)
+```
 
-- design topic and consumer-group boundaries explicitly
-- choose batching, compression, and retry settings around throughput and latency goals
-- do not hide the message contract only in config; keep it explicit in application code as well
+## Practical Notes
 
-## Related pages
+- Producer instances are started during plugin startup.
+- Consumer instances are created when you subscribe, not all at boot time.
+- `required_acks`, compression, retry, batching, and consumer offsets are operational settings that materially affect semantics, not just throughput.
 
-- Repo: [go-lynx/lynx-kafka](https://github.com/go-lynx/lynx-kafka)
+## Related Pages
+
 - [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Tracer](/docs/existing-plugin/tracer)

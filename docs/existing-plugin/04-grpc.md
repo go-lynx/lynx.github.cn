@@ -5,59 +5,89 @@ title: gRPC Service
 
 # gRPC Service
 
-The gRPC plugin brings a gRPC server into the Lynx runtime. Like the HTTP plugin, you do not have to hand-build the server initialization path. You provide listen configuration and register your business services onto the managed server.
+The `lynx-grpc` repository contains both a gRPC server plugin and a gRPC client plugin. Earlier docs often described only the server side, which is incomplete.
 
-Older versions of the docs described this as a "gRPC client", which is misleading. This page is about **gRPC server integration**.
+## Runtime Facts
 
-## Basic configuration
+| Capability | Go module | Config prefix | Runtime plugin name | Public API |
+|------|------|------|------|------|
+| gRPC server | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.service` | `grpc.service` | `grpc.GetGrpcServer(nil)` |
+| gRPC client | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.client` | `grpc.client` | `grpc.GetGrpcClientPlugin(nil)`, `grpc.GetGrpcClientConnection(...)` |
+
+## Server-Side Behavior
+
+The service plugin builds and owns the Kratos gRPC server. From the implementation, the server path includes:
+
+- config validation and defaulting
+- optional TLS and certificate-provider integration
+- health service registration and readiness polling
+- recovery, tracing, and validation middleware
+- optional rate limiting
+- optional max in-flight unary control
+- optional server-side circuit breaker
+
+Your service code should register protobuf services onto the managed server instead of creating another one.
+
+## Server Configuration
 
 ```yaml
 lynx:
   grpc:
-    addr: 0.0.0.0:9000
-    timeout: 5s
-    tls: true
+    service:
+      network: tcp
+      addr: ":9090"
+      timeout: 10s
+      tls_enable: false
 ```
 
-Where:
-
-- `addr`: gRPC listen address
-- `timeout`: request timeout
-- `tls`: whether certificate-related settings are enabled
-
-Once configured, the plugin initializes the gRPC server during application startup.
-
-## Service registration example
+## Server Registration
 
 ```go
 import (
-    bg "github.com/go-lynx/lynx/plugin/grpc"
+    lynxgrpc "github.com/go-lynx/lynx-grpc"
+    grpcgo "github.com/go-kratos/kratos/v2/transport/grpc"
 )
 
-func NewGRPCServer(
-    login *service.LoginService,
-    register *service.RegisterService,
-    account *service.AccountService,
-) *grpc.Server {
-    g := bg.GetServer()
-    loginV1.RegisterLoginServer(g, login)
-    registerV1.RegisterRegisterServer(g, register)
-    accountV1.RegisterAccountServer(g, account)
-    return g
+func NewGRPCServer(login *service.LoginService) (*grpcgo.Server, error) {
+    srv, err := lynxgrpc.GetGrpcServer(nil)
+    if err != nil {
+        return nil, err
+    }
+    v1.RegisterLoginServer(srv, login)
+    return srv, nil
 }
 ```
 
-`bg.GetServer()` returns the `*grpc.Server` already owned by the Lynx lifecycle. You only need to attach the generated protobuf service registrations.
+## Client-Side Behavior
 
-## Integration steps
+The same module also registers `grpc.client`. That plugin manages outbound connections and supports:
 
-1. add the plugin module `github.com/go-lynx/lynx/plugin/grpc`
-2. add `lynx.grpc` configuration
-3. anonymous-import the plugin in `main`
-4. register gRPC services in the server layer through `GetServer()`
+- static service endpoints and subscribed services
+- retries and timeouts
+- optional TLS
+- connection pooling
+- health checks
+- metrics and tracing toggles
+- per-service load-balancing strategy
 
-## Related pages
+If you only read this page as "how to expose a server", you miss half of the module.
+
+## Client Configuration
+
+```yaml
+lynx:
+  grpc:
+    client:
+      default_timeout: 10s
+      connection_pooling: true
+      pool_size: 8
+      subscribe_services:
+        - name: user-service
+          required: true
+```
+
+## Related Pages
 
 - [HTTP](/docs/existing-plugin/http)
 - [TLS Manager](/docs/existing-plugin/tls-manager)
-- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

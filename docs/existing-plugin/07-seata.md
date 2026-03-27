@@ -5,67 +5,57 @@ title: Distributed Transaction Plugin
 
 # Seata Distributed Transaction Plugin
 
-The Seata plugin brings distributed transaction capability into Lynx. It fits cases where you truly need transaction coordination across services or resources, but it should not be treated as a default choice for every workflow.
+The Seata module is a runtime-managed Seata client plugin. It does not infer transaction boundaries for you, but it does make Seata client initialization and global transaction entry part of the Lynx startup model.
 
-This kind of capability raises system complexity, so the important part of the documentation is not a giant config dump. It is understanding what problem the plugin is actually meant to solve.
+## Runtime Facts
 
-## What it is for
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-seata` |
+| Config prefix | `lynx.seata` |
+| Runtime plugin name | `seata.server` |
+| Public APIs | `GetPlugin()`, `GetConfig()`, `GetConfigFilePath()`, `IsEnabled()`, `WithGlobalTx(...)`, `GetMetrics()` |
 
-- coordinating transactions across multiple services or resources
-- providing a unified transaction entry when stronger consistency semantics are required
-- moving Seata client initialization into the Lynx startup flow
+## What The Implementation Provides
 
-## Basic integration
+The current implementation includes:
 
-Enable Seata in Lynx configuration first:
+- config-driven Seata client initialization
+- enable/disable switch
+- explicit config file path handling
+- a `WithGlobalTx(...)` helper around seata-go global transactions
+- metrics exposure
+
+This means the plugin already gives you a framework-owned transaction entry point instead of only saying "Seata is available".
+
+## Configuration
 
 ```yaml
 lynx:
   seata:
     enabled: true
-    config_path: /path/to/seatago.yml
+    config_file_path: "./conf/seata.yml"
 ```
 
-Here `config_path` points to the Seata client configuration file. Lynx is responsible for bringing the client-side capability into startup.
+The plugin defaults to `./conf/seata.yml` when the path is omitted.
 
-## Seata deployment itself
-
-Seata server deployment, TC configuration, registry choices, and config-center strategy are still governed by Seata's own documentation:
-
-- official site: [https://seata.apache.org/](https://seata.apache.org/)
-
-At minimum you usually need to define:
-
-- transaction groups and application identity
-- TC address or registry information
-- data source proxy mode
-- undo log and rollback storage requirements
-
-## How business code uses transactions
-
-After integration, the transaction boundary is still declared explicitly in business code, for example:
+## How To Consume It
 
 ```go
-tm.WithGlobalTx(context.Background(), &tm.GtxConfig{
-    Name:    "CreateOrderTx",
-    Timeout: 30 * time.Second,
-}, func(ctx context.Context) error {
-    // execute business operations
-    return nil
+plugin := seata.GetPlugin()
+
+err := plugin.WithGlobalTx(ctx, "CreateOrderTx", 30*time.Second, func(ctx context.Context) error {
+    return doBusiness(ctx)
 })
 ```
 
-That means the Seata plugin handles client integration and lifecycle ownership. It does not automatically infer your business transaction boundaries.
+## Practical Notes
 
-## When to use it
+- The plugin initializes the client through `client.InitPath(...)`.
+- Current shutdown is lightweight because seata-go does not expose a rich public shutdown API.
+- If your scenario is closer to orchestration-oriented distributed transactions, compare this page with [DTM](/docs/existing-plugin/dtm).
 
-- when local transactions are not enough for your cross-service consistency requirement
-- when you accept the operational and debugging complexity of distributed transactions
-- when your team can manage the Seata server side, data source proxying, and rollback chain correctly
+## Related Pages
 
-If your case is closer to async consistency, compensation, or eventual consistency, Seata may not be the first tool to reach for.
-
-## More
-
+- [DTM](/docs/existing-plugin/dtm)
 - [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
-- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)

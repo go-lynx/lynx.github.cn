@@ -5,28 +5,37 @@ title: Nacos 插件
 
 # Nacos 插件
 
-Nacos 插件为 Lynx 提供**服务注册**、**服务发现**和**配置管理**能力，可将 Nacos 同时用作命名服务与配置中心。
+Nacos 模块在当前实现里是一个 control-plane 插件，可以在同一套 runtime 里同时提供 naming、discovery 和 config-center 能力。
 
-## 功能
+## Runtime 事实
 
-- **服务注册**：将服务实例注册到 Nacos。
-- **服务发现**：从 Nacos 发现实例，并与 Lynx 服务调用集成。
-- **配置管理**：从 Nacos 拉取并监听配置，支持实时更新。
-- **多配置**：支持多个 dataId、group。
-- **鉴权**：用户名/密码或 AccessKey/SecretKey。
-- **命名空间**：多租户命名空间隔离。
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-nacos` |
+| 配置前缀 | `lynx.nacos` |
+| Runtime 插件名 | `nacos.control.plane` |
+| 公开 API 形态 | 通过 plugin-manager 获取插件对象，再调用 `GetConfig(...)`、`GetConfigSources()`、`GetNamespace()` 等方法 |
+
+## 实现提供的能力
+
+代码里支持：
+
+- 可选 naming client
+- 可选 config client
+- 服务注册与发现
+- 基于 `dataId` 和 `group` 的配置加载
+- 配置 watcher
+- retry、metrics、circuit breaker 辅助能力
+
+所以它更适合被归类为 control plane，而不是狭义的“只做配置”或“只做注册中心”。
 
 ## 配置
-
-在配置文件中增加 `lynx.nacos` 段：
 
 ```yaml
 lynx:
   nacos:
     server_addresses: "127.0.0.1:8848"
     namespace: "public"
-    username: "nacos"
-    password: "nacos"
     enable_register: true
     enable_discovery: true
     enable_config: true
@@ -36,32 +45,20 @@ lynx:
       cluster: "DEFAULT"
 ```
 
-## 使用
-
-在 `main` 中完成应用启动，Nacos 插件会根据配置参与启动流程：
+## 如何使用
 
 ```go
-package main
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("nacos.control.plane")
+nacosPlugin := plugin.(*nacos.PlugNacos)
 
-import (
-    "github.com/go-lynx/lynx/boot"
-)
-
-func main() {
-    if err := boot.NewApplication(wireApp).Run(); err != nil {
-        panic(err)
-    }
-}
+sources, err := nacosPlugin.GetConfigSources()
+source, err := nacosPlugin.GetConfig("app.yaml", "DEFAULT_GROUP")
 ```
 
-如果项目通过独立插件仓库接入 Nacos，请在代码中匿名导入对应插件包，以完成注册。实际模块路径以该插件仓库 README 为准。
+旧文档里使用 `github.com/go-lynx/lynx/plugin/nacos` 的导入方式，已经不符合当前仓库结构。
 
-当 `enable_config` 为 `true` 时，Lynx 可从 Nacos 拉取主配置，从而由 Nacos 驱动注册、发现与配置。
+## 相关页面
 
-## 安装
-
-```bash
-go get <nacos-plugin-module>@latest
-```
-
-集群模式可将 `server_addresses` 配置为多个 Nacos 地址（逗号分隔）。
+- [Apollo](/docs/existing-plugin/apollo)
+- [Etcd](/docs/existing-plugin/etcd)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

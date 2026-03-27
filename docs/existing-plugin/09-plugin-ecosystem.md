@@ -6,110 +6,79 @@ sidebar_label: Plugin Ecosystem
 
 # Lynx Plugin Ecosystem
 
-The Go-Lynx ecosystem is easiest to understand in two layers:
+The Lynx repository family is not just a list of unrelated SDKs. The core `lynx` runtime loads plugins through one plugin factory, orders them by dependency and weight, exposes shared resources, and lets application code consume them through stable runtime names or getters.
 
-- **framework core**: plugin registration, dependency ordering, resource ownership, event flow, and runtime assembly
-- **official module family**: independent modules for services, config, storage, messaging, governance, observability, and distributed capabilities
+## Read A Plugin Page The Right Way
 
-Today, the official repository family already covers 20+ modules, and this site documents the main modules and integration paths.
+For any Lynx plugin, the four facts that matter most are:
 
-## How To Read The Ecosystem
+1. the Go module path
+2. the configuration prefix
+3. the runtime plugin name
+4. the public API you use after startup
 
-In Go-Lynx, a plugin is not merely “an SDK you drop into a project”. More accurately:
+If a document does not state those four facts clearly, it is hard to integrate the plugin or debug startup.
 
-- plugins are registered and initialized through one runtime
-- plugins can collaborate through shared resources and the event system
-- capabilities enter the application lifecycle through configuration and assembly order
-- plugin docs describe how a module behaves **inside the Lynx runtime**, not only how the underlying client library works
+## Runtime Model
 
-## Main Modules Covered On This Site
+Most official plugins follow the same path:
 
-### Service & Communication
+1. import the module so its `init()` registers the plugin in the global factory
+2. add config under the plugin's prefix such as `lynx.http` or `lynx.apollo`
+3. let the unified runtime initialize resources and run startup tasks
+4. consume the capability through a getter or `GetPlugin("<runtime-name>")`
 
-| Module | Description | Doc |
-|------|------|------|
-| [HTTP](/docs/existing-plugin/http) | HTTP/HTTPS server, TLS, middleware, health checks, metrics | Yes |
-| [gRPC](/docs/existing-plugin/grpc) | gRPC service integration, TLS, and service exposure | Yes |
-| [Polaris](/docs/existing-plugin/polaris) | registration, discovery, governance, traffic management | Yes |
+That is why the runtime plugin name is not trivia. It is the real lookup key inside the plugin manager.
 
-### Config & Discovery
+## Core Examples
 
-| Module | Description | Doc |
-|------|------|------|
-| [Nacos](/docs/existing-plugin/nacos) | config center, discovery, naming | Yes |
-| [Apollo](/docs/existing-plugin/apollo) | config center, multi-namespace, watch, local cache | Yes |
-| [Etcd](/docs/existing-plugin/etcd) | config center and service registry/discovery backend | Yes |
-| [Polaris](/docs/existing-plugin/polaris) | also reused for configuration / governance scenarios | Yes |
+| Module | Go module | Config prefix | Runtime plugin name | Public API after startup |
+|------|------|------|------|------|
+| [HTTP](/docs/existing-plugin/http) | `github.com/go-lynx/lynx-http` | `lynx.http` | `http.server` | `http.GetHttpServer()` |
+| [gRPC service](/docs/existing-plugin/grpc) | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.service` | `grpc.service` | `grpc.GetGrpcServer(nil)` |
+| [gRPC client](/docs/existing-plugin/grpc) | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.client` | `grpc.client` | `grpc.GetGrpcClientPlugin(nil)`, `grpc.GetGrpcClientConnection(...)` |
+| [Kafka](/docs/existing-plugin/kafka) | `github.com/go-lynx/lynx-kafka` | `lynx.kafka` | `kafka.client` | plugin instance methods such as `ProduceWith`, `SubscribeWith` |
+| [MongoDB](/docs/existing-plugin/mongodb) | `github.com/go-lynx/lynx-mongodb` | `lynx.mongodb` | `mongodb.client` | `GetMongoDB()`, `GetMongoDBDatabase()`, `GetMongoDBCollection()` |
+| [Apollo](/docs/existing-plugin/apollo) | `github.com/go-lynx/lynx-apollo` | `lynx.apollo` | `apollo.config.center` | `GetConfigSources()`, `GetConfigValue()` |
+| [Etcd](/docs/existing-plugin/etcd) | `github.com/go-lynx/lynx-etcd` | `lynx.etcd` | `etcd.config.center` | `GetClient()`, `GetConfigSources()`, `GetConfigValue()` |
+| [Etcd Lock](/docs/existing-plugin/etcd-lock) | `github.com/go-lynx/lynx-etcd-lock` | `lynx.etcd-lock` | `etcd.distributed.lock` | `Lock`, `LockWithOptions`, `NewLockFromClient` |
+| [DTM](/docs/existing-plugin/dtm) | `github.com/go-lynx/lynx-dtm` | `lynx.dtm` | `dtm.server` | `NewSaga`, `NewTransactionHelper`, `GetDtmMetrics()` |
+| [Sentinel](/docs/existing-plugin/sentinel) | `github.com/go-lynx/lynx-sentinel` | `lynx.sentinel` | `sentinel.flow_control` | `GetSentinel()`, metrics APIs |
+| [Tracer](/docs/existing-plugin/tracer) | `github.com/go-lynx/lynx-tracer` | `lynx.tracer` | `tracer.server` | tracer runtime entry |
 
-### Data & Storage
+## Repository Family Beyond The Sidebar
 
-| Module | Description | Doc |
-|------|------|------|
-| [Database](/docs/existing-plugin/db) | relational database entry point for MySQL / PostgreSQL / SQL Server style integrations | Yes |
-| [Redis](/docs/existing-plugin/redis) | Redis client, pool, metrics, health checks | Yes |
-| [MongoDB](/docs/existing-plugin/mongodb) | MongoDB client, pool, TLS, health checks | Yes |
-| [Elasticsearch](/docs/existing-plugin/elasticsearch) | search, indexing, aggregation, health, metrics | Yes |
-| [SQL SDK](/docs/existing-plugin/sql-sdk) | shared SQL base, multi-datasource helpers, health/metrics adapters | Yes |
+The repository family in `lynx/plugins.json` currently includes more modules than the sidebar fully explains, including:
 
-> The wider repository family also includes dedicated modules such as `lynx-mysql`, `lynx-pgsql`, and `lynx-mssql`.
-
-### Messaging & Async
-
-| Module | Description | Doc |
-|------|------|------|
-| [Kafka](/docs/existing-plugin/kafka) | producer/consumer, SASL, TLS, metrics | Yes |
-| [RabbitMQ](/docs/existing-plugin/rabbitmq) | multi-instance producer/consumer, health, metrics | Yes |
-| [RocketMQ](/docs/existing-plugin/rocketmq) | clustering/broadcasting, multi-topic workflows | Yes |
-| [Pulsar](/docs/existing-plugin/pulsar) | batching, schema, multi-tenant, TLS | Yes |
-
-### Observability & Security
-
-| Module | Description | Doc |
-|------|------|------|
-| [Tracer](/docs/existing-plugin/tracer) | OpenTelemetry tracing | Yes |
-| [Swagger](/docs/existing-plugin/swagger) | OpenAPI / Swagger UI, mainly for dev/test workflows | Yes |
-| [Sentinel](/docs/existing-plugin/sentinel) | flow control, circuit breaking, system protection | Yes |
-| [TLS Manager](/docs/existing-plugin/tls-manager) | TLS configuration and certificate management | Yes |
-
-### Distributed Capabilities
-
-| Module | Description | Doc |
-|------|------|------|
-| [Seata](/docs/existing-plugin/seata) | distributed transactions via Seata | Yes |
-| [DTM](/docs/existing-plugin/dtm) | distributed transactions via SAGA / TCC / XA / 2PC | Yes |
-| [Redis Lock](/docs/existing-plugin/redis-lock) | distributed lock on top of Redis | Yes |
-| [Etcd Lock](/docs/existing-plugin/etcd-lock) | strongly consistent distributed lock on top of Etcd | Yes |
-
-### Engineering & Templates
-
-| Module | Description | Doc |
-|------|------|------|
-| [Layout](/docs/existing-plugin/layout) | official project template and service scaffold structure | Yes |
-
-## Modules Present In The Repo Family But Not Fully Covered Yet
-
-Beyond the modules already documented here, the current repository family also includes modules such as:
-
-- `lynx-http`
-- `lynx-eon-id`
 - `lynx-mysql`
 - `lynx-pgsql`
 - `lynx-mssql`
+- `lynx-eon-id`
+- `lynx-layout`
+- `lynx-sql-sdk`
+- `lynx-redis-lock`
+- `lynx-polaris`
+- `lynx-pulsar`
+- `lynx-rabbitmq`
+- `lynx-rocketmq`
 
-This is a useful signal that the ecosystem is broader than a small demo set of plugins and is evolving into a more complete runtime-centered module family.
+Some of these are application-facing plugins. Some are shared capability layers or service templates. The documentation should distinguish those roles instead of treating everything as the same kind of module.
 
-## Common Integration Path
+## Common Consumption Patterns
 
-Most plugins follow roughly the same path:
+Across the codebase, plugin access usually looks like one of these patterns:
 
-1. add the module dependency
-2. add `lynx.<plugin>` configuration in bootstrap/config
-3. import the module or consume its getter/builder as required
-4. let the unified runtime initialize it, register resources, and manage lifecycle
+- runtime-owned server getter: `http.GetHttpServer()`, `grpc.GetGrpcServer(nil)`
+- client getter: `mongodb.GetMongoDB()`, `elasticsearch.GetElasticsearch()`
+- plugin-manager lookup: `lynx.Lynx().GetPluginManager().GetPlugin("dtm.server")`
+- plugin object API: `apolloPlugin.GetConfigValue(...)`, `etcdPlugin.GetClient()`
 
-If you want the surrounding concepts and ordering, continue with:
+When reading docs, prefer examples that match one of these real patterns.
 
-- [Quick Start](/docs/getting-started/quick-start)
-- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
-- [Plugin Management](/docs/getting-started/plugin-manager)
-- [Framework Architecture](/docs/intro/arch)
+## Recommended Reading Order
+
+1. [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+2. [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+3. [Plugin Management](/docs/getting-started/plugin-manager)
+4. the specific plugin page you are integrating
+5. [Framework Architecture](/docs/intro/arch)

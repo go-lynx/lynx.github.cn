@@ -4,82 +4,81 @@ title: 插件生态
 sidebar_label: 插件生态
 ---
 
-# Go-Lynx 插件生态
+# Lynx 插件生态
 
-Go-Lynx 提供丰富的**生产级插件**，覆盖服务通信、数据存储、消息队列、配置中心、可观测性与分布式能力。所有插件均采用统一的即插即用方式：在 YAML 中配置，由框架完成注入。
+Lynx 的仓库族并不是一堆彼此无关的 SDK。核心 `lynx` 运行时会通过统一的插件工厂加载插件、按依赖和权重排序、暴露共享资源，并让业务代码通过稳定的 runtime 名称或 Getter 来消费能力。
 
-## 插件分类
+## 正确阅读插件文档的方式
 
-### 服务与通信
+对于任意 Lynx 插件，最关键的四个事实是：
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [HTTP](/docs/existing-plugin/http) | HTTP/HTTPS 服务，支持 TLS、中间件、指标与健康检查 | 有 |
-| [gRPC](/docs/existing-plugin/grpc) | gRPC 服务端与客户端，支持服务发现、TLS、熔断 | 有 |
-| [Polaris](/docs/existing-plugin/polaris) | 服务注册发现与流量管理 | 有 |
-| [Nacos](/docs/existing-plugin/nacos) | Nacos 注册发现与配置中心 | 有 |
+1. Go module 路径
+2. 配置前缀
+3. runtime 插件名
+4. 启动后的公开 API
 
-### 数据库与存储
+如果文档没有把这四件事写清楚，接入和排障都会很痛苦。
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Database](/docs/existing-plugin/db) | 通用数据库（MySQL/PostgreSQL/SQL Server 等） | 有 |
-| [Redis](/docs/existing-plugin/redis) | Redis 客户端，连接池与指标 | 有 |
-| [MongoDB](/docs/existing-plugin/mongodb) | MongoDB 客户端，连接池、TLS、健康检查 | 有 |
-| [Elasticsearch](/docs/existing-plugin/elasticsearch) | Elasticsearch 集成，检索/索引/聚合 | 有 |
+## Runtime 模型
 
-### 消息队列
+大多数官方插件都遵循同一条路径：
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Kafka](/docs/existing-plugin/kafka) | Apache Kafka 生产者/消费者，SASL、TLS、指标 | 有 |
-| [RabbitMQ](/docs/existing-plugin/rabbitmq) | RabbitMQ 生产者/消费者，多实例、健康与指标 | 有 |
-| [RocketMQ](/docs/existing-plugin/rocketmq) | Apache RocketMQ，集群/广播消费 | 有 |
-| [Pulsar](/docs/existing-plugin/pulsar) | Apache Pulsar，批处理、Schema、多租户 | 有 |
+1. 导入模块，让它的 `init()` 把插件注册进全局工厂
+2. 在对应前缀下增加配置，例如 `lynx.http` 或 `lynx.apollo`
+3. 让统一 runtime 完成资源初始化和 startup task
+4. 通过 Getter 或 `GetPlugin("<runtime-name>")` 获取能力
 
-### 配置与发现
+这也是为什么 runtime 插件名不是内部细节，而是插件管理器里的真实查找键。
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Polaris](/docs/existing-plugin/polaris) | 服务发现与配置 | 有 |
-| [Nacos](/docs/existing-plugin/nacos) | Nacos 配置与命名 | 有 |
-| [Apollo](/docs/existing-plugin/apollo) | Apollo 配置中心，多命名空间 | 有 |
-| [Etcd](/docs/existing-plugin/etcd) | Etcd 配置中心与服务注册发现 | 有 |
+## 核心示例
 
-### 可观测与安全
+| 模块 | Go module | 配置前缀 | Runtime 插件名 | 启动后公开 API |
+|------|------|------|------|------|
+| [HTTP](/docs/existing-plugin/http) | `github.com/go-lynx/lynx-http` | `lynx.http` | `http.server` | `http.GetHttpServer()` |
+| [gRPC 服务端](/docs/existing-plugin/grpc) | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.service` | `grpc.service` | `grpc.GetGrpcServer(nil)` |
+| [gRPC 客户端](/docs/existing-plugin/grpc) | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.client` | `grpc.client` | `grpc.GetGrpcClientPlugin(nil)`、`grpc.GetGrpcClientConnection(...)` |
+| [Kafka](/docs/existing-plugin/kafka) | `github.com/go-lynx/lynx-kafka` | `lynx.kafka` | `kafka.client` | 插件实例方法，如 `ProduceWith`、`SubscribeWith` |
+| [MongoDB](/docs/existing-plugin/mongodb) | `github.com/go-lynx/lynx-mongodb` | `lynx.mongodb` | `mongodb.client` | `GetMongoDB()`、`GetMongoDBDatabase()`、`GetMongoDBCollection()` |
+| [Apollo](/docs/existing-plugin/apollo) | `github.com/go-lynx/lynx-apollo` | `lynx.apollo` | `apollo.config.center` | `GetConfigSources()`、`GetConfigValue()` |
+| [Etcd](/docs/existing-plugin/etcd) | `github.com/go-lynx/lynx-etcd` | `lynx.etcd` | `etcd.config.center` | `GetClient()`、`GetConfigSources()`、`GetConfigValue()` |
+| [Etcd Lock](/docs/existing-plugin/etcd-lock) | `github.com/go-lynx/lynx-etcd-lock` | `lynx.etcd-lock` | `etcd.distributed.lock` | `Lock`、`LockWithOptions`、`NewLockFromClient` |
+| [DTM](/docs/existing-plugin/dtm) | `github.com/go-lynx/lynx-dtm` | `lynx.dtm` | `dtm.server` | `NewSaga`、`NewTransactionHelper`、`GetDtmMetrics()` |
+| [Sentinel](/docs/existing-plugin/sentinel) | `github.com/go-lynx/lynx-sentinel` | `lynx.sentinel` | `sentinel.flow_control` | `GetSentinel()`、指标 API |
+| [Tracer](/docs/existing-plugin/tracer) | `github.com/go-lynx/lynx-tracer` | `lynx.tracer` | `tracer.server` | tracer runtime 入口 |
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Tracer](/docs/existing-plugin/tracer) | OpenTelemetry 分布式追踪 | 有 |
-| [Swagger](/docs/existing-plugin/swagger) | Swagger/OpenAPI 文档与 UI（仅开发/测试） | 有 |
-| [Sentinel](/docs/existing-plugin/sentinel) | 流控、熔断与系统保护 | 有 |
-| [TLS Manager](/docs/existing-plugin/tls-manager) | TLS 与证书管理 | 有 |
+## 侧边栏之外的仓库族
 
-### 分布式与锁
+`lynx/plugins.json` 里当前还包含不少侧边栏没有完全展开说明的模块，例如：
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Seata](/docs/existing-plugin/seata) | 分布式事务（Seata） | 有 |
-| [DTM](/docs/existing-plugin/dtm) | 分布式事务（DTM，SAGA/TCC/XA/二阶段消息） | 有 |
-| [Redis Lock](/docs/existing-plugin/redis-lock) | 基于 Redis 的分布式锁，续期、可重入 | 有 |
-| [Etcd Lock](/docs/existing-plugin/etcd-lock) | 基于 Etcd 的强一致分布式锁 | 有 |
+- `lynx-mysql`
+- `lynx-pgsql`
+- `lynx-mssql`
+- `lynx-eon-id`
+- `lynx-layout`
+- `lynx-sql-sdk`
+- `lynx-redis-lock`
+- `lynx-polaris`
+- `lynx-pulsar`
+- `lynx-rabbitmq`
+- `lynx-rocketmq`
 
-### 其他
+这些模块里有些是面向应用直接接入的插件，有些是共享能力层或模板工程。文档需要把角色区分开，而不是把它们都写成同一种东西。
 
-| 插件 | 说明 | 文档 |
-|--------|-------------|-----|
-| [Layout](/docs/existing-plugin/layout) | 官方项目模板与脚手架 | 有 |
-| [SQL SDK](/docs/existing-plugin/sql-sdk) | SQL 基座、健康与指标、多数据源工具 | 有 |
+## 常见消费模式
 
-图例：本站有文档 | 请参阅 GitHub 仓库
+在代码里，插件访问大致会落到下面几种模式：
 
-## 使用方式
+- runtime 持有的服务端 Getter：`http.GetHttpServer()`、`grpc.GetGrpcServer(nil)`
+- 客户端 Getter：`mongodb.GetMongoDB()`、`elasticsearch.GetElasticsearch()`
+- plugin-manager lookup：`lynx.Lynx().GetPluginManager().GetPlugin("dtm.server")`
+- 插件对象 API：`apolloPlugin.GetConfigValue(...)`、`etcdPlugin.GetClient()`
 
-1. **添加依赖**：`go get github.com/go-lynx/lynx/plugins/<名称>`（或该插件的模块路径）。
-2. **配置**：在 `config.yaml` 中增加 `lynx.<插件>` 配置段。
-3. **导入**：在 `main.go` 中 `import _ "github.com/go-lynx/lynx/plugins/<名称>"`（或按插件要求）。
-4. **注入**：在 wire 中使用插件提供的 getter（如 `db.GetDriver`、`lynxRedis.GetRedis`）。
+看文档时，应该优先相信和这些真实模式一致的示例。
 
-启动与插件顺序详见 [启动与配置](/docs/getting-started/bootstrap-config) 与 [插件管理](/docs/getting-started/plugin-manager)。
+## 推荐阅读顺序
 
-**相关文档：** [快速开始](/docs/getting-started/quick-start) | [引导配置](/docs/getting-started/bootstrap-config) | [插件管理](/docs/getting-started/plugin-manager) | [框架架构](/docs/intro/arch)
+1. [插件使用指南](/docs/getting-started/plugin-usage-guide)
+2. [引导配置](/docs/getting-started/bootstrap-config)
+3. [插件管理](/docs/getting-started/plugin-manager)
+4. 你要接入的具体插件页
+5. [框架架构](/docs/intro/arch)

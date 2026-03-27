@@ -1,15 +1,35 @@
 ---
 id: polaris
-title: 北极星服务治理
+title: Polaris 服务治理
 ---
 
-# 北极星服务治理
+# Polaris 服务治理
 
-Go-Lynx 在进行微服务治理方面高度集成到了 `polaris`，用户无需做任何额外配置，即可使用北极星提供的服务治理能力。但是首先我们得编写一个北极星的连接信息，然后才能享受服务治理。
+Polaris 模块在 Lynx 里是一个 control-plane 插件，把服务注册、服务发现、配置访问、watch 能力和治理能力集中到同一个 runtime 里。
 
-## 北极星配置
+## Runtime 事实
 
-在配置文件中先配置连接北极星信息，文件内容如下：
+| 项目 | 值 |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-polaris` |
+| 配置前缀 | `lynx.polaris` |
+| Runtime 插件名 | `polaris.control.plane` |
+| 公开 API | `GetPolarisPlugin()`、`GetPolaris()`、`GetServiceInstances()`、`GetConfig(...)`、`WatchService(...)`、`WatchConfig(...)`、`CheckRateLimit(...)`、`GetMetrics()` |
+
+## 实现提供了什么
+
+从代码看，Polaris 支持：
+
+- 服务注册与发现
+- 配置加载与 config source 集成
+- 服务 watcher 和配置 watcher
+- 限流检查
+- 负载均衡和路由相关辅助能力
+- retry、circuit breaker、metrics、health check
+
+它远不只是一个简单的注册中心适配器。
+
+## 配置
 
 ```yaml
 lynx:
@@ -19,32 +39,24 @@ lynx:
     weight: 100
     ttl: 5
     timeout: 5s
+    enable_service_watch: true
+    enable_config_watch: true
+    enable_rate_limit: true
 ```
 
-然后再在本地文件夹中放入该文件 `polaris.yaml` , 该文件是北极星官方标准配置文件，而上面的配置文件需要和 `polaris.yaml` 进行配合使用。
+除此之外，插件通常还需要官方 Polaris SDK 侧配置文件，一般通过 `config_path` 指定连接器级别行为。
 
-`polaris.yaml` 文件内容如下 (此处只是基本配置示例)：
+## 如何使用
 
-```yaml
-global:
-  serverConnector:
-    protocol: grpc
-    addresses:
-      - 127.0.0.1:8091
-  statReporter:
-    enable: true
-    chain:
-      - prometheus
-    plugin:
-      prometheus:
-        type: push
-        address: 127.0.0.1:9091
-        interval: 10s
-config:
-  configConnector:
-    addresses:
-      - 127.0.0.1:8093
+```go
+plugin, err := polaris.GetPolarisPlugin()
+instances, err := polaris.GetServiceInstances("user-service")
+content, err := polaris.GetConfig("application.yaml", "DEFAULT_GROUP")
+allowed, err := polaris.CheckRateLimit("user-service", labels)
 ```
-`polaris.yaml` 文件详情，以及具体部署可以查看：[腾讯北极星官网文档](https://polarismesh.cn/docs)
 
-接入北极星之后，我们的 Go-Lynx 应用程序就具备了服务发现、服务路由、服务配置、服务元数据管理、服务限流降级，遥测，灰度等功能。
+## 相关页面
+
+- [Nacos](/docs/existing-plugin/nacos)
+- [Etcd](/docs/existing-plugin/etcd)
+- [插件生态](/docs/existing-plugin/plugin-ecosystem)

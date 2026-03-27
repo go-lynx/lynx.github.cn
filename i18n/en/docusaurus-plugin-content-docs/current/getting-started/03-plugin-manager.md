@@ -5,103 +5,109 @@ title: Plugin Management
 
 # Plugin Management
 
-In Go-Lynx, plugin management is not a side feature. It is one of the core mechanisms of the framework.
+In Lynx, the plugin manager is the runtime assembly center. It does more than "load plugins": it prepares plugin instances from the global typed factory, resolves lifecycle order, owns the shared runtime, and exposes managed plugin instances to the application.
 
-The framework is not only loading plugins. It is also answering questions like:
+## What the plugin manager actually owns
 
-- which plugins should be enabled for this startup
-- what depends on what
-- what must initialize first and what can initialize later
-- which resources are private and which are shared
-- how those resources should be released on shutdown
+The current public API on `TypedPluginManager` includes:
 
-## What The Plugin Manager Actually Does
+- `LoadPlugins(...)`, `LoadPluginsByName(...)`, `PreparePlug(...)`
+- `GetPlugin(name)`, `GetPluginByID(id)`
+- `GetPluginCapabilities(name)`
+- `GetRuntime()`, `SetConfig(...)`
+- `StopPlugin(...)`, `ListResources()`, `GetResourceStats()`
+- `GetRestartRequirementReport()`
 
-From a user-facing perspective, the plugin manager is mainly responsible for:
+This already tells you something important: plugin management in Lynx is about lifecycle and runtime ownership, not only discovery.
 
-- determining which plugins are needed based on configuration and registration
-- resolving dependencies and producing a valid startup order
-- initializing plugins, assembling them, and registering resources
-- unwinding resources in a reasonable order during shutdown
+## The real runtime chain
 
-That is why plugin management is not just a list of plugins; it is the center of runtime assembly.
+The actual flow in current Lynx is:
 
-## Why Ordering Matters
+1. plugin modules register themselves into `factory.GlobalTypedFactory()`
+2. the application creates a plugin manager
+3. startup passes config into the manager
+4. the manager prepares plugin instances for the configured prefixes
+5. the manager initializes them against a shared `plugins.Runtime`
+6. application code retrieves managed instances through exported getters or `GetPlugin(...)`
 
-A typical real-world chain looks like this:
+If one link is missing, the plugin will not become available just because config exists.
 
-- a business-facing plugin may depend on Redis
-- Redis-related plugins may depend on configuration already being available
-- HTTP / gRPC services may depend on earlier plugins having registered resources
+## The current plugin contract
 
-If the order is wrong, the result is not merely “one missing feature”. The application can enter an invalid startup state. Go-Lynx therefore treats ordering as a framework responsibility instead of a detail left to business code.
-
-## Common Shape Of A Custom Plugin
-
-A typical plugin abstraction looks roughly like this:
+The old `Load/Unload` style examples are no longer the right mental model. The current core contract is:
 
 ```go
+type CorePlugin interface {
+    Metadata
+    Lifecycle
+    DependencyAware
+}
+
 type Plugin interface {
-    LoaderPlugin
-    SupportPlugin
-}
-
-type LoaderPlugin interface {
-    Load(config.Value) (Plugin, error)
-    Unload() error
-}
-
-type SupportPlugin interface {
-    Name() string
-    Weight() int
-    DependsOn(config.Value) []string
-    ConfPrefix() string
+    CorePlugin
+    LifecycleSteps
 }
 ```
 
-You may not write custom plugins every day, but understanding these interfaces helps you read:
+The step-level hooks managed by Lynx today are:
 
-- how a plugin declares its identity and config prefix
-- how it expresses dependencies
-- how it is loaded and unloaded inside the runtime
+```go
+type LifecycleSteps interface {
+    InitializeResources(rt Runtime) error
+    StartupTasks() error
+    CleanupTasks() error
+    CheckHealth() error
+}
+```
 
-## What Registration Means In Practice
+Most real plugins embed `plugins.BasePlugin` or `plugins.TypedBasePlugin[...]` and then implement the hooks they actually need.
 
-A plugin is not recognized only because a config section exists. It also needs to be registered into the plugin system.
+## What registration means in practice
 
-A typical registration pattern looks like:
+Current plugins usually register like this:
 
 ```go
 func init() {
-    factory.GlobalPluginFactory().Register(name, confPrefix, func() plugin.Plugin {
-        return Db()
-    })
+    factory.GlobalTypedFactory().RegisterPlugin(
+        pluginName,
+        confPrefix,
+        func() plugins.Plugin {
+            return NewPlugin()
+        },
+    )
 }
 ```
 
-That is why some plugins must be imported explicitly even when your business code does not call them directly.
+That is why anonymous import is part of the normal integration path. If the module is never imported, the typed factory has no creator for that plugin name.
 
-## A Practical Mental Model
+## Why ordering matters
 
-In real usage, plugin management is easiest to think of as this chain:
+A practical dependency chain can look like this:
 
-1. the plugin module exists
-2. the module registers itself
-3. configuration declares which capabilities should be enabled
-4. the plugin manager resolves dependencies and assembles them
-5. the runtime exposes resources for the application layer
+- `etcd.distributed.lock` depends on the Etcd runtime resource
+- HTTP and gRPC services may depend on TLS material already being available
+- governance or config-center plugins may need to finish before business-facing layers start
 
-Once you internalize that chain, it becomes much easier to debug questions such as:
+The manager resolves that startup order so application code does not have to hand-assemble it.
 
-- why a plugin did not activate
-- why a resource is missing
-- why startup order looks wrong
+## Debugging with the current model
 
-## Next Steps
+When a plugin does not appear to work, check these questions in order:
 
-After this page, continue with:
+1. Was the correct module imported so `RegisterPlugin(...)` ran?
+2. Does config exist under the actual prefix used in code?
+3. Did startup run through `boot.NewApplication(wireApp).Run()`?
+4. Are you retrieving the capability through the plugin's public getter or the correct plugin-manager name?
+5. Does the plugin depend on another runtime resource that was never initialized?
 
-- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
+## One more current constraint
+
+Lynx core now treats configuration changes as restart-based. The plugin manager exposes `GetRestartRequirementReport()` because in-process plugin reconfiguration is not the default model.
+
+## Next steps
+
 - [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Bootstrap Configuration](/docs/getting-started/bootstrap-config)
 - [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
 - [Framework Architecture](/docs/intro/arch)

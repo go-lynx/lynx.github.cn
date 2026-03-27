@@ -1,49 +1,81 @@
 ---
 id: overview
-title: 简介
+title: 概览
 ---
 
-# 简介
+# 概览
 
-欢迎来到 Go-Lynx，这是一个以可扩展性和简洁性为核心设计的即插即用 Go 微服务框架。
+Lynx 是一个面向 Go 微服务的**插件编排与运行时框架**。
 
-> Go-Lynx 的命名是因为希望框架可以像猞猁 (一种猫科动物) 一样灵活的寓意。
+它的重心不是“再套一层 Web 框架”，而是把微服务项目里反复出现的基础设施装配问题收敛到统一运行时模型中：插件注册、依赖排序、资源装配、生命周期控制、事件流，以及面向服务治理的集成能力。
 
-## 入门
+> “Lynx” 这个名字来自猞猁，强调灵活、敏捷，以及对不同环境的适应能力。
 
-要开始使用 Go-Lynx，请查看 [快速开始](/docs/getting-started/quick-start)：安装 Lynx CLI、使用 `lynx new` 创建项目、使用 `lynx run --watch` 运行。若已熟悉基础，可查看 [插件生态](/docs/existing-plugin/plugin-ecosystem) 了解全部插件及配置方式。
+## 现在应该如何理解 Lynx
 
-## 目标
+理解当前 Lynx 代码库，最有效的心智模型是：
 
-我们致力于提供轻便，灵活的微服务开发框架，我们会整合各种第三方插件及工具，微服务治理相关功能，缩短业务开发周期，从而更加聚焦于业务交付。
+- **先看核心运行时**：插件注册、拓扑排序、资源所有权、生命周期和事件流是中心。
+- **再看应用启动壳层**：`boot`、应用启动编排，以及面向控制面的辅助能力，用来把服务稳定地拉起来。
+- **外围是一组插件家族**：HTTP、gRPC、配置中心、服务发现、数据库、消息队列、追踪、流控、事务和分布式锁等能力，以独立模块的形式接入。
 
+因此在实践里，Lynx 更适合被理解为一层微服务基础设施装配层，而不是某个单一协议或中间件产品的轻量包装。
 
-## 为什么选择 Go-Lynx？
+这点之所以重要，是因为 Lynx 里的大多数真实集成都是 runtime 管理型的：
 
-使用 Go-Lynx，你可以获得：
+- 插件先注册进全局 typed factory
+- 插件管理器负责准备实例和排序
+- unified runtime 暴露共享资源
+- 应用代码再通过 Getter 或 plugin-manager lookup 去消费这些资源
 
-- **专注业务**：通过底层插件处理所有，增强功能，你可以专注于最重要的事情 - 你的业务逻辑。
-- **插件扩展**：使用现有的插件或创建你自己的插件来扩展你的应用程序的功能。
-- **轻松集成**：允许插件之间互相集成，使你能够为你的需求组装强大的组件。
-- **即插即用**：你可以轻松地插入你需要的插件，并开始构建你的应用程序，只需要引入对应模块，插件即可生效。
+## 你能获得什么
 
-在此感谢您使用 Go-Lynx，我们很期待您将构建什么微服务模块！
+使用 Lynx，团队通常会得到：
 
+- **更稳定的启动路径**：插件加载顺序、依赖关系和资源注册由框架统一编排。
+- **更少的胶水代码**：数据库、消息队列、配置中心、服务发现、链路追踪等能力遵循同一套接入模型。
+- **更清晰的运行时边界**：应用、插件、资源和治理职责更容易划分清楚。
+- **更一致的团队工作流**：CLI、项目模板、配置结构、文档和插件契约保持同一条线。
 
-## 底层依赖
+## 当前官方模块范围
 
-Go-Lynx 底层主要使用 Kratos + Polaris 作为核心底层进行设计与集成，但随着版本的迭代，Go-Lynx 可能会更像一个插件的粘合剂，底层都将会进行插件化，就像积木一样，可以组合任何的插件组合成为你需要的微服务模块。
+当前仓库家族已经覆盖框架核心和较完整的官方模块集合，包括：
 
----
+- 服务与治理：HTTP、gRPC、Polaris、Nacos、Etcd、Apollo、Sentinel、Swagger、Tracer
+- 数据与存储：Redis、MongoDB、Elasticsearch、MySQL、PostgreSQL、SQL Server、SQL SDK
+- 消息与异步：Kafka、RabbitMQ、RocketMQ、Pulsar
+- 分布式能力：Seata、DTM、Redis Lock、Etcd Lock、Eon ID
+- 工程工具：Layout 模板与 Lynx CLI
+
+站点已经覆盖主要模块和接入路径，后续也会继续补充更多模块页面。
+
+从工程边界上看，可以大致分成三块：
+
+- `github.com/go-lynx/lynx`：runtime core、boot、plugin manager、TLS、共享抽象
+- `lynx-http`、`lynx-grpc`、`lynx-redis`、`lynx-tracer`、`lynx-sentinel` 这类独立插件模块
+- Lynx CLI 和 `lynx-layout` 这类工程工具
+
+## 推荐阅读顺序
+
+如果你是第一次接触 Lynx，建议按这个顺序读：
+
+1. [快速开始](/docs/getting-started/quick-start)：先把 CLI、模板和启动流程跑起来。
+2. [引导配置](/docs/getting-started/bootstrap-config)：理解本地引导配置和远程配置入口。
+3. [插件管理](/docs/getting-started/plugin-manager)：理解排序、依赖解析和装配逻辑。
+4. [插件生态](/docs/existing-plugin/plugin-ecosystem)：按能力域选择模块。
+5. [框架架构](/docs/intro/arch)：理解分层运行时模型。
 
 ## 社区
 
-Go-Lynx 社区始终在这里为你提供帮助。如果你有任何问题或需要帮助，请不要犹豫，直接联系我们。可加入 [Discord](https://discord.gg/2vq2Zsqq)，或下方的钉钉群、微信群进行交流沟通。
+如果你在使用或扩展 Lynx 时遇到问题，优先走社区渠道：
+
+- [Discord](https://discord.gg/2vq2Zsqq)
+- 钉钉 / 微信群（见下方）
 
 ### 贡献者列表
 
 <a href="https://github.com/go-lynx/lynx/graphs/contributors">
- <img src="https://contrib.rocks/image?repo=go-lynx/lynx"  alt="贡献者列表"/>
+ <img src="https://contrib.rocks/image?repo=go-lynx/lynx" alt="Contributor List"/>
 </a>
 
 ### 钉钉群

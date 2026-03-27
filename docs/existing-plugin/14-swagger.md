@@ -5,39 +5,72 @@ title: Swagger Plugin
 
 # Swagger Plugin
 
-The Swagger plugin provides OpenAPI documentation and Swagger UI for Lynx HTTP services. It fits development and testing workflows and should not be treated as a default production capability.
+`lynx-swagger` is the documentation and Swagger UI plugin for Lynx HTTP services. The current implementation is more than a static `/swagger` page: it can scan Go annotations, merge external spec files, derive the API server address from `lynx.http`, persist merged output, and serve a standalone UI.
 
-## What it is mainly for
+## Runtime facts
 
-- exposing an API documentation entry automatically
-- giving developers an interactive interface for browsing and testing APIs
-- keeping the documentation endpoint inside the same startup path as the HTTP service
+| Item | Value |
+| --- | --- |
+| Go module | `github.com/go-lynx/lynx-swagger` |
+| Config prefix | `lynx.swagger` |
+| Runtime plugin name | `swagger` |
+| Main getter | `GetSwagger()` |
 
-## Basic configuration
+## What the implementation actually provides
+
+- loads plugin configuration from `lynx.swagger`
+- supports a generator section for annotation scanning, spec-file merging, file watching, and output persistence
+- supports a UI section for exposing Swagger UI on a configurable port and path
+- supports an `api_server` section so Swagger UI "Try it out" requests point to the real HTTP server
+- if `api_server.host` is empty, the plugin tries to derive it from `lynx.http.addr`
+
+## Configuration
 
 ```yaml
 lynx:
   swagger:
     enabled: true
-    path: "/swagger"
-    base_path: "/"
-    doc_path: "./api"
-    allowed_envs:
-      - development
-      - testing
+    generator:
+      enabled: true
+      scan_dirs:
+        - "./"
+      output_path: "./docs/openapi.yaml"
+      watch_enabled: true
+    ui:
+      enabled: true
+      port: 8080
+      path: "/swagger"
+      title: "API Documentation"
+    api_server:
+      host: "localhost:8080"
+      base_path: "/api/v1"
+    info:
+      title: "User Service API"
+      version: "1.0.0"
+      description: "HTTP API documentation"
 ```
 
 ## Usage
 
-1. import the plugin module: `import _ "github.com/go-lynx/lynx-swagger"`
-2. maintain annotations or OpenAPI descriptions at the API layer
-3. visit `http://localhost:<port>/swagger` in an allowed environment
+```go
+import swagger "github.com/go-lynx/lynx-swagger"
+```
+
+The plugin exposes the generated Swagger object through `GetSwagger()`:
+
+```go
+plugin := swagger.GetSwagger()
+spec := plugin.GetSwagger()
+_ = spec
+```
+
+After startup, visit the configured UI path such as `http://localhost:8080/swagger`.
 
 ## Practical guidance
 
-- do not enable Swagger UI by default in production
-- documentation is not a substitute for real authentication and access control
-- if the API changes frequently, annotations and spec descriptions must evolve with the code or the page becomes misleading quickly
+- keep this enabled for development, testing, or explicitly controlled internal environments
+- if you rely on external OpenAPI files, keep `generator.output_path` aligned so the merged artifact stays current
+- do not assume Swagger UI is a security boundary; it is only a documentation surface
 
 ## Related pages
 

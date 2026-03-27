@@ -5,64 +5,59 @@ title: Redis Plugin
 
 # Redis Plugin
 
-The Redis plugin brings a Redis client into the Lynx runtime. It moves connection initialization, timeout control, lifecycle ownership, and a stable injection entry into the plugin layer instead of having each business package create clients ad hoc.
+The Redis plugin is a runtime-managed UniversalClient layer, not only a single-node `*redis.Client`.
 
-## Common use cases
+## Runtime Facts
 
-- cache
-- shared session or state
-- lightweight message distribution
-- base resource for higher-level capabilities such as distributed locks
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-redis` |
+| Config prefix | `lynx.redis` |
+| Runtime plugin name | `redis.client` |
+| Public APIs | `GetRedis()`, `GetUniversalRedis()` |
 
-## Basic configuration
+## What The Implementation Actually Supports
+
+The plugin is built on go-redis UniversalClient and supports:
+
+- standalone, cluster, and sentinel topologies
+- TLS
+- startup and readiness checks
+- command-level metrics and pool metrics
+- shared runtime resource exposure for higher-level plugins
+
+`GetRedis()` only returns `*redis.Client` in standalone mode. `GetUniversalRedis()` is the stable API across all topologies.
+
+## Configuration
 
 ```yaml
 lynx:
   redis:
-    addr: 127.0.0.1:6379
-    password: ""
+    addrs:
+      - "127.0.0.1:6379"
     db: 0
-    dial_timeout: 3s
-    read_timeout: 1s
-    write_timeout: 1s
+    min_idle_conns: 5
+    max_active_conns: 20
+    dial_timeout: 5s
+    read_timeout: 5s
+    write_timeout: 5s
 ```
 
-Once configured, the Redis client is initialized during application startup and managed by the runtime.
+The old `addr` examples are outdated. Current config is centered on `addrs`.
 
-## How to obtain the client in application code
+## How To Consume It
 
 ```go
-import (
-    lynxRedis "github.com/go-lynx/lynx/plugin/redis"
+import redisplug "github.com/go-lynx/lynx-redis"
 
-    "github.com/google/wire"
-    "github.com/redis/go-redis/v9"
-)
-
-var ProviderSet = wire.NewSet(
-    NewData,
-    lynxRedis.GetRedis,
-)
-
-type Data struct {
-    rdb *redis.Client
-}
-
-func NewData(rdb *redis.Client, logger log.Logger) (*Data, error) {
-    return &Data{rdb: rdb}, nil
-}
+universal := redisplug.GetUniversalRedis()
+singleNode := redisplug.GetRedis()
 ```
 
-`lynxRedis.GetRedis` returns the `*redis.Client` already created by the plugin, which you can inject directly into the data or repository layer.
+Prefer `GetUniversalRedis()` unless you know you only run in standalone mode.
 
-## Integration steps
-
-1. add the plugin module `github.com/go-lynx/lynx/plugin/redis`
-2. add `lynx.redis` configuration
-3. anonymous-import the plugin in `main`
-4. include `lynxRedis.GetRedis` in your Wire set
-
-## Related pages
+## Related Pages
 
 - [Redis Lock](/docs/existing-plugin/redis-lock)
-- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Etcd Lock](/docs/existing-plugin/etcd-lock)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

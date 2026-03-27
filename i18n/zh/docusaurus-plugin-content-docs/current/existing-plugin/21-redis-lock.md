@@ -1,89 +1,75 @@
 ---
 id: redis-lock
-title: Redis 分布式锁 Plugin
+title: Redis Lock 插件
 ---
 
-# Redis 分布式锁 Plugin
+# Redis Lock 插件
 
-Go-Lynx 的 Redis 分布式锁插件基于 Redis 提供分布式锁能力，支持自动续期、重试、可重入（同一实例）、兼容 standalone/Cluster/Sentinel。
+`lynx-redis-lock` 为 Lynx 应用提供基于 Redis 的分布式锁能力，但它并不是像 HTTP、Redis 那样注册到 runtime 里的独立插件。它本质上是构建在 `lynx-redis` 之上的库层能力，内部直接复用 `lynx-redis` 暴露的 `GetUniversalRedis()` client。
 
-## 功能概览
+## 运行时事实
 
-- **分布式锁**：基于 Redis 的加锁/解锁
-- **自动续期**：可配置续期阈值与间隔，避免业务执行时间超过 TTL
-- **重试**：可配置重试次数与退避策略
-- **可重入**：同一 `*RedisLock` 实例可多次 Acquire/Release
-- **健康与指标**：Prometheus 指标与优雅关闭
+| 项目 | 值 |
+| --- | --- |
+| Go 模块 | `github.com/go-lynx/lynx-redis-lock` |
+| 自有配置前缀 | 无 |
+| runtime 插件名 | 无 |
+| 依赖 | `github.com/go-lynx/lynx-redis` 以及它的 `lynx.redis` 配置 |
 
-## 前置条件
+## 实现里实际提供了什么
 
-需先启用 [Redis Plugin](/docs/existing-plugin/redis)，以提供 Redis 连接（插件内部使用 `GetUniversalRedis()`，兼容单机/集群/哨兵）。
+- 基于 Redis Lua script 的分布式加锁和解锁
+- 通过 `NewLock()` 创建可复用的锁实例
+- 提供 `Lock`、`LockWithOptions`、`LockWithRetry`、`LockWithToken` 这类 callback 风格辅助方法
+- 支持自动续租、重试策略、基于 worker pool 的续租管理、script 调用超时
+- 提供 fencing token 能力，以及通过 `GetStats()` 暴露管理器统计信息
 
-## 配置说明
+需要明确的一点是：可重入是“按锁实例”生效，不是“按 key”生效。复用同一个 `*RedisLock` 实例可以重入；同 key 新建实例不算重入。
 
-在 `config.yaml` 的 `lynx.redis` 下增加 `lock` 段：
+## 配置依赖
+
+`lynx-redis-lock` 自己不会读取单独的 `lynx.redis-lock` 配置树，它依赖 Redis 插件本身：
 
 ```yaml
 lynx:
   redis:
-    addrs: ["localhost:6379"]
+    addrs:
+      - "localhost:6379"
     password: ""
     db: 0
-    lock:
-      default_timeout: 30s
-      default_retry_interval: 100ms
-      max_retries: 3
-      renewal_enabled: true
-      renewal_threshold: 0.5
-      renewal_interval: 10s
 ```
 
-长耗时任务建议开启 `renewal_enabled` 并适当增大 `default_timeout`。
-
-## 如何使用
-
-### 1. 引入依赖
-
-```bash
-go get github.com/go-lynx/lynx-redis-lock
-```
-
-### 2. 简单加锁执行（推荐）
+## 使用方式
 
 ```go
 import (
     "context"
-    "github.com/go-lynx/lynx-redis-lock"
+    "time"
+
+    redislock "github.com/go-lynx/lynx-redis-lock"
 )
 
-err := redislock.Lock(ctx, "my-lock", 30*time.Second, func() error {
-    // 临界区业务逻辑
-    return nil
-})
-if err != nil {
-    log.Printf("lock failed: %v", err)
+func run(ctx context.Context) error {
+    return redislock.LockWithRetry(
+        ctx,
+        "order:close:123",
+        30*time.Second,
+        func() error {
+            return doBusiness()
+        },
+        redislock.RetryStrategy{
+            MaxRetries: 3,
+            RetryDelay: 100 * time.Millisecond,
+        },
+    )
 }
 ```
 
-### 3. 自定义选项（超时、重试、续期）
+复用锁实例的写法：
 
 ```go
-options := redislock.LockOptions{
-    Expiration:       60 * time.Second,
-    RetryStrategy:    redislock.RetryStrategy{MaxRetries: 3, RetryDelay: 100 * time.Millisecond},
-    RenewalEnabled:   true,
-    RenewalThreshold: 0.5,
-}
-err := redislock.LockWithOptions(ctx, "my-lock", options, func() error {
-    // 长耗时逻辑
-    return nil
-})
-```
-
-### 4. 手动加锁/解锁
-
-```go
-lock, err := redislock.NewLock(ctx, "my-lock", options)
+options := redislock.LockOptions{Expiration: 30 * time.Second}
+lock, err := redislock.NewLock(ctx, "inventory:deduct:sku-1", options)
 if err != nil {
     return err
 }
@@ -91,24 +77,16 @@ if err := lock.Acquire(ctx); err != nil {
     return err
 }
 defer lock.Release(ctx)
-// 业务逻辑
-held, err := lock.IsLocked(ctx)
 ```
 
-### 5. 优雅关闭
+## 实践建议
 
-```go
-if err := redislock.Shutdown(ctx); err != nil {
-    log.Printf("shutdown: %v", err)
-}
-```
+- 如果你的基础设施已经稳定使用 Redis，且协调需求偏轻量，Redis lock 是合适的
+- 过期时间、重试策略和业务幂等补偿必须一起设计，否则锁只是把问题往后推
+- 如果场景需要更强的一致性语义，优先和 [Etcd Lock](/docs/existing-plugin/etcd-lock) 做对比再决定
 
-## 设计说明与限制
+## 相关页面
 
-- 可重入仅在同一 `*RedisLock` 实例内有效；每次 `NewLock`/`Lock()` 为不同实例，不共享重入计数。
-- 单节点 Redis 与 Redlock、进程暂停与 TTL、fencing token 等说明见仓库 [LIMITATIONS.md](https://github.com/go-lynx/lynx-redis-lock/blob/main/LIMITATIONS.md)。
-
-## 相关链接
-
-- 仓库：[go-lynx/lynx-redis-lock](https://github.com/go-lynx/lynx-redis-lock)
-- [Redis Plugin](/docs/existing-plugin/redis) | [插件生态概览](/docs/existing-plugin/plugin-ecosystem)
+- 仓库: [go-lynx/lynx-redis-lock](https://github.com/go-lynx/lynx-redis-lock)
+- [Redis](/docs/existing-plugin/redis)
+- [Etcd Lock](/docs/existing-plugin/etcd-lock)

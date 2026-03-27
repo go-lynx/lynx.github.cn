@@ -5,27 +5,65 @@ title: DTM Plugin
 
 # DTM Plugin
 
-The DTM plugin brings DTM distributed transaction capability into Lynx. Like Seata, it is not meant to push every workflow into distributed transactions. It is meant to provide a standard path for cases that truly need cross-service transaction orchestration.
+The DTM module is a runtime-managed distributed transaction client. It is designed around orchestration patterns, not around a single transaction style.
 
-## What it is mainly for
+## Runtime Facts
 
-- integrating SAGA, TCC, XA, and two-phase message patterns
-- bringing the DTM client and orchestration capability into the runtime
-- keeping transaction infrastructure aligned with service startup
+| Item | Value |
+|------|------|
+| Go module | `github.com/go-lynx/lynx-dtm` |
+| Config prefix | `lynx.dtm` |
+| Runtime plugin name | `dtm.server` |
+| Public APIs | `GetServerURL()`, `GetGRPCServer()`, `GetConfig()`, `NewSaga()`, `NewTransactionHelper()`, `GetDtmMetrics()` |
 
-## When to use it
+## What The Code Supports
 
-- you clearly need orchestration-oriented distributed transactions rather than only local transactions
-- your team accepts the debugging and operational cost of distributed transactions
-- you need more flexible orchestration patterns than a single transaction model provides
+The implementation includes:
 
-## Practical guidance
+- HTTP server URL integration for DTM APIs
+- optional gRPC connection with retry
+- optional gRPC TLS certificates
+- SAGA, TCC, XA, and two-phase message helper flows
+- pass-through request headers for branch calls
+- transaction and health metrics
 
-- define transaction boundaries and compensation semantics before adding framework integration
-- choose SAGA, TCC, or XA based on consistency and failure-recovery requirements
-- the DTM plugin handles integration and lifecycle; it does not define your business workflow for you
+This is much more concrete than "DTM is available". The plugin already exposes the transaction helper layer you are expected to build on.
 
-## Related pages
+## Configuration
+
+```yaml
+lynx:
+  dtm:
+    enabled: true
+    server_url: "http://127.0.0.1:36789/api/dtmsvr"
+    grpc_server: "127.0.0.1:36790"
+    timeout: 10
+    retry_interval: 10
+    transaction_timeout: 60
+    branch_timeout: 30
+    pass_through_headers:
+      - x-request-id
+```
+
+The timeout values are seconds in the current protobuf config.
+
+## How To Consume It
+
+```go
+plugin := lynx.Lynx().GetPluginManager().GetPlugin("dtm.server")
+dtmClient := plugin.(*dtm.DTMClient)
+helper := dtm.NewTransactionHelper(dtmClient)
+
+err := helper.ExecuteSAGA(ctx, gid, branches, nil)
+```
+
+## Practical Notes
+
+- `NewSaga()` is useful when you want direct DTM saga construction.
+- `NewTransactionHelper()` is the higher-level entry point for SAGA, TCC, XA, and MSG execution.
+- `GetDtmMetrics()` exposes plugin metrics once the plugin is enabled and initialized.
+
+## Related Pages
 
 - [Seata](/docs/existing-plugin/seata)
-- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)
+- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)

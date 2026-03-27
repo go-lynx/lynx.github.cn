@@ -5,7 +5,7 @@ title: Overview
 
 # Overview
 
-Go-Lynx is a **plugin orchestration and runtime framework** for Go microservices.
+Lynx is a **plugin orchestration and runtime framework** for Go microservices.
 
 Its center of gravity is not “yet another web layer”, but a unified runtime model for the infrastructure pieces that keep reappearing in service projects: plugin registration, dependency ordering, resource wiring, lifecycle control, event flow, and service-governance-facing integrations.
 
@@ -21,9 +21,16 @@ The most useful mental model for the current Lynx codebase is:
 
 In practice, Lynx should be read as a microservice infrastructure assembly layer rather than a thin wrapper around one specific protocol or middleware product.
 
+That distinction matters because most real integrations in Lynx are runtime-managed:
+
+- plugins register into a global typed factory
+- the plugin manager prepares and orders them
+- the unified runtime exposes shared resources
+- application code consumes those resources through plugin getters or plugin-manager lookups
+
 ## What You Get
 
-With Go-Lynx, teams typically gain:
+With Lynx, teams typically gain:
 
 - **A more stable startup path**: plugin load order, dependencies, and resource registration are orchestrated consistently.
 - **Less glue code**: databases, message queues, config centers, discovery, tracing, and similar capabilities follow one integration model.
@@ -42,9 +49,15 @@ The current repository family already covers the framework core and a broad set 
 
 The site already documents the main modules and usage flow, and more module pages continue to be added.
 
+The practical split is:
+
+- `github.com/go-lynx/lynx`: runtime core, boot, plugin manager, TLS, shared abstractions
+- standalone plugin modules such as `lynx-http`, `lynx-grpc`, `lynx-redis`, `lynx-tracer`, `lynx-sentinel`
+- engineering tooling such as the Lynx CLI and `lynx-layout`
+
 ## Suggested Reading Path
 
-If you are new to Go-Lynx, this order works well:
+If you are new to Lynx, this order works well:
 
 1. [Quick Start](/docs/getting-started/quick-start): get the CLI, template, and bootstrap flow running.
 2. [Bootstrap Configuration](/docs/getting-started/bootstrap-config): understand local bootstrap config and remote config entry points.
@@ -54,7 +67,7 @@ If you are new to Go-Lynx, this order works well:
 
 ## Community
 
-If you run into problems while using or extending Go-Lynx, the community channels are the best next step:
+If you run into problems while using or extending Lynx, the community channels are the best next step:
 
 - [Discord](https://discord.gg/2vq2Zsqq)
 - DingTalk / WeChat groups (see below)
