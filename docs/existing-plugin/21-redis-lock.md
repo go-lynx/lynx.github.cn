@@ -5,88 +5,35 @@ title: Redis Lock Plugin
 
 # Redis Lock Plugin
 
-`lynx-redis-lock` provides Redis-based distributed locking for Lynx applications, but it is not registered as a standalone runtime plugin like HTTP or Redis. It is a library layer built on top of `lynx-redis`, and it uses `lynx-redis`'s `GetUniversalRedis()` client under the hood.
+`lynx-redis-lock` is a Redis-backed locking library that sits on top of the runtime client from `lynx-redis`. It is not an independently configured runtime plugin, and this repo does not ship a separate `conf/example_config.yml` for it.
 
-## Runtime facts
+## Boundary And Ownership
 
-| Item | Value |
+| Concern | Owner |
 | --- | --- |
-| Go module | `github.com/go-lynx/lynx-redis-lock` |
-| Own config prefix | none |
-| Runtime plugin name | none |
-| Dependency | `github.com/go-lynx/lynx-redis` and its `lynx.redis` configuration |
+| Redis addresses, auth, DB selection, TLS, Sentinel / Cluster topology | `lynx.redis` in the upstream Redis plugin |
+| Redis client lifecycle and shared-resource registration | `lynx-redis` runtime plugin |
+| Lock TTL, retry policy, renewal, fencing-token behavior | Application code via `LockOptions` / retry structs |
+| Runtime plugin name / config prefix for Redis Lock itself | None |
 
-## What the implementation actually provides
+## What This Means In Practice
 
-- distributed lock acquire and release based on Redis Lua scripts
-- reusable lock instances through `NewLock()`
-- callback-style helpers through `Lock`, `LockWithOptions`, `LockWithRetry`, and `LockWithToken`
-- optional auto-renewal, retry strategy, worker-pool based renewal management, and script call timeouts
-- fencing-token support and manager statistics through `GetStats()`
+- Do **not** add a `lynx.redis-lock` or `lynx.redis.lock` YAML block. The current repository does not load one.
+- Redis Lock reuses the upstream client exposed by `lynx-redis`; it should not create a second Redis pool beside the runtime-managed client.
+- Any YAML you write for lock-backed services still belongs to [Redis](/docs/existing-plugin/redis). That is where connection endpoints, passwords, topology mode, and transport settings are owned.
+- Lock acquisition behavior is configured in code, not in `example_config.yml`. That includes lease duration, retry/backoff, renewal, and callback-style business execution.
 
-Reentrancy is per lock instance, not per lock key. Reusing the same `*RedisLock` instance can reenter. Creating a new instance for the same key cannot.
+## Dependency Notes
 
-## Configuration dependency
+- The lock library depends on `github.com/go-lynx/lynx-redis`.
+- Standalone Redis, Redis Cluster, and Redis Sentinel are all supported only through whatever `lynx.redis` has already configured correctly.
+- If older snippets show a lock-specific YAML subtree, treat those snippets as historical examples rather than the current source of truth for this repo.
 
-`lynx-redis-lock` itself does not read a dedicated `lynx.redis-lock` config tree. It relies on the Redis client plugin:
+## Public Surface
 
-```yaml
-lynx:
-  redis:
-    addrs:
-      - "localhost:6379"
-    password: ""
-    db: 0
-```
+Common APIs include `Lock`, `LockWithToken`, `LockWithRetry`, `LockWithOptions`, `NewLock`, `UnlockByValue`, `GetStats()`, and `Shutdown()`.
 
-## Usage
+## Related Pages
 
-```go
-import (
-    "context"
-    "time"
-
-    redislock "github.com/go-lynx/lynx-redis-lock"
-)
-
-func run(ctx context.Context) error {
-    return redislock.LockWithRetry(
-        ctx,
-        "order:close:123",
-        30*time.Second,
-        func() error {
-            return doBusiness()
-        },
-        redislock.RetryStrategy{
-            MaxRetries: 3,
-            RetryDelay: 100 * time.Millisecond,
-        },
-    )
-}
-```
-
-Reusable lock instance:
-
-```go
-options := redislock.LockOptions{Expiration: 30 * time.Second}
-lock, err := redislock.NewLock(ctx, "inventory:deduct:sku-1", options)
-if err != nil {
-    return err
-}
-if err := lock.Acquire(ctx); err != nil {
-    return err
-}
-defer lock.Release(ctx)
-```
-
-## Practical guidance
-
-- use Redis lock when you already run Redis and the coordination requirement is lightweight
-- model expiration, retry, and business idempotency together, otherwise the lock only hides failure cases
-- if you need stronger coordination semantics, compare it with [Etcd Lock](/docs/existing-plugin/etcd-lock) before standardizing on Redis
-
-## Related pages
-
-- Repo: [go-lynx/lynx-redis-lock](https://github.com/go-lynx/lynx-redis-lock)
 - [Redis](/docs/existing-plugin/redis)
-- [Etcd Lock](/docs/existing-plugin/etcd-lock)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)

@@ -6,75 +6,48 @@ sidebar_label: Plugin Ecosystem
 
 # Lynx Plugin Ecosystem
 
-The Lynx repository family is not just a list of unrelated SDKs. The core `lynx` runtime loads plugins through one plugin factory, orders them by dependency and weight, exposes shared resources, and lets application code consume them through stable runtime names or getters.
+This page is a map, not a plugin config reference. Use it to decide which plugin page to read next and to understand where one plugin's responsibility ends and another system or dependency begins.
 
-## Read A Plugin Page The Right Way
+## How To Read A Plugin Page
 
-For any Lynx plugin, the four facts that matter most are:
+For any Lynx plugin, the four facts that matter most are still:
 
 1. the Go module path
 2. the configuration prefix
 3. the runtime plugin name
 4. the public API you use after startup
 
-If a document does not state those four facts clearly, it is hard to integrate the plugin or debug startup.
+That set tells you how the plugin is loaded, how it is looked up at runtime, and whether it is a good match for your integration point. This ecosystem page itself has no standalone YAML because it is not a runtime plugin.
 
-## Runtime Model
+## Navigation By Job To Be Done
 
-Most official plugins follow the same path:
-
-1. import the module so its `init()` registers the plugin in the global factory
-2. add config under the plugin's prefix such as `lynx.http` or `lynx.apollo`
-3. let the unified runtime initialize resources and run startup tasks
-4. consume the capability through a getter or `GetPlugin("<runtime-name>")`
-
-That is why the runtime plugin name is not trivia. It is the real lookup key inside the plugin manager.
-
-## What The Official Template Actually Starts With
-
-`lynx-layout` does not try to enable the whole plugin family at once. Today, the scaffold is easier to read if you group plugins into three buckets:
-
-| Template status | What it means now | Current examples |
+| Goal | Start here | What you are really choosing |
 |------|------|------|
-| Enabled in local bootstrap | part of the smallest runnable local service | `lynx.http`, `lynx.grpc.service`, `lynx.mysql`, `lynx.redis` |
-| Used in governance bootstrap | enabled in the control-plane oriented config path | `lynx.application`, `lynx.polaris` |
-| Not enabled by default | supported, but added only when the service actually needs it | `lynx.apollo`, `lynx.nacos`, `lynx.etcd`, `lynx.kafka`, `rabbitmq`, `rocketmq`, `lynx.pulsar`, `lynx.sentinel`, `lynx.swagger`, `lynx.tls` |
+| Expose service traffic | [HTTP](/docs/existing-plugin/http), [gRPC](/docs/existing-plugin/grpc), [TLS](/docs/existing-plugin/tls), [Swagger](/docs/existing-plugin/swagger) | Server entrypoints, ports, middleware/interceptor surfaces |
+| Use data stores and locks | [Database Plugin](/docs/existing-plugin/db), [SQL SDK](/docs/existing-plugin/sql-sdk), [MongoDB](/docs/existing-plugin/mongodb), [Redis](/docs/existing-plugin/redis), [Redis Lock](/docs/existing-plugin/redis-lock), [Etcd Lock](/docs/existing-plugin/etcd-lock) | Shared clients, lock semantics, and storage-specific APIs |
+| Consume config centers or governance control planes | [Apollo](/docs/existing-plugin/apollo), [Nacos](/docs/existing-plugin/nacos), [Etcd](/docs/existing-plugin/etcd), [Polaris](/docs/existing-plugin/polaris) | External control planes, not business-facing APIs |
+| Add transaction or identity infrastructure | [Seata](/docs/existing-plugin/seata), [DTM](/docs/existing-plugin/dtm), [Eon ID](/docs/existing-plugin/eon-id) | External coordinators, ID layout, and operational ownership boundaries |
+| Add traffic protection and observability hooks | [Sentinel](/docs/existing-plugin/sentinel), [Tracer](/docs/existing-plugin/tracer) | Resource naming, protection policy, and observability surfaces |
+| Add asynchronous brokers | [Kafka](/docs/existing-plugin/kafka), [RabbitMQ](/docs/existing-plugin/rabbitmq), [RocketMQ](/docs/existing-plugin/rocketmq), [Pulsar](/docs/existing-plugin/pulsar) | Broker clients, delivery semantics, and topic ownership |
+| Understand templates and lifecycle | [Layout](/docs/existing-plugin/layout), [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide), [Plugin Management](/docs/getting-started/plugin-manager) | What the scaffold imports, what runtime owns, and how plugins are ordered |
 
-There is also one special case worth calling out: `lynx-tracer` is already imported by the template, but its config is not made explicit in the default local bootstrap. So it is better understood as a pre-wired observability hook rather than a fully enabled default feature.
+## Dependency Boundaries That Matter Most
 
-## Core Examples
+| Page | What it depends on | What it does not own | Read together with |
+|------|------|------|------|
+| [Seata](/docs/existing-plugin/seata) | An external Seata coordinator plus the referenced Seata client YAML | Transaction boundary placement inside your business code | [DTM](/docs/existing-plugin/dtm) |
+| [DTM](/docs/existing-plugin/dtm) | An external DTM server and, optionally, gRPC/TLS assets | Branch business endpoints and orchestration semantics | [Seata](/docs/existing-plugin/seata) |
+| [Sentinel](/docs/existing-plugin/sentinel) | Stable resource names from HTTP, gRPC, or business wrappers | Dynamic config-center rule loading or automatic resource design | [HTTP](/docs/existing-plugin/http), [gRPC](/docs/existing-plugin/grpc) |
+| [Eon ID](/docs/existing-plugin/eon-id) | Optional shared Redis when worker auto-registration is enabled | Redis provisioning and uniqueness guarantees after you disable auto-registration | [Redis](/docs/existing-plugin/redis) |
+| [Redis Lock](/docs/existing-plugin/redis-lock) | A working Redis plugin and clear lock ownership rules | Redis deployment, connection bootstrap, or business retry policy | [Redis](/docs/existing-plugin/redis) |
+| [Apollo](/docs/existing-plugin/apollo), [Nacos](/docs/existing-plugin/nacos), [Etcd](/docs/existing-plugin/etcd) | External config / service-discovery control planes | Application-local validation of every consumed key | [Bootstrap Configuration](/docs/getting-started/bootstrap-config) |
 
-| Module | Go module | Config prefix | Runtime plugin name | Public API after startup |
-|------|------|------|------|------|
-| [HTTP](/docs/existing-plugin/http) | `github.com/go-lynx/lynx-http` | `lynx.http` | `http.server` | `http.GetHttpServer()` |
-| [gRPC service](/docs/existing-plugin/grpc) | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.service` | `grpc.service` | `grpc.GetGrpcServer(nil)` |
-| [gRPC client](/docs/existing-plugin/grpc) | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.client` | `grpc.client` | `grpc.GetGrpcClientPlugin(nil)`, `grpc.GetGrpcClientConnection(...)` |
-| [Kafka](/docs/existing-plugin/kafka) | `github.com/go-lynx/lynx-kafka` | `lynx.kafka` | `kafka.client` | plugin instance methods such as `ProduceWith`, `SubscribeWith` |
-| [MongoDB](/docs/existing-plugin/mongodb) | `github.com/go-lynx/lynx-mongodb` | `lynx.mongodb` | `mongodb.client` | `GetMongoDB()`, `GetMongoDBDatabase()`, `GetMongoDBCollection()` |
-| [Apollo](/docs/existing-plugin/apollo) | `github.com/go-lynx/lynx-apollo` | `lynx.apollo` | `apollo.config.center` | `GetConfigSources()`, `GetConfigValue()` |
-| [Etcd](/docs/existing-plugin/etcd) | `github.com/go-lynx/lynx-etcd` | `lynx.etcd` | `etcd.config.center` | `GetClient()`, `GetConfigSources()`, `GetConfigValue()` |
-| [Etcd Lock](/docs/existing-plugin/etcd-lock) | `github.com/go-lynx/lynx-etcd-lock` | `lynx.etcd-lock` | `etcd.distributed.lock` | `Lock`, `LockWithOptions`, `NewLockFromClient` |
-| [DTM](/docs/existing-plugin/dtm) | `github.com/go-lynx/lynx-dtm` | `lynx.dtm` | `dtm.server` | `NewSaga`, `NewTransactionHelper`, `GetDtmMetrics()` |
-| [Sentinel](/docs/existing-plugin/sentinel) | `github.com/go-lynx/lynx-sentinel` | `lynx.sentinel` | `sentinel.flow_control` | `GetSentinel()`, metrics APIs |
-| [Tracer](/docs/existing-plugin/tracer) | `github.com/go-lynx/lynx-tracer` | `lynx.tracer` | `tracer.server` | tracer runtime entry |
+## One Repo Is Not Always One Page
 
-## Repository Family Beyond The Sidebar
-
-The repository family in `lynx/plugins.json` currently includes more modules than the sidebar fully explains, including:
-
-- `lynx-mysql`
-- `lynx-pgsql`
-- `lynx-mssql`
-- `lynx-eon-id`
-- `lynx-layout`
-- `lynx-sql-sdk`
-- `lynx-redis-lock`
-- `lynx-polaris`
-- `lynx-pulsar`
-- `lynx-rabbitmq`
-- `lynx-rocketmq`
-
-Some of these are application-facing plugins. Some are shared capability layers or service templates. The documentation should distinguish those roles instead of treating everything as the same kind of module.
+- `lynx-mysql`, `lynx-pgsql`, and `lynx-mssql` are concrete SQL plugins that are easier to compare through [Database Plugin](/docs/existing-plugin/db) plus [SQL SDK](/docs/existing-plugin/sql-sdk).
+- `lynx-layout` is a service template, not a runtime plugin, so it belongs with [Layout](/docs/existing-plugin/layout).
+- `lynx-redis-lock` is a capability layer on top of Redis and should be read together with [Redis Lock](/docs/existing-plugin/redis-lock) and [Redis](/docs/existing-plugin/redis).
+- `lynx-eon-id` used to live mostly as a side mention in the ecosystem page, but it now deserves its own page because its Redis dependency, fail-closed behavior, and bit-allocation limits are specific enough to document separately.
 
 ## Common Consumption Patterns
 
@@ -82,10 +55,11 @@ Across the codebase, plugin access usually looks like one of these patterns:
 
 - runtime-owned server getter: `http.GetHttpServer()`, `grpc.GetGrpcServer(nil)`
 - client getter: `mongodb.GetMongoDB()`, `elasticsearch.GetElasticsearch()`
+- package-level runtime helper: `eonid.GenerateID()`, `eonid.ParseID(id)`
 - plugin-manager lookup: `lynx.Lynx().GetPluginManager().GetPlugin("dtm.server")`
 - plugin object API: `apolloPlugin.GetConfigValue(...)`, `etcdPlugin.GetClient()`
 
-When reading docs, prefer examples that match one of these real patterns.
+When reading docs, prefer examples that match one of these real lookup patterns. That is usually the fastest way to distinguish a runtime-owned server plugin from a client wrapper or a pure capability layer.
 
 ## Recommended Reading Order
 

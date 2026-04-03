@@ -40,6 +40,7 @@ go get github.com/go-lynx/lynx-elasticsearch
 go get github.com/go-lynx/lynx-mysql
 go get github.com/go-lynx/lynx-pgsql
 go get github.com/go-lynx/lynx-mssql
+go get github.com/go-lynx/lynx-eon-id
 
 # 消息
 go get github.com/go-lynx/lynx-kafka
@@ -82,6 +83,7 @@ go get github.com/go-lynx/lynx-etcd-lock
 | Redis | `github.com/go-lynx/lynx-redis` | `lynx.redis` |
 | Elasticsearch | `github.com/go-lynx/lynx-elasticsearch` | `lynx.elasticsearch` |
 | MongoDB | `github.com/go-lynx/lynx-mongodb` | `lynx.mongodb` |
+| Eon ID | `github.com/go-lynx/lynx-eon-id` | `lynx.eon-id` |
 | Polaris | `github.com/go-lynx/lynx-polaris` | `lynx.polaris` |
 | Apollo | `github.com/go-lynx/lynx-apollo` | `lynx.apollo` |
 | Etcd | `github.com/go-lynx/lynx-etcd` | `lynx.etcd` |
@@ -192,7 +194,7 @@ func main() {
 
 ## 5. 启动完成后如何拿能力
 
-当前代码里常见有三种方式。
+当前代码里常见有四种方式。
 
 ### 方式 A：直接拿运行时持有的对象
 
@@ -229,6 +231,19 @@ mqPlugin := app.Lynx().GetPluginManager().GetPlugin("rabbitmq")
 client := mqPlugin.(rabbitmq.ClientInterface)
 ```
 
+### 方式 D：包级 helper 对运行时插件做封装
+
+`lynx-eon-id` 最适合走这条路径：
+
+```go
+id, err := eonid.GenerateID()
+id, metadata, err := eonid.GenerateIDWithMetadata()
+parsed, err := eonid.ParseID(id)
+plugin, err := eonid.GetEonIdPlugin()
+```
+
+这些包级方法背后仍然依赖 Lynx runtime 已经完成初始化，但它们让普通调用方不需要直接走插件管理器路径。
+
 ## 代码里已经存在的公开入口
 
 下面这些 API 都已经在代码里存在，文档应该优先围绕它们来写，而不是模糊描述：
@@ -239,6 +254,7 @@ client := mqPlugin.(rabbitmq.ClientInterface)
 | gRPC 服务 | `grpc.GetGrpcServer(nil)` |
 | Redis | `redis.GetRedis()`、`redis.GetUniversalRedis()` |
 | MongoDB | `mongodb.GetMongoDB()`、`mongodb.GetMongoDBDatabase()`、`mongodb.GetMongoDBCollection()` |
+| Eon ID | `eonid.GenerateID()`、`eonid.GenerateIDWithMetadata()`、`eonid.ParseID()`、`eonid.GetEonIdPlugin()` |
 | Elasticsearch | `elasticsearch.GetElasticsearch()`、`elasticsearch.GetElasticsearchPlugin()`、`elasticsearch.GetIndexName()` |
 | Pulsar | `pulsar.GetPulsarClient()` |
 | Polaris | `polaris.GetPolarisPlugin()`、`polaris.GetServiceInstances()`、`polaris.GetConfig()`、`polaris.GetMetrics()` |
@@ -259,6 +275,7 @@ client := mqPlugin.(rabbitmq.ClientInterface)
 | Redis | `redis.client` |
 | Elasticsearch | `elasticsearch.client` |
 | MongoDB | `mongodb.client` |
+| Eon ID | `eon-id` |
 | Polaris | `polaris.control.plane` |
 | Apollo | `apollo.config.center` |
 | Etcd | `etcd.config.center` |
@@ -281,6 +298,7 @@ client := mqPlugin.(rabbitmq.ClientInterface)
 | 搜索 | `lynx-elasticsearch` | `GetElasticsearch()` |
 | 文档型数据库 | `lynx-mongodb` | `GetMongoDBDatabase()` |
 | SQL 数据库 | `lynx-mysql` / `lynx-pgsql` / `lynx-mssql` | SQL 插件 Getter / provider |
+| 分布式 ID 生成 | `lynx-eon-id` | `GenerateID()` 这类包级 helper 或 `GetEonIdPlugin()` |
 | 配置中心 / 服务发现 | `lynx-polaris`、`lynx-nacos`、`lynx-apollo`、`lynx-etcd` | 插件 API + 运行时装配 |
 | 消息队列 | `lynx-kafka`、`lynx-rabbitmq`、`lynx-rocketmq`、`lynx-pulsar` | 插件管理器或公开 Getter |
 | 分布式事务 | `lynx-seata`、`lynx-dtm` | 插件对象 / helper API |
@@ -292,6 +310,7 @@ client := mqPlugin.(rabbitmq.ClientInterface)
 - 模块路径以插件仓库里的 `go.mod` 为准，不要凭印象猜
 - 配置前缀以插件代码里的常量为准，不要写模糊别名
 - 要记住并不是所有插件都用 `lynx.<name>` 这种前缀，例如 `rabbitmq` 和 `rocketmq`
+- 如果 `lynx-eon-id` 开启自动 worker ID 注册，要确保 Redis 插件已经启动，并且共享资源名和你配置的 `redis_plugin_name` 对得上
 - 插件已经提供 Getter 时，优先使用 Getter
 - 只有在需要更丰富的插件能力或动态接入时，再退回到 `GetPlugin(...)`
 - 读插件文档时，要把它和引导配置、启动顺序一起理解，因为很多能力依赖的是运行时装配顺序，而不只是配置结构
