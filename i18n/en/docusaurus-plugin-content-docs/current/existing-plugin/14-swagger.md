@@ -20,7 +20,7 @@ The critical detail is that the current runtime reads a custom YAML struct in `s
 | Go module | `github.com/go-lynx/lynx-swagger` |
 | Config prefix | `lynx.swagger` |
 | Runtime plugin name | `swagger` |
-| Main getter | `GetSwagger()` |
+| Getter boundary | Instance method `(*PlugSwagger).GetSwagger()` only; there is no package-level `swagger.GetSwagger()` |
 
 ## Before You Configure It
 

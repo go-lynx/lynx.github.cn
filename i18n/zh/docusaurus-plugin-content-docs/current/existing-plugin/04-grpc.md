@@ -25,6 +25,7 @@ title: gRPC 服务
 - 服务端如果省略 stream / message size，不会回到 protobuf 注释里的“零值语义”，而是启动时补上更安全的运行时默认值：`1000` 个并发 stream、`10 MiB` 的收发消息上限。
 - `lynx.grpc.service` 还会从同一前缀读取一些仅 YAML 暴露的扩展键，例如 `graceful_shutdown_timeout`、`rate_limit`、`max_inflight_unary`、`circuit_breaker`。
 - 客户端优先使用 `subscribe_services`；`services` 只是兼容历史配置。
+- `example_client_config.yml` 末尾还给出了一段顶层 `subscriptions.grpc[*]` 示例。真实 bootstrap 配置里，它属于 `lynx.subscriptions.grpc[*]`，而不是 `lynx.grpc.client`。
 - 当前客户端代码真正生效的开关里，`tracing_enabled` 是 live 的，但 `metrics_enabled`、`logging_enabled`、`health_check_enabled`、`health_check_interval`、`max_message_size`、`compression_enabled`、`compression_type` 目前还只有模板 / proto 面定义，没有对应运行时效果。
 - `subscribe_services[*]` 里的 `tls_enable` 和 `tls_auth_type` 现在不会可靠继承客户端全局 TLS 默认值；你不写，就会落成 `false` / `0`。
 
@@ -113,6 +114,20 @@ title: gRPC 服务
 | `tls_enable` | 历史单服务 TLS 开关。 | 历史项被选中时。 | 默认 `false`。 | 应用里没有证书提供者却打开了 TLS。 |
 | `tls_auth_type` | 历史单服务 TLS 模式。 | 仅历史 TLS 打开时。 | 默认 `0`。 | TLS 关闭状态下还期待它改变行为。 |
 | `max_retries` | 历史单服务重试次数。 | 历史项被选中时。 | `0` 时回退到全局配置。 | 把它当成现代 discovery 服务的覆盖项。 |
+
+## `example_client_config.yml` 里的顶层 `lynx.subscriptions.grpc[*]`
+
+`example_client_config.yml` 结尾还有第二段示例块：`subscriptions.grpc[*]`。这组键不属于 `lynx.grpc.client`，而是属于 Lynx bootstrap 订阅配置；真实运行时路径应写成 `lynx.subscriptions.grpc[*]`。
+
+这组键由 `lynx/subscribe` 里的 core subscription loader 消费，适合描述“启动阶段要建立并复用的 gRPC 订阅连接”。它和 `lynx.grpc.client.subscribe_services[*]` 是两套不同的配置面，不应混写成同一语义。
+
+| 字段 | 作用 | 何时生效 | 默认值 / 交互关系 | 常见误配 |
+| --- | --- | --- | --- | --- |
+| `service` | 指定 discovery 中的上游服务名，同时也作为订阅连接的 key。 | 一直生效。 | 必填；开启 TLS 时，它还会被用作证书校验里的 `ServerName`。 | 把这里写成 `host:port`，而不是服务发现注册名。 |
+| `tls` | 为该订阅连接打开 TLS。 | 仅 `lynx.subscriptions.grpc[*]` 订阅路径。 | 默认 `false`；为 `true` 时，core loader 会先开 TLS，再按 `ca_name` / `ca_group` 取 CA，或回退到应用默认 Root CA provider。 | 开了 TLS，却没有任何 CA 来源或默认 Root CA。 |
+| `required` | 把该订阅标记为启动期硬依赖。 | 启动建连阶段。 | 默认 `false`；失败时不再只是告警跳过，而是直接返回错误。 | 把可选上游标成必需，导致服务起不来。 |
+| `ca_name` | 指定该订阅 TLS 路径使用的根 CA 配置名 / 载荷名。 | 仅 `tls: true` 且需要从配置 / 控制面拉取 CA 时。 | 留空表示改用应用默认 Root CA provider。 | `tls` 没开就填它，或应用路径里没有 config provider 却硬填。 |
+| `ca_group` | 指定该 CA 配置所在的分组。 | 仅 `tls: true` 且 `ca_name` 已设置。 | 在 core loader 里，留空会回退到 `ca_name`。 | 分组填错，结果拉到了错误的 CA。 |
 
 ## `example_polaris_config.yml`：服务发现前提
 

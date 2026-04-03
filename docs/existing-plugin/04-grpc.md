@@ -27,6 +27,7 @@ It then cross-checks the templates against the current runtime code.
 - The server runtime does not keep the protobuf defaults for stream and message sizes. If you omit them, startup applies safe runtime defaults of `1000` concurrent streams and `10 MiB` max recv/send message size.
 - `lynx.grpc.service` also accepts extra YAML-only keys from the same prefix, such as `graceful_shutdown_timeout`, `rate_limit`, `max_inflight_unary`, and `circuit_breaker`.
 - `subscribe_services` is the preferred client config. `services` remains only for backward compatibility.
+- `example_client_config.yml` also shows a top-level `subscriptions.grpc[*]` block. In real bootstrap config, that block belongs under `lynx.subscriptions.grpc[*]`, not under `lynx.grpc.client`.
 - In the current client code, `tracing_enabled` is honored, but `metrics_enabled`, `logging_enabled`, `health_check_enabled`, `health_check_interval`, `max_message_size`, `compression_enabled`, and `compression_type` are defined in proto/examples without a matching runtime effect yet.
 - In `subscribe_services[*]`, `tls_enable` and `tls_auth_type` do not inherit global client TLS defaults cleanly. Leaving them unset on the item means `false` / `0`, not "inherit".
 
@@ -115,6 +116,20 @@ It then cross-checks the templates against the current runtime code.
 | `tls_enable` | Legacy per-service TLS toggle. | When the legacy item is selected. | Default `false`. | Enabling TLS without a certificate provider in the app. |
 | `tls_auth_type` | Legacy per-service TLS auth mode. | Only when legacy TLS is enabled. | Default `0`. | Expecting it to change anything while TLS is off. |
 | `max_retries` | Legacy per-service retry count. | When the legacy item is selected. | Falls back to the global retry settings when `0`. | Using it as a modern discovery-service override. |
+
+## Top-Level `lynx.subscriptions.grpc[*]` From `example_client_config.yml`
+
+`example_client_config.yml` ends with a second example block named `subscriptions.grpc[*]`. Those keys do not belong to `lynx.grpc.client`. They belong to Lynx bootstrap subscriptions, whose real runtime path is `lynx.subscriptions.grpc[*]`.
+
+This block is consumed by the Lynx core subscription loader in `lynx/subscribe`, and it is useful when the app wants startup-time reusable gRPC subscription connections keyed by service name. Treat it as a separate surface from `lynx.grpc.client.subscribe_services[*]`.
+
+| Field | What it does | When it is used | Default / interaction | Common misconfiguration |
+| --- | --- | --- | --- | --- |
+| `service` | Names the upstream service in discovery and becomes the subscription connection key. | Always. | Required; the TLS path also uses it as `ServerName` for certificate verification. | Writing a host:port here instead of the discovery registration name. |
+| `tls` | Enables TLS for that subscription connection. | Only for `lynx.subscriptions.grpc[*]` subscriptions. | Default `false`; when `true`, the core loader enables TLS and then either loads CA material from `ca_name` / `ca_group` or falls back to the app's default root CA provider. | Turning it on without any CA source or default root CA available. |
+| `required` | Marks the subscription as a hard startup dependency. | During startup connection establishment. | Default `false`; failures return an error instead of being logged and skipped. | Marking optional upstreams as required and blocking service startup. |
+| `ca_name` | Selects the root CA payload name for the subscription TLS path. | Only when `tls: true` and you want CA material from config/control plane. | Empty means "use the app's default root CA provider instead". | Setting it while `tls` stays `false`, or setting it without a config provider in the app path. |
+| `ca_group` | Selects the config/control-plane group for the CA payload. | Only when `tls: true` and `ca_name` is set. | In the core loader, empty falls back to `ca_name`. | Filling the wrong group and fetching the wrong CA bundle. |
 
 ## `example_polaris_config.yml`: Discovery Prerequisites
 
