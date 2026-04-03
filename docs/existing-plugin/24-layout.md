@@ -5,79 +5,49 @@ title: Lynx Project Template (Layout)
 
 # Lynx Project Template (Layout)
 
-`lynx-layout` is the official service template repository aligned with the current Lynx runtime and plugin model.
+`lynx-layout` is the official Lynx service template repository. It is not an independently configurable runtime plugin, and this page intentionally documents repository boundaries and real entry points instead of inventing a fake `layout` runtime schema.
 
-## What It Really Shows
+## Repository Boundary
 
-`lynx-layout` is not itself a runtime plugin. It is an example application skeleton that demonstrates how current Lynx services are assembled.
+| Item | Value |
+| --- | --- |
+| Go module | `github.com/go-lynx/lynx-layout` |
+| Nature | service template / scaffold repository |
+| Own config prefix | none |
+| Own runtime plugin name | none |
+| Own plugin getter | none |
+| What it actually provides | a runnable project skeleton that wires real Lynx plugins together |
 
-## Code-Backed Facts
+## Relationship To Lynx Runtime
 
-From the repository:
+`lynx-layout` does not replace Lynx runtime plugins. It demonstrates how a real service composes them.
 
-- startup entry uses `boot.NewApplication(wireApp).Run()`
-- HTTP server wiring uses `github.com/go-lynx/lynx-http` and `GetHttpServer()`
-- gRPC server wiring uses `github.com/go-lynx/lynx-grpc` and `GetGrpcServer(nil)`
-- data wiring already depends on concrete plugins such as MySQL and Redis rather than abstract placeholder packages
-- service registry wiring uses `lynx.GetServiceRegistry()`
+| Template file or path | Real runtime dependency it shows | Why it matters |
+| --- | --- | --- |
+| `cmd/user/wire_gen.go` | `lynx.GetServiceRegistry()` and generated app assembly | Shows that service registration comes from real Lynx runtime services, not from a `layout` plugin. |
+| `internal/server/http.go` | `lynx-http.GetHttpServer()` | Confirms HTTP capability comes from `lynx-http`. |
+| `internal/server/grpc.go` | `lynx-grpc.GetGrpcServer(nil)` | Confirms gRPC capability comes from `lynx-grpc`. |
+| `internal/data/data.go` | `lynx-mysql.GetProvider()` | Confirms DB access comes from the MySQL plugin family. |
+| `internal/data/data.go` | `lynx-redis.GetRedis()` | Confirms Redis access comes from the Redis plugin family. |
+| `deployments/docker-compose.local.yml` plus `start.sh` | local dependency boot path | Shows how the template expects local runtime dependencies to be started around the service. |
 
-## Template Configuration That Matches Real Code
+The practical implication is simple: if you need HTTP, gRPC, MySQL, Redis, Polaris, Kafka, or any other runtime capability, configure the real plugin or runtime module directly. `lynx-layout` is only the place where those pieces are assembled into a service skeleton.
 
-The template currently exposes two useful config views.
+## Existing Configuration Entry Points
 
-`configs/bootstrap.local.yaml` is the practical local-dev shape:
+The repository already ships concrete configuration entry points. They belong to the scaffold and should be read as examples of how to compose real runtime modules.
 
-```yaml
-lynx:
-  http:
-    addr: 127.0.0.1:8000
-  grpc:
-    service:
-      addr: 127.0.0.1:9000
-  mysql:
-    driver: mysql
-    source: "..."
-  redis:
-    addrs:
-      - 127.0.0.1:6379
-```
+| Entry point | Purpose | What it already configures | What not to assume |
+| --- | --- | --- | --- |
+| `configs/bootstrap.local.yaml` | local runnable bootstrap | `lynx.application`, `lynx.log`, `lynx.http`, `lynx.grpc.service`, `lynx.mysql`, `lynx.redis` | It is not a generic plugin catalog and it does not imply every plugin is enabled by default. |
+| `configs/bootstrap.yaml` | governance-oriented bootstrap | `lynx.application` plus `lynx.polaris` settings such as `config_path`, `namespace`, `token`, `weight`, `ttl`, `timeout` | It is a template entry for Polaris-backed environments, not a separate `layout` runtime config namespace. |
+| `README` optional auth example | optional external login-token issue path | `lynx.layout.auth.grpc.service`, `lynx.layout.auth.grpc.method`, `lynx.layout.auth.grpc.timeout` and matching env vars | This is an application-specific optional extension, not a general-purpose runtime plugin named `layout`. |
 
-`configs/bootstrap.yaml` is the narrower governance-oriented shape:
+## Practical Reading Rules
 
-```yaml
-lynx:
-  application:
-    name: user-service
-  polaris:
-    config_path: "configs/polaris.yaml"
-```
-
-This is the key thing many plugin documents fail to make obvious: the template does not start by enabling every plugin. It starts from a small runnable combination, then layers in governance-oriented config separately.
-
-## Template Code Path
-
-The template also shows the real public integration entry points:
-
-- `internal/server/http.go` uses `lynx-http.GetHttpServer()`
-- `internal/server/grpc.go` uses `lynx-grpc.GetGrpcServer(nil)`
-- `internal/data/data.go` uses `lynx-redis.GetRedis()`
-- `internal/data/data.go` uses `lynx-mysql.GetProvider()`
-- `cmd/user/wire_gen.go` uses `lynx.GetServiceRegistry()`
-
-That makes `lynx-layout` the most direct reference for how the current plugin family is meant to be consumed in a real service.
-
-## Structure
-
-```text
-api      protocol definitions and generated code
-biz      business flow and domain logic
-bo       shared business objects
-conf     configuration structs and mapping
-data     repository and external dependency integration
-service  service-layer logic
-server   HTTP and gRPC registration
-cmd      application entry and Wire assembly
-```
+- Read `lynx-layout` as a template repository boundary, not as a plugin boundary.
+- Read `configs/bootstrap.local.yaml` and `configs/bootstrap.yaml` as example service bootstraps that compose real Lynx modules.
+- Add or remove real plugins by editing the service bootstrap and code wiring, not by searching for a nonexistent `layout` runtime plugin schema.
 
 ## How To Use It
 
@@ -95,14 +65,12 @@ lynx new demo
 
 ## Local Run Path
 
-`lynx-layout` already includes a local bootstrap path and dependency compose file:
+The template already includes a local bootstrap path and dependency compose file:
 
 ```bash
 docker compose -f deployments/docker-compose.local.yml up -d
 go run ./cmd/user -conf ./configs/bootstrap.local.yaml
 ```
-
-The local config path is useful when you want to start from DB, Redis, HTTP, and gRPC first without introducing full governance dependencies immediately.
 
 ## Related Pages
 

@@ -5,58 +5,39 @@ title: SQL SDK
 
 # SQL SDK
 
-`lynx-sql-sdk` is the shared SQL capability layer used by concrete SQL plugins such as MySQL, PostgreSQL, and MSSQL. It is not a standalone plugin entry in `plugins.json`.
+`lynx-sql-sdk` is the shared SQL capability layer used by `lynx-mysql`, `lynx-pgsql`, and `lynx-mssql`. It is not an independently configured runtime plugin, and it does not own its own YAML block or `example_config.yml`.
 
-## What It Actually Is
+## Boundary And Ownership
 
-The SDK provides:
+| Concern | Owner |
+| --- | --- |
+| YAML config prefix | Concrete plugin only: `lynx.mysql`, `lynx.pgsql`, or `lynx.mssql` |
+| Runtime plugin name and package getters | Concrete plugin only |
+| Repo example templates | `lynx-pgsql/conf/example_config.yml`, `lynx-mssql/conf/example_config.yml`; MySQL currently has no `lynx-mysql/conf/example_config.yml` |
+| Shared interfaces, provider abstraction, reconnect / pool / health behavior | `lynx-sql-sdk` |
 
-- the shared `interfaces.SQLPlugin` contract
-- a stable `DBProvider` abstraction
-- common config fields for SQL plugins
-- a reusable base plugin implementation in `base.SQLPlugin`
+## What SQL SDK Actually Owns
 
-Concrete SQL plugins embed this base layer and then supply driver-specific behavior.
+- shared interfaces such as `interfaces.SQLPlugin` and `interfaces.DBProvider`
+- the reusable base runtime in `base.SQLPlugin`
+- common connection-pool, reconnect, health-check, slow-query, and leak-detection behavior reused by concrete SQL plugins
 
-## Shared Runtime Capabilities
+## What SQL SDK Does Not Own
 
-From the base implementation, concrete SQL plugins inherit support for:
+- no `lynx.sql` config block
+- no runtime plugin registration of its own
+- no standalone `GetDB()` / `GetDriver()` entry point for applications
+- no datasource selection outside the concrete MySQL / PostgreSQL / MSSQL plugins
 
-- startup connection and validation
-- retry on connect
-- pool monitoring and alert thresholds
-- health checks
-- auto-reconnect
-- connection warmup
-- slow-query monitoring
-- leak detection
+## Configuration Ownership Rules
 
-Those are real runtime behaviors, not just helper types.
-
-## Important Interfaces
-
-`interfaces.SQLPlugin` is the contract for plugin-backed SQL access:
-
-- `GetDB()`
-- `GetDBWithContext(ctx)`
-- `GetValidatedConn(ctx)`
-- `GetDialect()`
-- `IsConnected()`
-
-`interfaces.DBProvider` is the safer abstraction when callers should resolve the current pool dynamically instead of caching an old `*sql.DB`.
-
-## When To Read This Page
-
-This page matters when:
-
-- you are building or reviewing a concrete SQL plugin
-- you need to understand what MySQL, PostgreSQL, and MSSQL plugins share
-- you want to reason about reconnect and pool semantics in the SQL stack
-
-For ordinary application integration, read the concrete plugin page first.
+- If you are wiring MySQL, configure `lynx.mysql`. This repo currently has no dedicated MySQL `conf/example_config.yml`, so use the plugin README / proto and the runnable `lynx-layout` sample instead of inventing a fake SDK-level YAML tree.
+- If you are wiring PostgreSQL, configure `lynx.pgsql`. The concrete template lives in `lynx-pgsql/conf/example_config.yml`.
+- If you are wiring MSSQL, configure `lynx.mssql`. The concrete template lives in `lynx-mssql/conf/example_config.yml`.
+- If your code imports `lynx-sql-sdk`, that is for interfaces and shared runtime semantics, not for separate config ownership.
 
 ## Related Pages
 
 - [Database Plugin](/docs/existing-plugin/db)
 - [Layout](/docs/existing-plugin/layout)
-- [Plugin Ecosystem](/docs/existing-plugin/plugin-ecosystem)
+- [Plugin Usage Guide](/docs/getting-started/plugin-usage-guide)

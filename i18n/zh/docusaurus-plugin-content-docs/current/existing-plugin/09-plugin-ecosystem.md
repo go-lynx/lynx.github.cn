@@ -6,75 +6,48 @@ sidebar_label: 插件生态
 
 # Lynx 插件生态
 
-Lynx 的仓库族并不是一堆彼此无关的 SDK。核心 `lynx` 运行时会通过统一的插件工厂加载插件、按依赖和权重排序、暴露共享资源，并让业务代码通过稳定的 runtime 名称或 Getter 来消费能力。
+这页是导航图，不是插件配置说明。它的作用是帮助你判断下一篇应该读哪个插件页，以及理解某个插件的职责边界到底止步于哪里，哪里开始属于外部系统或其他插件。
 
-## 正确阅读插件文档的方式
+## 如何读一篇插件文档
 
-对于任意 Lynx 插件，最关键的四个事实是：
+对任意 Lynx 插件来说，最关键的四个事实仍然是：
 
 1. Go module 路径
 2. 配置前缀
 3. runtime 插件名
 4. 启动后的公开 API
 
-如果文档没有把这四件事写清楚，接入和排障都会很痛苦。
+靠这四件事，你才能判断插件如何被加载、如何在 runtime 里查找，以及它是否真的适合你的接入点。插件生态页本身没有独立 YAML，因为它不是 runtime 插件。
 
-## Runtime 模型
+## 按目标导航
 
-大多数官方插件都遵循同一条路径：
-
-1. 导入模块，让它的 `init()` 把插件注册进全局工厂
-2. 在对应前缀下增加配置，例如 `lynx.http` 或 `lynx.apollo`
-3. 让统一 runtime 完成资源初始化和 startup task
-4. 通过 Getter 或 `GetPlugin("<runtime-name>")` 获取能力
-
-这也是为什么 runtime 插件名不是内部细节，而是插件管理器里的真实查找键。
-
-## 官方模板实际从什么开始
-
-`lynx-layout` 不会一上来把整个插件家族全部打开。按照当前脚手架，最容易理解的方式是把插件分成三类：
-
-| 模板状态 | 当前含义 | 当前示例 |
+| 目标 | 从这里开始 | 你真正要做的选择 |
 |------|------|------|
-| 本地 bootstrap 默认启用 | 构成最小可运行本地服务的一部分 | `lynx.http`、`lynx.grpc.service`、`lynx.mysql`、`lynx.redis` |
-| 治理 bootstrap 使用 | 走控制面配置路径时启用 | `lynx.application`、`lynx.polaris` |
-| 默认不启用 | 受支持，但只在服务真正需要时再加 | `lynx.apollo`、`lynx.nacos`、`lynx.etcd`、`lynx.kafka`、`rabbitmq`、`rocketmq`、`lynx.pulsar`、`lynx.sentinel`、`lynx.swagger`、`lynx.tls` |
+| 暴露服务入口 | [HTTP](/docs/existing-plugin/http)、[gRPC](/docs/existing-plugin/grpc)、[TLS](/docs/existing-plugin/tls)、[Swagger](/docs/existing-plugin/swagger) | 服务入口、端口、middleware / interceptor 接面 |
+| 使用存储与分布式锁 | [Database Plugin](/docs/existing-plugin/db)、[SQL SDK](/docs/existing-plugin/sql-sdk)、[MongoDB](/docs/existing-plugin/mongodb)、[Redis](/docs/existing-plugin/redis)、[Redis Lock](/docs/existing-plugin/redis-lock)、[Etcd Lock](/docs/existing-plugin/etcd-lock) | 共享客户端、锁语义、存储特定 API |
+| 接配置中心或治理控制面 | [Apollo](/docs/existing-plugin/apollo)、[Nacos](/docs/existing-plugin/nacos)、[Etcd](/docs/existing-plugin/etcd)、[Polaris](/docs/existing-plugin/polaris) | 外部控制面，而不是业务接口 |
+| 接事务或分布式标识能力 | [Seata](/docs/existing-plugin/seata)、[DTM](/docs/existing-plugin/dtm)、[Eon ID](/docs/existing-plugin/eon-id) | 外部协调器、ID 位分配，以及运行所有权边界 |
+| 接流量保护与观测钩子 | [Sentinel](/docs/existing-plugin/sentinel)、[Tracer](/docs/existing-plugin/tracer) | 资源命名、保护策略、观测面 |
+| 接异步消息系统 | [Kafka](/docs/existing-plugin/kafka)、[RabbitMQ](/docs/existing-plugin/rabbitmq)、[RocketMQ](/docs/existing-plugin/rocketmq)、[Pulsar](/docs/existing-plugin/pulsar) | Broker 客户端、投递语义、topic 所有权 |
+| 理解模板与生命周期 | [Layout](/docs/existing-plugin/layout)、[插件使用指南](/docs/getting-started/plugin-usage-guide)、[插件管理](/docs/getting-started/plugin-manager) | 脚手架默认导入了什么、runtime 管什么、插件如何排序 |
 
-这里还有一个值得单独指出的特例：`lynx-tracer` 已经被模板导入了，但它的配置没有在默认本地 bootstrap 里显式展开。所以更准确的理解是，它是一个已经预留好的可观测性接入点，而不是一个完全默认启用的功能。
+## 最重要的依赖边界
 
-## 核心示例
+| 页面 | 它依赖什么 | 它不负责什么 | 建议一起读 |
+|------|------|------|------|
+| [Seata](/docs/existing-plugin/seata) | 外部 Seata 协调器，以及被引用的 Seata client YAML | 业务代码里的事务边界定义 | [DTM](/docs/existing-plugin/dtm) |
+| [DTM](/docs/existing-plugin/dtm) | 外部 DTM 服务端，以及可选的 gRPC / TLS 资产 | 分支业务接口本身，以及编排语义设计 | [Seata](/docs/existing-plugin/seata) |
+| [Sentinel](/docs/existing-plugin/sentinel) | 来自 HTTP、gRPC 或业务 wrapper 的稳定资源名 | 动态配置中心规则装载，以及自动资源命名设计 | [HTTP](/docs/existing-plugin/http)、[gRPC](/docs/existing-plugin/grpc) |
+| [Eon ID](/docs/existing-plugin/eon-id) | 开启自动注册时所需的共享 Redis | Redis 的部署，以及关闭自动注册后的唯一性担保 | [Redis](/docs/existing-plugin/redis) |
+| [Redis Lock](/docs/existing-plugin/redis-lock) | 可用的 Redis 插件与明确的锁所有权约定 | Redis 部署、连接初始化、业务重试策略 | [Redis](/docs/existing-plugin/redis) |
+| [Apollo](/docs/existing-plugin/apollo)、[Nacos](/docs/existing-plugin/nacos)、[Etcd](/docs/existing-plugin/etcd) | 外部配置 / 服务发现控制面 | 应用侧对每个配置 key 的本地语义校验 | [引导配置](/docs/getting-started/bootstrap-config) |
 
-| 模块 | Go module | 配置前缀 | Runtime 插件名 | 启动后公开 API |
-|------|------|------|------|------|
-| [HTTP](/docs/existing-plugin/http) | `github.com/go-lynx/lynx-http` | `lynx.http` | `http.server` | `http.GetHttpServer()` |
-| [gRPC 服务端](/docs/existing-plugin/grpc) | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.service` | `grpc.service` | `grpc.GetGrpcServer(nil)` |
-| [gRPC 客户端](/docs/existing-plugin/grpc) | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.client` | `grpc.client` | `grpc.GetGrpcClientPlugin(nil)`、`grpc.GetGrpcClientConnection(...)` |
-| [Kafka](/docs/existing-plugin/kafka) | `github.com/go-lynx/lynx-kafka` | `lynx.kafka` | `kafka.client` | 插件实例方法，如 `ProduceWith`、`SubscribeWith` |
-| [MongoDB](/docs/existing-plugin/mongodb) | `github.com/go-lynx/lynx-mongodb` | `lynx.mongodb` | `mongodb.client` | `GetMongoDB()`、`GetMongoDBDatabase()`、`GetMongoDBCollection()` |
-| [Apollo](/docs/existing-plugin/apollo) | `github.com/go-lynx/lynx-apollo` | `lynx.apollo` | `apollo.config.center` | `GetConfigSources()`、`GetConfigValue()` |
-| [Etcd](/docs/existing-plugin/etcd) | `github.com/go-lynx/lynx-etcd` | `lynx.etcd` | `etcd.config.center` | `GetClient()`、`GetConfigSources()`、`GetConfigValue()` |
-| [Etcd Lock](/docs/existing-plugin/etcd-lock) | `github.com/go-lynx/lynx-etcd-lock` | `lynx.etcd-lock` | `etcd.distributed.lock` | `Lock`、`LockWithOptions`、`NewLockFromClient` |
-| [DTM](/docs/existing-plugin/dtm) | `github.com/go-lynx/lynx-dtm` | `lynx.dtm` | `dtm.server` | `NewSaga`、`NewTransactionHelper`、`GetDtmMetrics()` |
-| [Sentinel](/docs/existing-plugin/sentinel) | `github.com/go-lynx/lynx-sentinel` | `lynx.sentinel` | `sentinel.flow_control` | `GetSentinel()`、指标 API |
-| [Tracer](/docs/existing-plugin/tracer) | `github.com/go-lynx/lynx-tracer` | `lynx.tracer` | `tracer.server` | tracer runtime 入口 |
+## 一仓不一定一页
 
-## 侧边栏之外的仓库族
-
-`lynx/plugins.json` 里当前还包含不少侧边栏没有完全展开说明的模块，例如：
-
-- `lynx-mysql`
-- `lynx-pgsql`
-- `lynx-mssql`
-- `lynx-eon-id`
-- `lynx-layout`
-- `lynx-sql-sdk`
-- `lynx-redis-lock`
-- `lynx-polaris`
-- `lynx-pulsar`
-- `lynx-rabbitmq`
-- `lynx-rocketmq`
-
-这些模块里有些是面向应用直接接入的插件，有些是共享能力层或模板工程。文档需要把角色区分开，而不是把它们都写成同一种东西。
+- `lynx-mysql`、`lynx-pgsql`、`lynx-mssql` 这些具体 SQL 插件，更适合先通过 [Database Plugin](/docs/existing-plugin/db) 和 [SQL SDK](/docs/existing-plugin/sql-sdk) 一起理解。
+- `lynx-layout` 是服务模板，不是 runtime 插件，所以应当归到 [Layout](/docs/existing-plugin/layout)。
+- `lynx-redis-lock` 是构建在 Redis 之上的能力层，最好和 [Redis Lock](/docs/existing-plugin/redis-lock) 以及 [Redis](/docs/existing-plugin/redis) 一起读。
+- `lynx-eon-id` 以前更像是生态页里的顺带说明，但现在它的 Redis 依赖、fail-closed 行为、位分配约束都足够具体，已经值得单列独立页面。
 
 ## 常见消费模式
 
@@ -82,10 +55,11 @@ Lynx 的仓库族并不是一堆彼此无关的 SDK。核心 `lynx` 运行时会
 
 - runtime 持有的服务端 Getter：`http.GetHttpServer()`、`grpc.GetGrpcServer(nil)`
 - 客户端 Getter：`mongodb.GetMongoDB()`、`elasticsearch.GetElasticsearch()`
+- 包级运行时 helper：`eonid.GenerateID()`、`eonid.ParseID(id)`
 - plugin-manager lookup：`lynx.Lynx().GetPluginManager().GetPlugin("dtm.server")`
 - 插件对象 API：`apolloPlugin.GetConfigValue(...)`、`etcdPlugin.GetClient()`
 
-看文档时，应该优先相信和这些真实模式一致的示例。
+看文档时，应该优先相信与这些真实查找模式一致的示例。它们往往也是区分“runtime 持有的服务端插件”和“客户端 wrapper / 能力层插件”的最快办法。
 
 ## 推荐阅读顺序
 

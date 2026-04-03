@@ -40,6 +40,7 @@ go get github.com/go-lynx/lynx-elasticsearch
 go get github.com/go-lynx/lynx-mysql
 go get github.com/go-lynx/lynx-pgsql
 go get github.com/go-lynx/lynx-mssql
+go get github.com/go-lynx/lynx-eon-id
 
 # messaging
 go get github.com/go-lynx/lynx-kafka
@@ -82,6 +83,7 @@ Examples from the current codebase:
 | Redis | `github.com/go-lynx/lynx-redis` | `lynx.redis` |
 | Elasticsearch | `github.com/go-lynx/lynx-elasticsearch` | `lynx.elasticsearch` |
 | MongoDB | `github.com/go-lynx/lynx-mongodb` | `lynx.mongodb` |
+| Eon ID | `github.com/go-lynx/lynx-eon-id` | `lynx.eon-id` |
 | Polaris | `github.com/go-lynx/lynx-polaris` | `lynx.polaris` |
 | Apollo | `github.com/go-lynx/lynx-apollo` | `lynx.apollo` |
 | Etcd | `github.com/go-lynx/lynx-etcd` | `lynx.etcd` |
@@ -192,7 +194,7 @@ That is why plugin documentation should be read in runtime terms, not only in SD
 
 ## 5. Obtain the capability after startup
 
-There are three common patterns in the current codebase.
+There are four common patterns in the current codebase.
 
 ### Pattern A: direct Getter returning the runtime-owned object
 
@@ -229,6 +231,19 @@ mqPlugin := app.Lynx().GetPluginManager().GetPlugin("rabbitmq")
 client := mqPlugin.(rabbitmq.ClientInterface)
 ```
 
+### Pattern D: package-level helper wrapping the runtime plugin
+
+This is the cleanest path for `lynx-eon-id`:
+
+```go
+id, err := eonid.GenerateID()
+id, metadata, err := eonid.GenerateIDWithMetadata()
+parsed, err := eonid.ParseID(id)
+plugin, err := eonid.GetEonIdPlugin()
+```
+
+The package-level functions still depend on the Lynx runtime being initialized first, but they keep ordinary callers out of the plugin-manager path.
+
 ## Public entry points you will actually use
 
 The following APIs are already present in code and are worth knowing because they are better than guessing.
@@ -239,6 +254,7 @@ The following APIs are already present in code and are worth knowing because the
 | gRPC service | `grpc.GetGrpcServer(nil)` |
 | Redis | `redis.GetRedis()`, `redis.GetUniversalRedis()` |
 | MongoDB | `mongodb.GetMongoDB()`, `mongodb.GetMongoDBDatabase()`, `mongodb.GetMongoDBCollection()` |
+| Eon ID | `eonid.GenerateID()`, `eonid.GenerateIDWithMetadata()`, `eonid.ParseID()`, `eonid.GetEonIdPlugin()` |
 | Elasticsearch | `elasticsearch.GetElasticsearch()`, `elasticsearch.GetElasticsearchPlugin()`, `elasticsearch.GetIndexName()` |
 | Pulsar | `pulsar.GetPulsarClient()` |
 | Polaris | `polaris.GetPolarisPlugin()`, `polaris.GetServiceInstances()`, `polaris.GetConfig()`, `polaris.GetMetrics()` |
@@ -259,6 +275,7 @@ If you inspect the plugin manager directly, the current codebase uses names such
 | Redis | `redis.client` |
 | Elasticsearch | `elasticsearch.client` |
 | MongoDB | `mongodb.client` |
+| Eon ID | `eon-id` |
 | Polaris | `polaris.control.plane` |
 | Apollo | `apollo.config.center` |
 | Etcd | `etcd.config.center` |
@@ -281,6 +298,7 @@ This matters when you use `GetPlugin(...)` manually.
 | Search | `lynx-elasticsearch` | `GetElasticsearch()` |
 | Document database | `lynx-mongodb` | `GetMongoDBDatabase()` |
 | SQL database | `lynx-mysql` / `lynx-pgsql` / `lynx-mssql` | SQL plugin Getter / provider |
+| Distributed ID generation | `lynx-eon-id` | package-level helpers such as `GenerateID()` or `GetEonIdPlugin()` |
 | Config center / discovery | `lynx-polaris`, `lynx-nacos`, `lynx-apollo`, `lynx-etcd` | plugin API + runtime wiring |
 | Messaging | `lynx-kafka`, `lynx-rabbitmq`, `lynx-rocketmq`, `lynx-pulsar` | plugin manager or exported Getter |
 | Distributed transaction | `lynx-seata`, `lynx-dtm` | plugin object / helper APIs |
@@ -292,6 +310,7 @@ This matters when you use `GetPlugin(...)` manually.
 - use the real module path from the plugin repository, not guessed import paths
 - use the real config prefix from plugin code, not a hand-waved alias
 - remember that some plugins do not use a `lynx.<name>` prefix even though they are Lynx plugins, such as `rabbitmq` and `rocketmq`
+- if `lynx-eon-id` uses auto worker-ID registration, make sure the Redis plugin is started and exposes the shared resource name you configured
 - prefer the exported Getter when it already exists; it is usually the intended public entry
 - drop down to `GetPlugin(...)` only when you need plugin-specific rich methods or dynamic integration
 - read plugin pages together with bootstrap configuration and runtime ordering, because many capabilities depend on startup sequence, not only config shape

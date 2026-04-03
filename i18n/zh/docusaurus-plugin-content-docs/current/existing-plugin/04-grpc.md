@@ -5,227 +5,131 @@ title: gRPC 服务
 
 # gRPC 服务
 
-`lynx-grpc` 仓库里同时包含 gRPC 服务端插件和 gRPC 客户端插件。过去不少文档只写了服务端，这其实是不完整的。
+本页覆盖以下模板，并逐项对照当前运行时代码：
+
+- `lynx-grpc/conf/example_config.yml`
+- `lynx-grpc/conf/example_client_config.yml`
+- `lynx-grpc/conf/example_complete_config.yml`
+- `lynx-grpc/conf/example_polaris_config.yml`
 
 ## Runtime 事实
 
-| 能力 | Go module | 配置前缀 | Runtime 插件名 | 公开 API |
-|------|------|------|------|------|
-| gRPC 服务端 | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.service` | `grpc.service` | `grpc.GetGrpcServer(nil)` |
-| gRPC 客户端 | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.client` | `grpc.client` | `grpc.GetGrpcClientPlugin(nil)`、`grpc.GetGrpcClientConnection(...)` |
+| 能力 | Go module | 配置前缀 | Runtime 插件名 |
+| --- | --- | --- | --- |
+| gRPC 服务端 | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.service` | `grpc.service` |
+| gRPC 客户端 | `github.com/go-lynx/lynx-grpc` | `lynx.grpc.client` | `grpc.client` |
 
-## 服务端行为
+## 配置前先知道
 
-服务端插件会构建并持有 Kratos gRPC Server。从实现看，服务端路径包括：
+- `lynx.grpc.service` 和 `lynx.grpc.client` 是两套独立能力，可以只开服务端、只开客户端，或同时启用。
+- 服务端如果省略 stream / message size，不会回到 protobuf 注释里的“零值语义”，而是启动时补上更安全的运行时默认值：`1000` 个并发 stream、`10 MiB` 的收发消息上限。
+- `lynx.grpc.service` 还会从同一前缀读取一些仅 YAML 暴露的扩展键，例如 `graceful_shutdown_timeout`、`rate_limit`、`max_inflight_unary`、`circuit_breaker`。
+- 客户端优先使用 `subscribe_services`；`services` 只是兼容历史配置。
+- 当前客户端代码真正生效的开关里，`tracing_enabled` 是 live 的，但 `metrics_enabled`、`logging_enabled`、`health_check_enabled`、`health_check_interval`、`max_message_size`、`compression_enabled`、`compression_type` 目前还只有模板 / proto 面定义，没有对应运行时效果。
+- `subscribe_services[*]` 里的 `tls_enable` 和 `tls_auth_type` 现在不会可靠继承客户端全局 TLS 默认值；你不写，就会落成 `false` / `0`。
 
-- 配置校验和默认值补齐
-- 可选 TLS 与证书提供者集成
-- health service 注册与 readiness 轮询
-- recovery、tracing、validate 中间件
-- 可选限流
-- 可选 unary 并发上限
-- 可选服务端熔断
+## `lynx.grpc.service`
 
-业务代码应该把 protobuf service 注册到这个受管 server 上，而不是重新创建一套 gRPC server。
+| 字段 | 作用 | 何时生效 | 默认值 / 交互关系 | 常见误配 |
+| --- | --- | --- | --- | --- |
+| `network` | 选择监听传输类型。 | 一直生效。 | 默认 `tcp`。 | 选了 `unix` 却仍填写 TCP 地址。 |
+| `addr` | 设置监听地址。 | 一直生效。 | 默认 `:9090`。 | 只绑回环地址却期待跨主机访问。 |
+| `tls_enable` | 打开 gRPC 服务端 TLS。 | 只有证书来源已就绪时。 | 默认 `false`；通常要配合可工作的 [TLS Manager](/docs/existing-plugin/tls-manager)。 | 证书还没准备好就先开 TLS。 |
+| `tls_auth_type` | 选择客户端证书校验策略。 | 仅 `tls_enable: true`。 | 默认 `0`；合法值 `0..4`。 | TLS 没开，却配置了 mTLS 策略。 |
+| `timeout` | 设置 Kratos gRPC 请求超时。 | 一直生效。 | 默认 `10s`。 | 有长耗时 RPC 却没同步调大。 |
+| `max_concurrent_streams` | 限制每个连接的 HTTP/2 并发 stream 数。 | 服务端启动时。 | 省略或写 `0` 时，运行时仍会补成安全默认值 `1000`。 | 只看 proto 注释，以为 `0` 在实际运行里等于不限流。 |
+| `max_recv_msg_size` | 限制入站消息大小，单位字节。 | 服务端启动时。 | 省略或写 `0` 时，运行时补成 `10 MiB`。 | 仍按上游 gRPC 默认约 `4 MiB` 去理解。 |
+| `max_send_msg_size` | 限制出站消息大小，单位字节。 | 服务端启动时。 | 省略或写 `0` 时，运行时补成 `10 MiB`。 | 大响应 / 流式场景没同步调大。 |
 
-## 服务端配置
+## 额外的 `lynx.grpc.service` YAML 键
 
-```yaml
-lynx:
-  grpc:
-    service:
-      network: tcp
-      addr: ":9090"
-      timeout: 10s
-      tls_enable: false
-```
+`example_config.yml` 里还有一些不在 `service.proto` 内，但运行时仍通过 `ServerOptions` 从 `lynx.grpc.service` 前缀读取的键。
 
-## 代码里的真实服务端配置骨架
+| 字段 | 作用 | 何时生效 | 默认值 / 交互关系 | 常见误配 |
+| --- | --- | --- | --- | --- |
+| `graceful_shutdown_timeout` | 设置服务端停机等待时间。 | 停机阶段。 | 默认 `30s`。 | 把它和请求超时混为一谈。 |
+| `enable_tracing` | 打开 gRPC tracing 拦截器。 | 启动时。 | 默认 `true`。 | 关掉它后还期待服务端继续产出 gRPC span。 |
+| `enable_request_logging` | 打开 unary / stream 请求日志。 | 启动时。 | 默认 `true`。 | 关掉它后还在找带 trace-id 的请求日志。 |
+| `enable_metrics` | 打开 unary / stream 指标拦截器。 | 启动时。 | 默认 `true`。 | 关掉后还期待服务端 gRPC 指标继续出现。 |
+| `rate_limit.enabled` | 打开进程内服务端限流器。 | 启动时。 | 默认 `false`；不显式开启就不会生效。 | 误以为示例里有这个块就已经启用。 |
+| `rate_limit.rate_per_second` | 设置稳态 unary RPC 吞吐。 | 仅 `rate_limit.enabled: true`。 | 除零值保护外没有额外默认值。 | 只填了速率，却没把 `enabled` 打开。 |
+| `rate_limit.burst` | 设置限流突发容量。 | 仅 `rate_limit.enabled: true`。 | `<= 0` 时回退到 `rate_per_second + 1`。 | 留 `0` 却误判实际 burst。 |
+| `max_inflight_unary` | 限制并发执行中的 unary RPC 数。 | 仅值 `> 0`。 | 默认 `0` 表示不限制。 | 以为它也能限制 streaming RPC。 |
+| `circuit_breaker.enabled` | 打开服务端熔断器。 | 启动时。 | 默认 `false`。 | 误以为和 HTTP 插件一样默认就开。 |
+| `circuit_breaker.failure_threshold` | 熔断打开前的失败次数门槛。 | 仅熔断启用时。 | 省略或非法时默认 `5`。 | 把它当成失败率而不是失败次数。 |
+| `circuit_breaker.recovery_timeout` | 熔断从 open 进入 half-open 前的等待时长。 | 仅熔断启用时。 | 默认 `30s`。 | 把它当成单次请求超时。 |
+| `circuit_breaker.success_threshold` | 熔断恢复关闭前需要的成功探测次数。 | 仅熔断启用时。 | 默认 `3`。 | 设太高导致 half-open 持续过久。 |
+| `circuit_breaker.timeout` | 熔断保护请求时使用的超时。 | 仅熔断启用时。 | 默认 `10s`。 | 误以为它会替代 `lynx.grpc.service.timeout`。 |
+| `circuit_breaker.max_concurrent_requests` | 熔断参与时允许的并发请求数。 | 仅熔断启用时。 | 默认 `10`。 | 配得低于常规流量，制造出额外节流。 |
 
-`lynx.grpc.service` 的 protobuf 配置虽然没有 HTTP 那么多层，但也比旧文档写得更完整。除了基础传输字段，它还支持：
+## `lynx.grpc.client`
 
-- `max_concurrent_streams`
-- `max_recv_msg_size`
-- `max_send_msg_size`
+| 字段 | 作用 | 何时生效 | 默认值 / 交互关系 | 常见误配 |
+| --- | --- | --- | --- | --- |
+| `default_timeout` | 出站 RPC 的默认超时。 | 服务项没覆写 `timeout` 时。 | 默认 `10s`。 | 忘了它也影响 `required: true` 服务的启动探活等待。 |
+| `default_keep_alive` | 客户端连接 keepalive 周期。 | 建连时。 | 默认 `30s`。 | 设太小导致重连抖动频繁。 |
+| `max_retries` | 可重试 unary RPC 的默认重试次数。 | 重试拦截器中。 | 默认 `3`；服务项里 `0` 或更小会回退到这个全局值。 | 配得很高，却忘了重试会放大时延。 |
+| `retry_backoff` | 重试退避基础间隔。 | 重试拦截器中。 | 默认 `1s`。 | 配得太大，让短暂故障看起来像卡死。 |
+| `max_connections` | 每个服务在连接池里的最大连接数。 | 开启连接池或创建池化连接时。 | 默认 `10`。 | 把它理解成“最多跟踪多少个服务”。 |
+| `tls_enable` | 全局兜底客户端连接是否启用 TLS。 | `createConnection()` 和历史路径里。 | 默认 `false`。 | 全局打开后，以为 `subscribe_services[*]` 会自动继承。 |
+| `tls_auth_type` | 全局兜底客户端 TLS 认证模式。 | 全局 TLS 路径中。 | 默认 `0`。 | TLS 没开还期待它起作用。 |
+| `connection_pooling` | 是否启用多连接池。 | 客户端初始化时。 | 默认 `false`。 | 打开后却把 `pool_size` 和 `max_connections` 按错误维度去调。 |
+| `pool_size` | 连接池最多跟踪多少个服务项。 | 仅 `connection_pooling: true`。 | `<= 0` 时回退到 `10`。 | 把它当成“每个服务保留多少连接”。 |
+| `idle_timeout` | 池化连接空闲淘汰时间。 | 仅 `connection_pooling: true`。 | 缺失或 `<= 0` 时回退到 `5m`。 | 配到一分钟以下导致频繁重连。 |
+| `health_check_enabled` | 预期中的客户端健康检查开关。 | 启动时会解析。 | 目前模板 / proto 有，代码未使用。 | 以为打开后就会自动做 gRPC health probe。 |
+| `health_check_interval` | 预期中的客户端健康检查频率。 | 启动时会解析。 | 当前未使用。 | 调了它却看不到任何运行时变化。 |
+| `metrics_enabled` | 预期中的客户端指标开关。 | 启动时会解析。 | 当前客户端无论此值如何都会挂指标拦截器。 | 设成 `false` 后还惊讶指标没停。 |
+| `tracing_enabled` | 是否向出站 metadata 注入 trace 上下文。 | 构建客户端拦截器时。 | 默认 `false`。 | 启用了 `lynx-tracer` 却忘了这里，结果链路不串。 |
+| `logging_enabled` | 预期中的客户端日志开关。 | 启动时会解析。 | 当前客户端无论此值如何都会挂日志拦截器。 | 设成 `false` 后还期待客户端静默。 |
+| `max_message_size` | 预期中的客户端消息大小覆盖。 | 启动时会解析。 | 当前 dial 选项未使用。 | 把它当成真实生效的保护上限。 |
+| `compression_enabled` | 预期中的压缩开关。 | 启动时会解析。 | 当前未接线。 | 以为打开后链路会自动启用 gzip。 |
+| `compression_type` | 预期中的压缩算法。 | 启动时会解析。 | 当前未接线。 | 配成 `gzip` 后发现线上仍是明文未压缩流量。 |
+| `subscribe_services` | 推荐使用的按服务配置 / 发现配置列表。 | `GetConnection(serviceName)` 优先走这里。 | 默认空。 | 新服务仍只写进已废弃的 `services`。 |
+| `services` | 已废弃的旧静态服务列表。 | 只有 `subscribe_services` 没命中时才兜底。 | 仍兼容，但启动会告警。 | 把 discovery-first 的新服务继续写在这里。 |
 
-更接近实现的配置骨架大致是：
+## `lynx.grpc.client.subscribe_services[*]`
 
-```yaml
-lynx:
-  grpc:
-    service:
-      network: tcp
-      addr: ":9090"
-      tls_enable: false
-      tls_auth_type: 0
-      timeout: 10s
-      max_concurrent_streams: 1024
-      max_recv_msg_size: 4194304
-      max_send_msg_size: 4194304
-```
+| 字段 | 作用 | 何时生效 | 默认值 / 交互关系 | 常见误配 |
+| --- | --- | --- | --- | --- |
+| `name` | 作为 discovery 服务名和 `GetConnection(name)` 的查找键。 | 一直生效。 | 必填。 | 同一个服务名写了两次，校验会直接拒绝。 |
+| `endpoint` | 静态地址覆盖。 | 仅没有 discovery 实例时。 | 一旦 discovery 存在，当前代码会忽略它，不会做“在线 fallback”。 | 以为 Polaris 在场时它还能兜底。 |
+| `timeout` | 单服务超时覆盖。 | 该服务被选中时。 | 回退到 `default_timeout`。 | 慢上游没调大，且 `required: true` 导致启动失败。 |
+| `tls_enable` | 单服务 TLS 开关。 | 该订阅项被选中时。 | 当前不会继承全局值；不写就等于 `false`。 | 全局开了 TLS，却忘了在每个服务项上重复声明。 |
+| `tls_auth_type` | 单服务 TLS 认证模式。 | 仅该服务项 `tls_enable: true`。 | 当前不会可靠继承全局值；不写就等于 `0`。 | 误以为全局 mTLS 策略会自动下沉。 |
+| `max_retries` | 单服务重试次数覆盖。 | 重试拦截器中。 | `0` 会回退到全局重试次数。 | 把 `0` 误解成“完全不重试”。 |
+| `required` | 启动时上游不可达就直接失败。 | 仅启动探活阶段。 | 默认 `false`。 | 把可选依赖标成必需，拖死整个服务启动。 |
+| `metadata` | 负载均衡筛选和路由提示的附加元数据。 | 仅所选负载均衡器会用到时。 | 可选 map。 | 把它当成每次 RPC 自动发送的请求 metadata。 |
+| `load_balancer` | 选择服务选址策略。 | 仅 discovery 可用时。 | 当前校验器接受 `round_robin`、`random`、`weighted_round_robin`。 | 静态 endpoint 场景下配置它，却期待真的生效。 |
+| `circuit_breaker_enabled` | 是否打开该上游的客户端熔断。 | 仅此服务。 | 默认 `false`。 | 以为客户端有一个全局共享熔断器。 |
+| `circuit_breaker_threshold` | 单服务熔断失败次数门槛。 | 仅 `circuit_breaker_enabled: true`。 | 过高会触发校验告警。 | 配得过高，导致熔断几乎永远不触发。 |
 
-所以当前服务端插件配置并不只是“地址 + 超时”。
+## 已废弃的 `lynx.grpc.client.services[*]`
 
-## 官方模板实际怎么配
+| 字段 | 作用 | 何时生效 | 默认值 / 交互关系 | 常见误配 |
+| --- | --- | --- | --- | --- |
+| `name` | 历史服务键。 | 一直生效。 | 必填。 | 继续复用现代 discovery 服务名，却没迁移到 `subscribe_services`。 |
+| `endpoint` | 静态上游地址。 | 一直生效。 | 历史列表里必填。 | 留空后还期待 discovery 自动补齐。 |
+| `timeout` | 历史单服务超时。 | 历史项被选中时。 | 省略时回退到全局客户端超时。 | 以为它能影响 `subscribe_services`。 |
+| `tls_enable` | 历史单服务 TLS 开关。 | 历史项被选中时。 | 默认 `false`。 | 应用里没有证书提供者却打开了 TLS。 |
+| `tls_auth_type` | 历史单服务 TLS 模式。 | 仅历史 TLS 打开时。 | 默认 `0`。 | TLS 关闭状态下还期待它改变行为。 |
+| `max_retries` | 历史单服务重试次数。 | 历史项被选中时。 | `0` 时回退到全局配置。 | 把它当成现代 discovery 服务的覆盖项。 |
 
-`lynx-layout/configs/bootstrap.local.yaml` 当前对服务端的配置是：
+## `example_polaris_config.yml`：服务发现前提
 
-```yaml
-lynx:
-  grpc:
-    service:
-      network: tcp
-      addr: 127.0.0.1:9000
-      timeout: 5s
-```
+`example_polaris_config.yml` 里的 `lynx.polaris` 配置不属于 `lynx-grpc` 本身，而是 Polaris 控制面插件的配置。但它依然会改变 gRPC 客户端行为，因为 discovery 一旦可用，`grpc.client` 的选址逻辑就会切换。
 
-这是这页最重要的模板对齐点：官方项目模板并没有用扁平的 `lynx.grpc`，而是使用 `lynx.grpc.service`，这与真实服务端插件实现一致。
+| 字段 | 对 gRPC 使用者的作用 | 默认值 / 交互关系 | 常见误配 |
+| --- | --- | --- | --- |
+| `lynx.polaris.namespace` | 选择客户端实际去解析的服务发现命名空间。 | 省略时 Polaris 默认 `default`。 | 命名空间写错，最后误判成 gRPC discovery 失效。 |
+| `lynx.polaris.server_addresses` | 指向一个或多个 Polaris 服务发现端点。 | 远程发现实践里基本必填。 | 服务网络里根本连不到 Polaris。 |
+| `lynx.polaris.enable_retry` | 打开 Polaris 侧重试。 | 有助于发现端短暂故障恢复。 | 关掉 gRPC 重试后，忘了 Polaris 还有自己的重试语义。 |
+| `lynx.polaris.max_retry_times` | 限制 Polaris 重试次数。 | Polaris 自身会校验范围。 | 设太大，让发现失败耗时过长。 |
+| `lynx.polaris.retry_interval` | Polaris 重试间隔。 | 和 `max_retry_times` 配合使用。 | 间隔配太大，让服务发现看上去像“卡住”。 |
+| `lynx.polaris.health_check_interval` | 控制 Polaris 侧健康检查 / 刷新频率。 | 会影响发现状态变化被感知的速度。 | 误以为它能替代客户端自己的每次 RPC 健康检查。 |
 
-## 模板与插件实现如何对应
+## 实用规则
 
-很多人对照 `lynx-layout` 看这页时，其实是在对两个不同层次的东西：
-
-- 模板默认只启动服务端这一半：`lynx.grpc.service`
-- 模块真实实现其实同时暴露了两个 runtime 插件：`grpc.service` 和 `grpc.client`
-
-可以先按这张表理解：
-
-| 配置域 | 模板默认情况 | 插件实现情况 |
-| --- | --- | --- |
-| 服务端监听 | `lynx.grpc.service.network`、`addr` | 同名字段 |
-| 服务端超时 | `lynx.grpc.service.timeout` | 同名字段 |
-| 服务端 TLS | 本地模板未展开 | `tls_enable`、`tls_auth_type` |
-| 服务端流量/消息限制 | 本地模板未展开 | `max_concurrent_streams`、`max_recv_msg_size`、`max_send_msg_size` |
-| 客户端插件 | 默认未启用 | `lynx.grpc.client` 已完整支持 |
-| 客户端传输控制 | 默认未启用 | 超时、重试、连接池、健康检查、metrics、tracing、logging |
-| 客户端服务订阅 | 默认未启用 | `subscribe_services[*]` 与旧 `services` |
-
-所以之前真正的问题不是“模板配置写错了”，而是旧文档没有把“模板默认只用服务端”与“模块完整支持服务端 + 客户端”这两层拆清楚。
-
-## 服务注册
-
-```go
-import (
-    lynxgrpc "github.com/go-lynx/lynx-grpc"
-    grpcgo "github.com/go-kratos/kratos/v2/transport/grpc"
-)
-
-func NewGRPCServer(login *service.LoginService) (*grpcgo.Server, error) {
-    srv, err := lynxgrpc.GetGrpcServer(nil)
-    if err != nil {
-        return nil, err
-    }
-    v1.RegisterLoginServer(srv, login)
-    return srv, nil
-}
-```
-
-`lynx-layout/internal/server/grpc.go` 里也正是这样使用的。
-
-## 客户端行为
-
-同一个模块还会注册 `grpc.client`。这个插件负责管理出站连接，并支持：
-
-- 静态服务端点和订阅式服务
-- 重试与超时
-- 可选 TLS
-- 连接池
-- 健康检查
-- metrics 与 tracing 开关
-- 按服务配置负载均衡策略
-
-如果你把本页只理解成“怎么暴露 gRPC 服务”，其实漏掉了这个模块的一半能力。
-
-## 客户端配置
-
-```yaml
-lynx:
-  grpc:
-    client:
-      default_timeout: 10s
-      connection_pooling: true
-      pool_size: 8
-      subscribe_services:
-        - name: user-service
-          required: true
-```
-
-## 代码里的真实客户端配置骨架
-
-客户端侧的 protobuf 配置面要比上面的短示例宽得多。插件会同时读取顶层 client 配置和每个订阅服务项的细节配置。
-
-顶层字段包括：
-
-- `default_timeout`
-- `default_keep_alive`
-- `max_retries`
-- `retry_backoff`
-- `max_connections`
-- `tls_enable`
-- `tls_auth_type`
-- `connection_pooling`
-- `pool_size`
-- `idle_timeout`
-- `health_check_enabled`
-- `health_check_interval`
-- `metrics_enabled`
-- `tracing_enabled`
-- `logging_enabled`
-- `max_message_size`
-- `compression_enabled`
-- `compression_type`
-- `subscribe_services`
-- 已废弃的旧 `services`
-
-每个 `subscribe_services` 子项还支持：
-
-- `name`
-- `endpoint`
-- `timeout`
-- `tls_enable`
-- `tls_auth_type`
-- `max_retries`
-- `required`
-- `metadata`
-- `load_balancer`
-- `circuit_breaker_enabled`
-- `circuit_breaker_threshold`
-
-更接近实现的配置骨架大致是：
-
-```yaml
-lynx:
-  grpc:
-    client:
-      default_timeout: 10s
-      default_keep_alive: 30s
-      max_retries: 3
-      retry_backoff: 1s
-      max_connections: 100
-      tls_enable: false
-      connection_pooling: true
-      pool_size: 8
-      idle_timeout: 60s
-      health_check_enabled: true
-      health_check_interval: 30s
-      metrics_enabled: true
-      tracing_enabled: true
-      logging_enabled: true
-      max_message_size: 4194304
-      compression_enabled: false
-      subscribe_services:
-        - name: user-service
-          required: true
-          load_balancer: round_robin
-          circuit_breaker_enabled: true
-```
-
-所以如果旧文档让你感觉客户端插件只是“订阅几个服务”，那和真实配置面差距确实很大。
-
-模板默认并不会启用 client 插件。它先只走 gRPC 服务端路径，等服务真的需要对外建立 gRPC client 连接或订阅时，再补 `lynx.grpc.client`。
-
-## 相关页面
-
-- [HTTP](/docs/existing-plugin/http)
-- [TLS Manager](/docs/existing-plugin/tls-manager)
-- [插件生态](/docs/existing-plugin/plugin-ecosystem)
+- 服务端 TLS 和客户端 TLS 要分开配，它们不会自动联动。
+- 现在如果某个上游需要 TLS，请在 `subscribe_services[*]` 里把相关 TLS 字段重复写清楚。
+- `required: true` 只留给那些“启动没它就没法继续”的硬依赖。
+- `metrics_enabled`、`logging_enabled`、`health_check_*`、`max_message_size`、`compression_*` 目前更应该视为前瞻模板字段，而不是已经生效的客户端开关。

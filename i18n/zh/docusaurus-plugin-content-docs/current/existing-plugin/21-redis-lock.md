@@ -5,88 +5,35 @@ title: Redis Lock 插件
 
 # Redis Lock 插件
 
-`lynx-redis-lock` 为 Lynx 应用提供基于 Redis 的分布式锁能力，但它并不是像 HTTP、Redis 那样注册到 runtime 里的独立插件。它本质上是构建在 `lynx-redis` 之上的库层能力，内部直接复用 `lynx-redis` 暴露的 `GetUniversalRedis()` client。
+`lynx-redis-lock` 是构建在 `lynx-redis` runtime client 之上的 Redis 分布式锁库。它不是一个独立可配置的 runtime 插件，而且本仓库也没有给它提供单独的 `conf/example_config.yml`。
 
-## 运行时事实
+## Boundary And Ownership（边界与归属）
 
-| 项目 | 值 |
+| 关注点 | 归属方 |
 | --- | --- |
-| Go 模块 | `github.com/go-lynx/lynx-redis-lock` |
-| 自有配置前缀 | 无 |
-| runtime 插件名 | 无 |
-| 依赖 | `github.com/go-lynx/lynx-redis` 以及它的 `lynx.redis` 配置 |
+| Redis 地址、认证、库号、TLS、Sentinel / Cluster 拓扑 | 上游 Redis 插件的 `lynx.redis` 配置 |
+| Redis client 生命周期与 shared-resource 注册 | `lynx-redis` runtime 插件 |
+| 锁 TTL、重试策略、续租、fencing token 行为 | 业务代码里的 `LockOptions` / 重试结构体 |
+| Redis Lock 自己的 runtime 插件名 / 配置前缀 | 不存在 |
 
-## 实现里实际提供了什么
+## What This Means In Practice（这在实践里意味着什么）
 
-- 基于 Redis Lua script 的分布式加锁和解锁
-- 通过 `NewLock()` 创建可复用的锁实例
-- 提供 `Lock`、`LockWithOptions`、`LockWithRetry`、`LockWithToken` 这类 callback 风格辅助方法
-- 支持自动续租、重试策略、基于 worker pool 的续租管理、script 调用超时
-- 提供 fencing token 能力，以及通过 `GetStats()` 暴露管理器统计信息
+- 不要新增 `lynx.redis-lock` 或 `lynx.redis.lock` 这样的 YAML 块。当前仓库不会读取它们。
+- Redis Lock 会复用 `lynx-redis` 暴露出来的上游 client，不应该在 runtime 持有的连接池之外再创建第二套 Redis pool。
+- 任何和锁相关服务的 YAML 仍然写在 [Redis](/docs/existing-plugin/redis) 页面所归属的上游 Redis 配置里，地址、密码、拓扑模式、传输参数都在那里。
+- 锁获取行为是代码配置，不是 `example_config.yml` 配置，包括 lease 时长、重试 / backoff、自动续租和 callback 风格执行业务。
 
-需要明确的一点是：可重入是“按锁实例”生效，不是“按 key”生效。复用同一个 `*RedisLock` 实例可以重入；同 key 新建实例不算重入。
+## Dependency Notes（依赖说明）
 
-## 配置依赖
+- 这个锁库依赖 `github.com/go-lynx/lynx-redis`。
+- 单机 Redis、Redis Cluster、Redis Sentinel 的支持，全部建立在 `lynx.redis` 已经正确配置的前提上。
+- 如果旧文档或旧片段里出现了锁专属 YAML 子树，应当把它们视为历史示例，而不是当前仓库的事实来源。
 
-`lynx-redis-lock` 自己不会读取单独的 `lynx.redis-lock` 配置树，它依赖 Redis 插件本身：
+## Public Surface（公开接口）
 
-```yaml
-lynx:
-  redis:
-    addrs:
-      - "localhost:6379"
-    password: ""
-    db: 0
-```
+常用 API 包括 `Lock`、`LockWithToken`、`LockWithRetry`、`LockWithOptions`、`NewLock`、`UnlockByValue`、`GetStats()`、`Shutdown()`。
 
-## 使用方式
+## Related Pages（相关页面）
 
-```go
-import (
-    "context"
-    "time"
-
-    redislock "github.com/go-lynx/lynx-redis-lock"
-)
-
-func run(ctx context.Context) error {
-    return redislock.LockWithRetry(
-        ctx,
-        "order:close:123",
-        30*time.Second,
-        func() error {
-            return doBusiness()
-        },
-        redislock.RetryStrategy{
-            MaxRetries: 3,
-            RetryDelay: 100 * time.Millisecond,
-        },
-    )
-}
-```
-
-复用锁实例的写法：
-
-```go
-options := redislock.LockOptions{Expiration: 30 * time.Second}
-lock, err := redislock.NewLock(ctx, "inventory:deduct:sku-1", options)
-if err != nil {
-    return err
-}
-if err := lock.Acquire(ctx); err != nil {
-    return err
-}
-defer lock.Release(ctx)
-```
-
-## 实践建议
-
-- 如果你的基础设施已经稳定使用 Redis，且协调需求偏轻量，Redis lock 是合适的
-- 过期时间、重试策略和业务幂等补偿必须一起设计，否则锁只是把问题往后推
-- 如果场景需要更强的一致性语义，优先和 [Etcd Lock](/docs/existing-plugin/etcd-lock) 做对比再决定
-
-## 相关页面
-
-- 仓库: [go-lynx/lynx-redis-lock](https://github.com/go-lynx/lynx-redis-lock)
 - [Redis](/docs/existing-plugin/redis)
-- [Etcd Lock](/docs/existing-plugin/etcd-lock)
+- [插件使用指南](/docs/getting-started/plugin-usage-guide)
