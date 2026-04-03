@@ -20,7 +20,7 @@ title: Swagger 插件
 | Go 模块 | `github.com/go-lynx/lynx-swagger` |
 | 配置前缀 | `lynx.swagger` |
 | Runtime 插件名 | `swagger` |
-| 主要 Getter | `GetSwagger()` |
+| Getter 边界 | 只有实例方法 `(*PlugSwagger).GetSwagger()`；不存在 package-level `swagger.GetSwagger()` |
 
 ## 配置前先知道
 
