@@ -49,39 +49,57 @@ title: Etcd Lock 插件
 | `service_config.prefix` / `additional_prefixes` | 只影响上游配置源加载。 | 回退到上游 namespace，并按声明顺序加载。 | 误以为它们会影响分布式锁存储路径。 |
 | `enable_graceful_shutdown` / `enable_logging` / `log_level` / `service_config.priority` / `service_config.merge_strategy` | 上游 schema 兼容字段。 | 上游 schema 接受，但不是活跃锁配置开关。 | 误以为这些是锁专用控制项。 |
 
-## 没有独立 YAML schema
+## 完整 YAML 示例
 
-仓库里真正有效的形态是：
+这里依然没有独立的 `lynx.etcd-lock` schema。下面这份完整示例实际就是锁插件真正消费的上游 `lynx.etcd` 配置。
 
 ```yaml
 lynx:
   etcd:
     endpoints:
-      - 127.0.0.1:2379
-    timeout: 10s
-    dial_timeout: 5s
-    namespace: lynx/config
-    enable_tls: false
-    cert_file: ""
-    key_file: ""
-    ca_file: ""
-    enable_cache: true
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: 1s
-    shutdown_timeout: 10s
-    enable_register: false
-    enable_discovery: false
-    registry_namespace: lynx/services
-    ttl: 30s
+      - 127.0.0.1:2379 # 复用 client 时必填的共享 etcd endpoint 列表
+    timeout: 10s # 共享 client 的操作超时
+    dial_timeout: 5s # 共享 client 的建连超时
+    namespace: lynx/config # 上游配置 key namespace；不会改写锁 key
+    username: "" # 认证集群下可选的用户名
+    password: "" # 与 username 配套的密码
+    enable_tls: false # 让共享 etcd client 走 TLS
+    cert_file: "" # 需要双向 TLS 时的客户端证书路径
+    key_file: "" # 需要双向 TLS 时的客户端私钥路径
+    ca_file: "" # 需要校验服务端证书时的 CA 文件路径
+    enable_cache: true # 只影响上游配置缓存，不会改变锁语义
+    enable_metrics: true # 上游 etcd 指标开关
+    enable_retry: true # 上游 client 重试管理器开关
+    max_retry_times: 3 # 上游重试上限
+    retry_interval: 1s # 上游重试间隔
+    shutdown_timeout: 10s # 共享 client 清理超时
+    enable_register: false # 只影响上游注册能力；加锁不需要
+    enable_discovery: false # 只影响上游发现能力；加锁不需要
+    registry_namespace: lynx/services # 只影响上游服务注册 namespace
+    ttl: 30s # 只影响上游服务注册 TTL
     service_config:
-      prefix: lynx/config
+      prefix: lynx/config # 只影响上游配置加载前缀
       additional_prefixes:
-        - lynx/config/app
+        - lynx/config/app # 额外的上游配置前缀
+    # enable_graceful_shutdown: true # 上游仅兼容保留的 schema 字段
+    # enable_logging: true # 上游仅兼容保留的 schema 字段
+    # log_level: info # 上游仅兼容保留的 schema 字段
+    # service_config.priority: 0 # 上游仅兼容保留的 schema 字段
+    # service_config.merge_strategy: override # 上游仅兼容保留的 schema 字段
 
   # 仓库里不存在独立的 lynx.etcd-lock schema。
   # 锁行为通过代码里的 LockOptions 配置。
+```
+
+## 最小可用 YAML 示例
+
+Etcd Lock 的启动配置直接继承自 etcd 插件。因为没有独立的 `lynx.etcd-lock` YAML 树，所以最小可运行配置就是下面这个共享的 `lynx.etcd` 子集。
+
+```yaml
+lynx:
+  etcd:
+    endpoints:
+      - 127.0.0.1:2379 # 复用锁 client 时必填的共享 etcd endpoint
 ```
 
 ## 代码级锁参数

@@ -38,6 +38,24 @@ lynx:
 | `enabled` | 控制 Lynx 是否启动 Seata Client 并注册共享资源。 | 只有为 `true` 时才会执行；否则启动阶段直接返回，`WithGlobalTx(...)` 也会报插件已禁用。 | 默认 `false`。它才是真正的总开关，单独配置 `config_file_path` 不会自动启用插件。 | 已经填了配置路径，却忘了把 `enabled` 打开。 |
 | `config_file_path` | 传给 `client.InitPath(...)` 的 Seata 配置文件路径。 | 只有在 `enabled: true` 时才会被消费。 | 省略时默认回退到 `./conf/seata.yml`。这里可以指向本地 `seata.yml` / `seatago.yml`，也可以指向由配置中心落地出来、seata-go 能直接读取的文件。 | 把协调器地址直接写进这个字段，而不是指向一份真实的 Seata YAML 文件。 |
 
+## 完整 YAML 示例
+
+```yaml
+lynx:
+  seata:
+    enabled: true # 必填开关；为 false 时会完全跳过 Seata Client 启动
+    config_file_path: "./conf/seata.yml" # 默认就是 ./conf/seata.yml；这里应指向外部 Seata Client 配置文件
+```
+
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  seata:
+    enabled: true # 打开插件
+    config_file_path: "./conf/seata.yml" # 指向 seata-go 实际要加载的外部 Seata 配置文件
+```
+
 ## 运行注意点
 
 - `config_file_path` 指向的 Seata YAML 不是 Lynx 自动生成的，真正的 registry、coordinator、auth、namespace、transport 参数都要写在那份文件里。

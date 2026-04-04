@@ -35,6 +35,40 @@ title: Elasticsearch Plugin
 | `index_prefix` | Prefix used by `GetIndexName(name)`. | When shared clusters need service or environment isolation. | Default empty. It only affects the helper; it does not create indices, mappings, or aliases for you. | Expecting the plugin to auto-create prefixed indices or migrations. |
 | `log_level` | Stored logging-level field. | Only if you want to preserve an intended level in config. | Default empty. The current implementation stores it but does not reconfigure logging from it. | Changing this field and expecting immediate plugin log-level changes. |
 
+## Complete YAML Example
+
+This example expands every field that appears in `lynx-elasticsearch/conf/example_config.yml`.
+
+```yaml
+lynx:
+  elasticsearch:
+    addresses:
+      - "http://localhost:9200" # Primary bootstrap node.
+      - "http://localhost:9201" # Optional second node for bootstrap resilience.
+    username: "elastic" # Basic-auth username.
+    password: "changeme" # Basic-auth password.
+    api_key: "" # Leave empty unless API key auth is the only active auth mode.
+    service_token: "" # Leave empty unless service-token auth is the only active auth mode.
+    certificate_fingerprint: "" # Optional TLS certificate fingerprint pinning.
+    compress_request_body: true # Compress large HTTP request bodies such as bulk indexing.
+    connect_timeout: "30s" # TCP connect timeout for the transport dialer.
+    max_retries: 3 # Maximum HTTP retry count.
+    enable_metrics: true # Enable plugin-local request and transport metrics.
+    enable_health_check: true # Run background cluster-health checks after startup.
+    health_check_interval: "30s" # Interval for background health checks.
+    index_prefix: "orders" # Prefix used by GetIndexName(name).
+    log_level: "info" # Stored log-level hint; current runtime does not reconfigure logging from it.
+```
+
+## Minimum Viable YAML Example
+
+The runtime can boot from defaults alone, so the smallest runnable block is an empty `lynx.elasticsearch` object.
+
+```yaml
+lynx:
+  elasticsearch: {} # Defaults to http://localhost:9200 with max_retries: 3 and no authentication.
+```
+
 ## Practical Notes
 
 - Keep exactly one authentication path active: basic auth, API key, or service token.

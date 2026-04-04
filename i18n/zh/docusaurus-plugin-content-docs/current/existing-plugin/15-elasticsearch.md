@@ -35,6 +35,40 @@ title: Elasticsearch 插件
 | `index_prefix` | `GetIndexName(name)` 使用的前缀。 | 共享集群里需要按服务或环境隔离时。 | 默认空。它只影响 helper，不会替你创建索引、mapping 或 alias。 | 期待插件自动创建带前缀的索引或迁移。 |
 | `log_level` | 保存日志级别意图的字段。 | 只有你想把预期级别留在配置里时。 | 默认空。当前实现会保存它，但不会用它重配日志级别。 | 改了这个字段，却期待插件日志级别立刻变化。 |
 
+## Complete YAML Example（完整 YAML 示例）
+
+下面这个示例展开了 `lynx-elasticsearch/conf/example_config.yml` 中出现的全部字段。
+
+```yaml
+lynx:
+  elasticsearch:
+    addresses:
+      - "http://localhost:9200" # 主 bootstrap 节点。
+      - "http://localhost:9201" # 第二个节点，用于提升 bootstrap 韧性。
+    username: "elastic" # Basic Auth 用户名。
+    password: "changeme" # Basic Auth 密码。
+    api_key: "" # 除非 API Key 是唯一认证方式，否则保持为空。
+    service_token: "" # 除非 service token 是唯一认证方式，否则保持为空。
+    certificate_fingerprint: "" # 可选的 TLS 证书指纹钉扎。
+    compress_request_body: true # bulk index 等大请求时压缩 HTTP 请求体。
+    connect_timeout: "30s" # transport dialer 的 TCP 建连超时。
+    max_retries: 3 # HTTP 最大重试次数。
+    enable_metrics: true # 开启插件本地请求与 transport 指标。
+    enable_health_check: true # 启动后开启后台 cluster-health 检查。
+    health_check_interval: "30s" # 后台健康检查间隔。
+    index_prefix: "orders" # GetIndexName(name) 使用的前缀。
+    log_level: "info" # 保存日志级别意图；当前 runtime 不会据此重配日志。
+```
+
+## Minimum Viable YAML Example（最小可用 YAML 示例）
+
+这个插件也可以完全依赖默认值启动，因此最小可运行块就是一个空的 `lynx.elasticsearch` 对象。
+
+```yaml
+lynx:
+  elasticsearch: {} # 默认回落到 http://localhost:9200、max_retries: 3，且不启用认证。
+```
+
 ## Practical Notes（实际注意点）
 
 - 认证路径只保留一套：Basic Auth、API Key、Service Token 三选一。

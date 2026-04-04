@@ -145,57 +145,79 @@ title: Tracer 插件
 | `key_file` | 指定 mTLS 客户端私钥。 | 仅 `cert_file` 已设置。 | 可选。 | 指向错误的 key 或缺失文件。 |
 | `insecure_skip_verify` | 跳过对端证书校验。 | 仅 TLS 在用时。 | 只建议测试环境使用。 | 把它当成证书问题的常规修复手段。 |
 
-## 修正后的 YAML 骨架
+## 完整 YAML 示例
+
+`example_config.yml` 仍然是平铺的历史形态。下面这个示例把整套字段改写成当前真正可复制的 `lynx.tracer` 结构。
 
 ```yaml
 lynx:
   tracer:
-    enable: true
-    addr: "otel-collector:4317" # 只做传播不导出时用 "None"
-    ratio: 1.0
+    enable: true # 必填总开关
+    addr: "otel-collector:4317" # OTLP collector 地址；只做传播不导出时用 "None"
+    ratio: 1.0 # 历史兜底采样率；0 会被归一成 1.0
     config:
-      protocol: OTLP_GRPC
-      insecure: true
+      protocol: OTLP_GRPC # OTLP_GRPC 或 OTLP_HTTP
+      insecure: false # true 表示明文传输
       tls:
-        ca_file: "/etc/ssl/certs/otel-ca.pem"
-        cert_file: "/etc/ssl/certs/otel-client.pem"
-        key_file: "/etc/ssl/private/otel-client.key"
-        insecure_skip_verify: false
+        ca_file: "/etc/ssl/certs/otel-ca.pem" # TLS 校验 collector 时使用的 CA
+        cert_file: "/etc/ssl/certs/otel-client.pem" # mTLS 客户端证书
+        key_file: "/etc/ssl/private/otel-client.key" # mTLS 客户端私钥
+        insecure_skip_verify: false # 测试用跳过校验，不建议常规使用
       headers:
-        Authorization: "Bearer ${OTEL_TOKEN}"
-      compression: COMPRESSION_GZIP
-      timeout: 10s
+        Authorization: "Bearer ${OTEL_TOKEN}" # exporter 自定义请求头
+      compression: COMPRESSION_GZIP # COMPRESSION_NONE 或 COMPRESSION_GZIP
+      timeout: 10s # 导出超时
       retry:
-        enabled: true
-        max_attempts: 3
-        initial_interval: 100ms
-        max_interval: 5s
+        enabled: true # OTLP gRPC 重试开关
+        max_attempts: 3 # 重试次数上限
+        initial_interval: 100ms # 首次退避间隔
+        max_interval: 1s # 最大退避间隔
       connection:
-        connect_timeout: 10s
-        reconnection_period: 5s
+        max_conn_idle_time: 5m # 空闲 exporter 连接关闭时长
+        max_conn_age: 10m # 连接最大寿命
+        max_conn_age_grace: 10s # 硬关闭前的宽限时间
+        connect_timeout: 10s # 建连超时
+        reconnection_period: 5s # 重连间隔；省略时默认 5s
+      load_balancing:
+        policy: round_robin # pick_first | round_robin | least_conn
+        health_check: true # gRPC service config 里的健康检查提示
       batch:
-        enabled: true
-        max_queue_size: 2048
-        scheduled_delay: 200ms
-        export_timeout: 30s
-        max_batch_size: 512
+        enabled: true # batch span processor 开关
+        max_queue_size: 1000 # 待导出 span 队列上限
+        scheduled_delay: 1s # 历史 batch_timeout 对应到当前字段
+        export_timeout: 30s # 单次 batch 导出超时
+        max_batch_size: 100 # 单批 span 上限
       sampler:
-        type: PARENT_BASED_TRACEID_RATIO
-        ratio: 0.1
+        type: TRACEID_RATIO # ALWAYS_ON | ALWAYS_OFF | TRACEID_RATIO | PARENT_BASED_TRACEID_RATIO
+        ratio: 0.1 # 比例采样场景必填
       propagators:
-        - W3C_TRACE_CONTEXT
-        - W3C_BAGGAGE
-        - B3
+        - W3C_TRACE_CONTEXT # 默认 Trace Context
+        - W3C_BAGGAGE # baggage 传播
+        - B3 # B3 头传播
+        - JAEGER # Jaeger 传播
       resource:
-        service_name: "user-service"
+        service_name: "my-service" # 覆盖 OpenTelemetry service.name
         attributes:
-          deployment.environment: "prod"
+          environment: "production" # 自定义 resource 属性
+          region: "us-west-2" # 自定义 resource 属性
+          team: "platform" # 自定义 resource 属性
       limits:
-        attribute_count_limit: 128
-        attribute_value_length_limit: 2048
-        event_count_limit: 128
-        link_count_limit: 128
-      http_path: /v1/traces
+        attribute_count_limit: 128 # span 属性数量上限
+        attribute_value_length_limit: 256 # 单个属性值长度上限
+        event_count_limit: 128 # 每个 span 的 event 上限
+        event_attribute_count_limit: 32 # 兼容字段；当前实现忽略
+        link_count_limit: 128 # 每个 span 的 link 上限
+        link_attribute_count_limit: 32 # 兼容字段；当前实现忽略
+      http_path: "/v1/traces" # OTLP HTTP 路径；仅 protocol=OTLP_HTTP 使用
 ```
 
-旧的 `example_config.yml` 更适合作为“能力清单”，不要把它原样当成可直接复制的运行时配置。
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  tracer:
+    enable: true # 必填开关
+    addr: "otel-collector:4317" # collector 地址；默认按 OTLP gRPC 导出
+```
+
+只有在你明确想“只传播、不导出”时，才把 `addr` 写成 `"None"`。

@@ -75,6 +75,68 @@ title: Kafka 插件
 | `rebalance_timeout` | group rebalance 的时间预算。 | consumer 重分配和扩缩容时。 | 省略时默认 `30s`。 | 配得低于实际启动和分配耗时。 |
 | `topics` | 该 consumer 预期负责的 topic 列表。 | 适合作为配置评审和运行说明。 | 代码仍要在 `SubscribeWith` 再传一次 topics，所以两边必须同步。 | 只改了 YAML，忘了同步订阅代码。 |
 
+## 完整 YAML 示例
+
+```yaml
+lynx:
+  kafka:
+    brokers:
+      - 127.0.0.1:9092 # producer 和 consumer 启动所需的 broker 种子地址
+      - 127.0.0.1:9093 # 可选的第二个 broker，用于提升启动冗余
+
+    tls:
+      enabled: true # 只有 broker 暴露 TLS listener 时才开启
+      ca_file: /etc/ssl/certs/kafka-ca.pem # broker 证书校验所用的自定义 CA 链
+      cert_file: /etc/ssl/certs/kafka-client.pem # 双向 TLS 所需的客户端证书
+      key_file: /etc/ssl/private/kafka-client.key # 双向 TLS 所需的客户端私钥
+      insecure_skip_verify: false # 仅限可控的本地调试环境才考虑设为 true
+      server_name: kafka.internal # 需要时覆盖 SNI / 主机名校验值
+
+    sasl:
+      enabled: false # 只有集群要求 SASL 时才开启
+      mechanism: PLAIN # PLAIN | SCRAM-SHA-256 | SCRAM-SHA-512
+      username: kafka-user # 开启 SASL 后必须提供
+      password: kafka-pass # 开启 SASL 后必须提供
+
+    dial_timeout: 5s # 建连超时；省略时默认 10s
+
+    producers:
+      - name: default # 业务代码使用的 producer 名
+        enabled: true # 禁用项会被忽略
+        required_acks: 1 # -1=全部 ISR，1=仅 leader，0=不等待 ACK
+        batch_size: 1000 # 省略时默认 1000
+        batch_timeout: 50ms # 省略时默认 1s；0s 基本等于关闭异步批处理
+        compression: snappy # none | gzip | snappy | lz4 | zstd
+        topics:
+          - topic_a # 该 producer 的评审提示 / topic 白名单
+          - topic_b
+
+    consumers:
+      - name: group_a # 业务代码使用的 consumer 名
+        enabled: true # 禁用项会被忽略
+        group_id: app-group-a # 启用 consumer 时必填
+        auto_commit: false # false 表示由 handler 自己控制提交时机
+        auto_commit_interval: 3s # 只有 auto_commit 为 true 时才使用
+        start_offset: latest # latest | earliest
+        max_concurrency: 8 # 省略时默认 10
+        rebalance_timeout: 45s # 省略时默认 30s
+        topics:
+          - topic_a # 需与应用代码中的 SubscribeWith topics 保持一致
+```
+
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  kafka:
+    brokers:
+      - 127.0.0.1:9092
+    producers:
+      - name: default
+        enabled: true
+        required_acks: 1
+```
+
 ## 配置来源
 
 - `lynx-kafka/conf/example_config.yml`

@@ -83,49 +83,60 @@ Nacos is a control-plane plugin for service registration, discovery, and remote 
 | `group` | Group for that config source. | When the extra config is stored outside `DEFAULT_GROUP`. | Defaults to `DEFAULT_GROUP`. | Copying the main config group when the shared config lives elsewhere. |
 | `format` | Config format presented to Kratos config loader. | When the data ID extension is ambiguous or missing. | If omitted, runtime infers from file extension; falls back to `yaml`. | Setting `json` while the remote content is actually YAML. |
 
-## Complete YAML Template
+## Complete YAML Example
 
 ```yaml
 lynx:
   nacos:
-    server_addresses: 127.0.0.1:8848
-    namespace_id: ""
-    namespace: public
-    username: ""
-    password: ""
-    access_key: ""
-    secret_key: ""
-    weight: 1.0
+    server_addresses: 127.0.0.1:8848 # Required unless endpoint is used instead
+    namespace_id: "" # Optional namespace ID; takes precedence over namespace when set
+    namespace: public # Namespace name fallback; runtime default is public
+    username: "" # Optional username for auth-enabled deployments
+    password: "" # Optional password paired with username
+    access_key: "" # Optional cloud-style access key
+    secret_key: "" # Optional cloud-style secret paired with access_key
+    weight: 1.0 # Instance weight for registration
     metadata:
-      version: v1.0.0
-      env: production
-    enable_register: true
-    enable_discovery: true
-    enable_config: true
-    timeout: 5
-    log_level: info
-    log_dir: ./logs/nacos
-    cache_dir: ./cache/nacos
-    notify_timeout: 3000
+      version: v1.0.0 # Example release metadata
+      env: production # Example environment label
+    enable_register: true # Enable naming client registration
+    enable_discovery: true # Enable naming client discovery
+    enable_config: true # Enable config-center client
+    timeout: 5 # Client timeout in seconds; runtime default is 5
+    log_level: info # Supported values: debug, info, warn, error
+    log_dir: ./logs/nacos # SDK log directory
+    cache_dir: ./cache/nacos # SDK cache directory
+    notify_timeout: 3000 # Config notification timeout in milliseconds
     service_config:
-      service_name: my-service
-      group: DEFAULT_GROUP
-      cluster: DEFAULT
-      health_check: true
-      health_check_interval: 5
-      health_check_timeout: 3
-      health_check_type: tcp
-      health_check_url: ""
+      service_name: my-service # Registration-side service name hint
+      group: DEFAULT_GROUP # Default Nacos group
+      cluster: DEFAULT # Default Nacos cluster label
+      health_check: true # Enable health-check metadata on registration
+      health_check_interval: 5 # Health-check interval in seconds
+      health_check_timeout: 3 # Health-check timeout in seconds
+      health_check_type: tcp # Supported values: none, tcp, http, mysql
+      health_check_url: "" # Required only when health_check_type is http
     additional_configs:
-      - data_id: database-config.yaml
-        group: DEFAULT_GROUP
-        format: yaml
-      - data_id: feature-flags.json
-        group: DEFAULT_GROUP
-        format: json
-    context_path: /nacos
-    endpoint: ""
-    region_id: ""
+      - data_id: database-config.yaml # Extra remote config source
+        group: DEFAULT_GROUP # Group for this config source
+        format: yaml # Loader format for the fetched content
+      - data_id: feature-flags.json # Second extra remote config source
+        group: DEFAULT_GROUP # Group for this config source
+        format: json # Loader format for the fetched content
+    context_path: /nacos # Nacos server context path
+    endpoint: "" # Optional server endpoint alternative to server_addresses
+    region_id: "" # Optional region hint for cloud deployments
+```
+
+## Minimum Viable YAML Example
+
+At least one capability switch must be enabled, otherwise the plugin starts without creating any Nacos client.
+
+```yaml
+lynx:
+  nacos:
+    server_addresses: 127.0.0.1:8848 # Required server address when endpoint is not used
+    enable_config: true # Smallest useful switch that creates a config client
 ```
 
 ## Common Misconfigurations

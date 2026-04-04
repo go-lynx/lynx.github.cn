@@ -152,6 +152,97 @@ title: HTTP 服务
 | `max_requests` | half-open 状态允许的探测请求数。 | 请求处理中。 | 默认 `10`。 | 设太高导致恢复探测阶段流量过多。 |
 | `failure_threshold` | closed 状态下的失败率阈值。 | 请求处理中。 | 默认 `0.5`；显式写 `0` 也会被当成默认 `0.5`。 | 把 `0` 当成“关闭失败率门槛”。 |
 
+## 完整 YAML 示例
+
+```yaml
+lynx:
+  http:
+    network: "tcp" # 监听类型；默认 tcp
+    addr: ":8080" # 监听地址；默认 :8080
+    timeout: "30s" # 模板示例值；省略时运行时代码默认 10s
+
+    tls_enable: false # 只有 lynx.tls 已加载证书后才应打开
+    tls_auth_type: 0 # 0..4；tls_enable=false 时不会生效
+
+    monitoring:
+      enable_metrics: true # 控制是否暴露 /metrics
+      metrics_path: "/metrics" # 指标路径
+      health_path: "/health" # 健康检查路径
+      enable_request_logging: true # 请求日志仍依赖 middleware.enable_logging=true
+      enable_error_logging: true # 错误日志同样依赖 logging 中间件
+      enable_route_metrics: true # 按路由拆分指标
+      enable_connection_metrics: true # 连接 / 池占用类指标
+      enable_queue_metrics: true # 排队指标；限流中间件开着才有意义
+      enable_error_type_metrics: true # 保留细粒度错误标签
+
+    security:
+      max_request_size: 10485760 # 模板值 10 MiB；当前运行时会存储但不会真实拦截请求体
+      cors:
+        enabled: false # 模板字段；当前 HTTP 运行时不会据此返回 CORS 头
+        allowed_origins: ["*"] # 模板来源白名单
+        allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"] # 模板方法列表
+        allowed_headers: ["*"] # 模板请求头列表
+        exposed_headers: [] # 模板暴露响应头列表
+        allow_credentials: false # 模板跨域凭证开关
+        max_age: 86400 # 模板预检缓存秒数
+      rate_limit:
+        enabled: true # live 的进程内限流开关
+        rate_per_second: 100 # 稳态限流值
+        burst_limit: 200 # 突发容量
+      security_headers:
+        enabled: false # 模板字段；当前 HTTP 运行时不会自动下发这些头
+        content_security_policy: "default-src 'self'" # 模板 CSP 值
+        x_frame_options: "DENY" # 模板 X-Frame-Options 值
+        x_content_type_options: "nosniff" # 模板 X-Content-Type-Options 值
+        x_xss_protection: "1; mode=block" # 模板 X-XSS-Protection 值
+
+    performance:
+      max_connections: 1000 # live 的请求准入信号量，不是原始 socket 数
+      max_concurrent_requests: 500 # 第二个并发请求上限
+      read_buffer_size: 4096 # TCP 读缓冲区大小
+      write_buffer_size: 4096 # TCP 写缓冲区大小
+      connection_pool:
+        max_idle_conns: 100 # 当前只是模板字段；服务端运行时不消费
+        max_idle_conns_per_host: 10 # 当前只是模板字段
+        max_conns_per_host: 100 # 当前只是模板字段
+        keep_alive_duration: "30s" # 当前只是模板字段
+      read_timeout: "30s" # 显式填写时才会写入 net/http.Server.ReadTimeout
+      write_timeout: "30s" # 显式填写时才会写入 net/http.Server.WriteTimeout
+      idle_timeout: "60s" # 省略时运行时默认 60s
+      read_header_timeout: "20s" # 省略时运行时默认 20s
+
+    middleware:
+      enable_tracing: true # tracing 中间件开关
+      enable_logging: true # 请求日志中间件开关
+      enable_recovery: true # panic recovery 中间件开关
+      enable_validation: true # protobuf 校验中间件开关
+      enable_rate_limit: true # 本地限流中间件要生效必须保留 true
+      enable_metrics: true # 请求指标中间件开关
+      custom_middleware: {} # 占位 map；当前运行时不会解释它
+
+    graceful_shutdown:
+      shutdown_timeout: "30s" # live 的停机超时
+      wait_for_ongoing_requests: true # 模板字段；当前清理逻辑不会消费
+      max_wait_time: "60s" # 模板字段；当前清理逻辑不会消费
+
+    circuit_breaker:
+      enabled: true # 整块省略时运行时仍会创建默认开启的熔断器
+      max_failures: 5 # 失败次数门槛
+      timeout: "60s" # open 状态持续时间
+      max_requests: 10 # half-open 探测请求上限
+      failure_threshold: 0.5 # closed 状态下的失败率门槛
+```
+
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  http:
+    addr: ":8080" # 足够启动一个纯 HTTP 监听；network 默认 tcp
+```
+
+只有当你真的要启用 HTTPS 时，才再补 `lynx.tls` 并把 `tls_enable` 打开。
+
 ## 实用规则
 
 - 想要 HTTPS，要同时配好 TLS 插件和 `lynx.http.tls_enable: true`。

@@ -132,6 +132,136 @@ The secure template is the most misleading one if copied verbatim:
 
 If you keep `swagger-secure.yml`, treat it as a checklist of intent and then rename the keys that the current runtime actually understands.
 
+## Complete YAML Example
+
+This block merges the live runtime keys with the full template inventory from `swagger.yml`, `swagger-simple.yml`, and `swagger-secure.yml`. Keys that the current runtime ignores are kept as commented template-only lines so the example stays copyable.
+
+```yaml
+lynx:
+  swagger:
+    enabled: true # master switch; default true
+
+    security:
+      environment: "development" # runtime environment label
+      allowed_environments:
+        - "development" # environments where Swagger may run
+        - "testing"
+      disable_in_production: true # current default logic forces this back to true
+      trusted_origins:
+        - "http://localhost:8080" # allowed browser origins for the UI server
+        - "http://127.0.0.1:8081"
+      require_auth: false # stored today, but not enforced by the current handler
+
+    generator:
+      enabled: true # annotation scan / rebuild switch
+      spec_files:
+        - "./openapi/openapi.yaml" # optional external OAS files loaded before scanning
+      scan_dirs:
+        - "./app/controllers" # directories scanned for annotations
+        - "./app/handlers"
+        - "./plugins"
+      output_path: "./docs/swagger.json" # merged output path
+      watch_files: true # live runtime key; shipped templates still call this watch_enabled
+      # exclude_dirs: ["./vendor", "./test", "./docs", "./.git"] # template-era key, not consumed today
+      # recursive: true # template-era key, not consumed today
+      # watch_enabled: true # template-era key, replaced by watch_files in current runtime docs
+      # watch_interval: 5s # template-era key, not consumed today
+      # gen_on_startup: true # template-era key, not consumed today
+
+    ui:
+      enabled: true # UI HTTP server switch
+      port: 8081 # UI server port; default 8081
+      path: "/swagger" # UI route prefix
+      deepLinking: true # runtime camelCase key actually rendered by the current HTML
+      docExpansion: "list" # runtime camelCase key actually rendered by the current HTML
+      # title: "Lynx API Documentation" # template-era key; current page title comes from info.title
+      # spec_url: "/swagger.json" # template-era key, not consumed today
+      # auto_refresh: false # template-era key, not consumed today
+      # refresh_interval: 5000 # template-era key, not consumed today
+      # deep_linking: true # template snake_case key; runtime expects deepLinking
+      # display_request_duration: true # template key stored but not rendered today
+      # doc_expansion: "list" # template snake_case key; runtime expects docExpansion
+      # default_models_expand_depth: 1 # template key stored but current HTML ignores it
+
+    info:
+      title: "Lynx Microservice API" # OpenAPI title and current HTML page title
+      description: "Secure API documentation built on Lynx framework" # OpenAPI description
+      version: "1.0.0" # API version string
+      termsOfService: "http://swagger.io/terms/" # runtime camelCase field for terms of service
+      contact:
+        name: "API Support Team" # contact name
+        email: "api-support@lynx.io" # contact email
+        url: "https://lynx.io/support" # contact URL
+      license:
+        name: "Apache 2.0" # license name
+        url: "http://www.apache.org/licenses/LICENSE-2.0.html" # license URL
+      # terms_of_service: "http://swagger.io/terms/" # template snake_case key, not consumed today
+
+    api_server:
+      host: "localhost:8080" # target API host used by Swagger UI "Try it out"
+      base_path: "/api/v1" # Swagger basePath for "Try it out"
+
+    # servers: # template-only inventory; current runtime does not read this block
+    #   - url: "http://localhost:8080"
+    #     description: "Development environment"
+    # base_path: "/api/v1" # template-only top-level key; use api_server.base_path instead
+    # schemes: ["http", "https"] # template-only today
+    # consumes: ["application/json", "application/xml", "multipart/form-data"] # template-only today
+    # produces: ["application/json", "application/xml"] # template-only today
+    # tags: # template-only today
+    #   - name: "User Management"
+    #     description: "User-related operations"
+    #     external_docs:
+    #       description: "More information"
+    #       url: "https://lynx.io/docs/user"
+    # external_docs: # template-only today
+    #   description: "Lynx Framework Documentation"
+    #   url: "https://lynx.io/docs"
+    # security_definitions: # template-only today
+    #   api_key:
+    #     type: "apiKey"
+    #     name: "X-API-Key"
+    #     in: "header"
+    #     description: "API key authentication"
+    # security: # top-level Swagger security requirements; template-only today
+    #   - api_key: []
+    # advanced: # template-only today
+    #   validate_spec: true
+    #   pretty_json: true
+    #   include_unused_definitions: false
+    #   generate_examples: true
+    #   max_file_size: 10485760
+    #   scan_concurrency: 4
+    #   cache:
+    #     enabled: true
+    #     ttl: 300s
+    #     max_size: 100
+```
+
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  swagger:
+    enabled: true # master switch
+    generator:
+      enabled: true # build the spec from code
+      scan_dirs:
+        - "./" # smallest scan scope from swagger-simple.yml
+      output_path: "./docs/openapi.yaml" # where the generated spec is written
+    ui:
+      enabled: true # start the Swagger UI server
+      port: 8081 # keep it separate from lynx-http
+      path: "/swagger" # UI route
+    info:
+      title: "My API" # page title and OpenAPI title
+      version: "1.0.0" # OpenAPI version
+    api_server:
+      host: "localhost:8080" # lynx-http address used by "Try it out"
+```
+
+If `lynx.http.addr` is already browser-safe, `api_server.host` can be omitted and derived at runtime.
+
 ## Practical Rules
 
 - If you want Swagger UI to call the right backend, make `api_server.host` explicit unless `lynx.http.addr` is already browser-safe.

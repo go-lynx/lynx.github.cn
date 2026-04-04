@@ -75,6 +75,68 @@ This page explains the YAML fields from `lynx-kafka/conf/example_config.yml`. Th
 | `rebalance_timeout` | Time budget for group rebalance work. | During consumer assignment and scale events. | Defaults to `30s` when omitted. | Setting it below the actual startup or assignment cost of the consumer. |
 | `topics` | Intended topic set for the consumer definition. | Useful as configuration documentation and review guardrails. | Application code still passes topics again to `SubscribeWith`, so the two lists must stay aligned. | Updating YAML topics and forgetting to update the subscribe call. |
 
+## Complete YAML Example
+
+```yaml
+lynx:
+  kafka:
+    brokers:
+      - 127.0.0.1:9092 # Required seed broker list for producer and consumer bootstrap
+      - 127.0.0.1:9093 # Optional secondary broker for bootstrap resilience
+
+    tls:
+      enabled: true # Enable only when brokers expose TLS listeners
+      ca_file: /etc/ssl/certs/kafka-ca.pem # Custom CA bundle for broker certificate validation
+      cert_file: /etc/ssl/certs/kafka-client.pem # Client certificate for mutual TLS
+      key_file: /etc/ssl/private/kafka-client.key # Client private key for mutual TLS
+      insecure_skip_verify: false # Keep false outside controlled local debugging
+      server_name: kafka.internal # Override SNI / hostname verification when needed
+
+    sasl:
+      enabled: false # Turn on only when the cluster requires SASL
+      mechanism: PLAIN # PLAIN | SCRAM-SHA-256 | SCRAM-SHA-512
+      username: kafka-user # Required when SASL is enabled
+      password: kafka-pass # Required when SASL is enabled
+
+    dial_timeout: 5s # Connection timeout; defaults to 10s when omitted
+
+    producers:
+      - name: default # Application-facing producer name
+        enabled: true # Disabled entries are ignored
+        required_acks: 1 # -1=all ISR, 1=leader only, 0=no ack
+        batch_size: 1000 # Defaults to 1000 when omitted
+        batch_timeout: 50ms # Defaults to 1s; 0s effectively disables async batching
+        compression: snappy # none | gzip | snappy | lz4 | zstd
+        topics:
+          - topic_a # Review hint / allow-list for this producer
+          - topic_b
+
+    consumers:
+      - name: group_a # Application-facing consumer name
+        enabled: true # Disabled entries are ignored
+        group_id: app-group-a # Required for enabled consumers
+        auto_commit: false # false means the handler owns commit timing
+        auto_commit_interval: 3s # Used only when auto_commit is true
+        start_offset: latest # latest | earliest
+        max_concurrency: 8 # Defaults to 10 when omitted
+        rebalance_timeout: 45s # Defaults to 30s when omitted
+        topics:
+          - topic_a # Keep aligned with SubscribeWith topics in application code
+```
+
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  kafka:
+    brokers:
+      - 127.0.0.1:9092
+    producers:
+      - name: default
+        enabled: true
+        required_acks: 1
+```
+
 ## Source Template
 
 - `lynx-kafka/conf/example_config.yml`

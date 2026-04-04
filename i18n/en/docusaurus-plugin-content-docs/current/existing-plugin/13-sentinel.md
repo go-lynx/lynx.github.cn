@@ -137,6 +137,63 @@ The numeric rule fields use Sentinel enum integers. Do not copy older string exa
 | `advanced.stat_interval_ms` | Reserved advanced tuning field. | Currently never consumed by startup. | Parsed only. Rule windows still come from each individual rule. | Treating it as a global override for every rule window. |
 | `advanced.metric_log_flush_interval_sec` | Reserved advanced flush interval field. | Currently never consumed by startup. | Parsed only. The in-process metrics collector uses `metrics.interval` instead. | Expecting it to change metrics flushing behavior. |
 
+## Complete YAML Example
+
+```yaml
+lynx:
+  sentinel:
+    app_name: "order-service" # falls back to the Lynx app name, then to lynx-app
+    log_dir: "./logs/sentinel" # defaults to ./logs/sentinel
+    log_level: "info" # compatibility field; current runtime still follows the global logger
+    flow_rules:
+      - resource: "http:create-user" # protected resource name used by your code or middleware
+        token_calculate_strategy: 0 # flow.Direct
+        control_behavior: 0 # flow.Reject
+        threshold: 200 # request threshold for this resource
+        stat_interval_in_ms: 1000 # statistics window for flow control
+        warm_up_period_sec: 0 # only used by warm-up strategies
+        max_queueing_time_ms: 0 # only used by queueing/throttling behavior
+    circuit_breaker_rules:
+      - resource: "http:create-user" # breaker target resource
+        strategy: 1 # circuitbreaker.ErrorRatio
+        threshold: 0.5 # trigger threshold for the chosen breaker strategy
+        retry_timeout_ms: 5000 # open-state duration before probing again
+        min_request_amount: 20 # minimum sample size before breaker evaluation starts
+        stat_interval_ms: 1000 # breaker statistics window
+    system_rules:
+      - metric_type: 0 # system.Load
+        trigger_count: 2.0 # threshold for the chosen system metric
+        strategy: 0 # parsed today; current loader does not act on it
+    metrics:
+      enabled: true # starts the in-process metrics collector
+      interval: "30s" # defaults to 30s if blank or invalid
+    dashboard:
+      enabled: false # set true to expose the lightweight dashboard
+      port: 8719 # defaults to 8719 when 0
+    data_source:
+      type: "" # compatibility-only; external rule sources are not wired today
+      file:
+        flow_rules_path: "" # reserved path for external flow rule files
+        circuit_breaker_rules_path: "" # reserved path for external breaker rule files
+        system_rules_path: "" # reserved path for external system rule files
+    warm_up:
+      enabled: false # compatibility-only; warm-up is still configured per flow rule
+      duration: "" # compatibility-only; current runtime ignores this field
+    advanced:
+      stat_interval_ms: 0 # compatibility-only; no global override is applied today
+      metric_log_flush_interval_sec: 0 # compatibility-only; metrics still use metrics.interval
+    enabled: true # compatibility-only; current runtime ignores this switch
+```
+
+The current runtime can boot with an empty `lynx.sentinel` block because it backfills `app_name`, `log_dir`, `log_level`, one default flow rule, and one default circuit-breaker rule.
+
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  sentinel: {} # runtime fills app_name/log_dir/log_level and injects default flow + breaker rules
+```
+
 ## How To Consume It
 
 ```go

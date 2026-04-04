@@ -138,6 +138,127 @@ title: Pulsar 插件
 | `monitoring.health_check_interval` | 健康检查间隔。 | `enable_health_check: true` 时。 | 构造器默认 `30s`；当前会用于初始化 health checker。 | 配得过小，把轻量检查变成噪声后台任务。 |
 | `monitoring.enable_tracing` | 预期的 tracing 开关。 | 设计 tracing / exporter 策略时。 | 模板暴露了它，但当前插件启动路径没有按这个开关接入 tracing。 | 只改这行就以为 tracing 已经打开。 |
 
+## 完整 YAML 示例
+
+```yaml
+lynx:
+  pulsar:
+    service_url: "pulsar://localhost:6650" # 必填 broker URL；TLS 端点请改用 pulsar+ssl://...
+
+    # 认证配置：本地无鉴权集群可保持 type 为空
+    auth:
+      type: "token" # "" | token | oauth2 | tls
+      token: "your-token" # 仅在 type 为 token 时使用
+
+      oauth2:
+        issuer_url: "https://issuer.example.com" # OAuth2 issuer 地址
+        client_id: "pulsar-client" # OAuth2 client ID
+        client_secret: "pulsar-secret" # OAuth2 client secret
+        audience: "pulsar://cluster" # 身份提供方为 Pulsar 配置的 audience
+        scope: "openid profile email" # OAuth2 认证可选 scope
+
+      tls_auth:
+        cert_file: "/etc/pulsar/client.crt" # TLS 认证使用的客户端证书
+        key_file: "/etc/pulsar/client.key" # TLS 认证使用的客户端私钥
+        ca_file: "/etc/pulsar/ca.crt" # TLS 认证使用的 CA 链
+
+    # 传输层 TLS：与 auth.tls_auth 独立
+    tls:
+      enable: true # 为 broker 连接开启 TLS 传输
+      allow_insecure_connection: false # 仅限可控的本地调试环境才考虑设为 true
+      trust_certs_file: "/etc/pulsar/trust-certs.pem" # broker 证书校验所用的自定义信任链
+      verify_hostname: true # 除非排查证书命名问题，否则应保持 true
+
+    # 连接参数
+    connection:
+      connection_timeout: 30s # 当前实际生效的 client 建连超时
+      operation_timeout: 30s # 当前实际生效的 client 操作超时
+      keep_alive_interval: 30s # 当前实际生效的 keep-alive 间隔
+      max_connections_per_host: 1 # 当前实际生效的每个 broker 最大连接数
+      connection_max_lifetime: 0s # 0s 表示不强制轮转连接
+      enable_connection_pooling: true # 配置层暴露的预期连接池开关
+
+    # 命名 producers
+    producers:
+      - name: "default-producer" # 业务代码使用的 producer 名
+        enabled: true # 禁用项会被忽略
+        topic: "default-topic" # 一个 producer 定义只对应一个 topic
+        options:
+          producer_name: "lynx-default-producer" # broker 侧可见的 producer 名覆盖值
+          send_timeout: 30s # 当前实际生效的发送超时
+          max_pending_messages: 1000 # 当前实际生效的内存待发送消息上限
+          max_pending_messages_across_partitions: 50000 # 配置层暴露的预期跨分区待发送上限
+          block_if_queue_full: false # 队列满时阻塞还是立即失败的预期策略
+          batching_enabled: true # 吞吐优先时开启；低延迟场景可关闭
+          batching_max_publish_delay: 10ms # 未攒满批次时的最长等待时间
+          batching_max_messages: 1000 # 每个批次允许的最大消息数
+          batching_max_size: 131072 # 每个批次允许的最大字节数；此处为 128 KiB
+          compression_type: "none" # none | lz4 | zlib | zstd | snappy
+          hashing_scheme: "java_string_hash" # 分区哈希算法
+          message_routing_mode: "round_robin" # round_robin | single_partition | custom_partition
+          enable_chunking: false # 仅大消息场景才建议开启
+          chunk_max_size: 1048576 # 开启 chunking 后的最大分块大小
+
+    # 命名 consumers
+    consumers:
+      - name: "default-consumer" # 业务代码使用的 consumer 名
+        enabled: true # 禁用项会被忽略
+        topics:
+          - "default-topic" # 要订阅的 topic 列表
+        subscription_name: "default-subscription" # subscription 游标名
+        options:
+          consumer_name: "lynx-default-consumer" # broker 侧可见的 consumer 名覆盖值
+          subscription_type: "exclusive" # exclusive | shared | failover | key_shared
+          subscription_initial_position: "latest" # latest | earliest
+          subscription_mode: "durable" # durable | non_durable
+          receiver_queue_size: 1000 # 当前实际生效的本地接收缓冲大小
+          max_total_receiver_queue_size_across_partitions: 50000 # 配置层暴露的预期跨分区接收缓冲上限
+          consumer_name_prefix: "lynx-consumer" # 配置层暴露的预期动态 consumer 名前缀
+          read_compacted: false # 配置层暴露的预期 compacted-topic 读取模式
+          enable_retry_on_message_failure: true # 配置层暴露的预期失败重试开关
+          retry_enable: true # 配置层暴露的预期 consumer retry 开关
+          ack_timeout: 0s # 0s 表示不使用 ACK 超时触发重投
+          negative_ack_delay: 1m # 当前实际生效的 negative ACK 重投延迟
+          priority_level: 0 # 配置层暴露的预期 broker 侧 consumer 优先级
+          crypto_failure_action: "fail" # fail | discard | consume
+          properties:
+            application: "lynx-framework" # 用于归属标识和诊断的自由元数据
+            version: "2.0.0"
+          dead_letter_policy:
+            max_redeliver_count: 3 # 配置层暴露的预期进入 DLQ 前最大重投次数
+            dead_letter_topic: "dlq-topic" # 配置层暴露的预期死信 topic 名
+            initial_subscription_name: "dlq-subscription" # 配置层暴露的预期 DLQ 初始 subscription 名
+
+    # 共享 retry manager
+    retry:
+      enable: true # 启用共享 retry manager
+      max_attempts: 3 # 最大重试次数
+      initial_delay: 100ms # 第一次重试延迟
+      max_delay: 30s # 重试退避上限
+      retry_delay_multiplier: 2.0 # 指数退避倍率
+      jitter_factor: 0.1 # 用于避免同步重试的随机抖动比例
+
+    # 监控与健康检查
+    monitoring:
+      enable_metrics: true # 配置层暴露的预期指标开关
+      metrics_namespace: "lynx_pulsar" # 配置层暴露的预期指标命名空间前缀
+      enable_health_check: true # 启动后台健康检查器
+      health_check_interval: 30s # 健康检查间隔
+      enable_tracing: false # 配置层暴露的预期 tracing 开关
+```
+
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  pulsar:
+    service_url: "pulsar://localhost:6650"
+    producers:
+      - name: "default-producer"
+        enabled: true
+        topic: "default-topic"
+```
+
 ## 配置来源
 
 - `lynx-pulsar/conf/example_config.yml`

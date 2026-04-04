@@ -58,6 +58,57 @@ This page explains the YAML fields from `lynx-rocketmq/conf/example_config.yml`.
 | `enable_trace` | Intended consumer trace switch. | Diagnostics. | Present in the template, but the current consumer creation path does not wire it into SDK options. | Assuming trace is active just because the YAML says so. |
 | `topics` | Topic list the consumer is expected to own. | Subscription review and handler design. | Topics are validated in config, but application code still passes topics again to `SubscribeWith`. | Updating one list and forgetting the other. |
 
+## Complete YAML Example
+
+```yaml
+rocketmq:
+  name_server:
+    - 127.0.0.1:9876 # Required NameServer address for bootstrap and health probing
+    - 127.0.0.1:9877 # Optional secondary NameServer for HA bootstrap
+
+  access_key: your-access-key # Fill only for ACL-enabled clusters
+  secret_key: your-secret-key # Pair with access_key for ACL authentication
+  dial_timeout: 3s # Intended dial timeout knob in config
+  request_timeout: 30s # Intended request timeout knob in config
+
+  producers:
+    - name: default-producer # Application-facing producer name
+      enabled: true # Disabled entries are ignored
+      group_name: lynx-producer-group # Defaults to lynx-producer-group when omitted
+      max_retries: 3 # Intended send retry count
+      retry_backoff: 100ms # Intended retry backoff between send attempts
+      send_timeout: 3s # Active SDK send timeout
+      enable_trace: false # Intended producer trace switch
+      topics:
+        - test-topic # Expected topic list for this producer profile
+        - user-events
+
+  consumers:
+    - name: default-consumer # Application-facing consumer name
+      enabled: true # Disabled entries are ignored
+      group_name: lynx-consumer-group # Defaults to lynx-consumer-group when omitted
+      consume_model: CLUSTERING # CLUSTERING | BROADCASTING
+      consume_order: CONCURRENTLY # CONCURRENTLY | ORDERLY
+      max_concurrency: 4 # Active SDK consume goroutine count
+      pull_batch_size: 32 # Active SDK pull batch size
+      pull_interval: 100ms # Active SDK pull interval
+      enable_trace: false # Intended consumer trace switch
+      topics:
+        - test-topic # Keep aligned with SubscribeWith topics in application code
+        - user-events
+```
+
+## Minimum Viable YAML Example
+
+```yaml
+rocketmq:
+  name_server:
+    - 127.0.0.1:9876
+  producers:
+    - name: default-producer
+      enabled: true
+```
+
 ## Source Template
 
 - `lynx-rocketmq/conf/example_config.yml`

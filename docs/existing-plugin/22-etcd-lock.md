@@ -49,39 +49,57 @@ Because the lock plugin reuses the upstream etcd client, the only YAML that matt
 | `service_config.prefix` / `additional_prefixes` | Control upstream config-source loading only. | Fallback to upstream namespace and declaration order. | Assuming they influence distributed lock storage paths. |
 | `enable_graceful_shutdown` / `enable_logging` / `log_level` / `service_config.priority` / `service_config.merge_strategy` | Compatibility-only upstream schema fields. | Accepted by upstream schema but not active plugin-local toggles. | Expecting them to be lock-specific controls. |
 
-## No standalone YAML schema
+## Complete YAML Example
 
-The effective repository shape is:
+There is still no standalone `lynx.etcd-lock` schema. The complete inherited example below is the upstream `lynx.etcd` configuration that the lock plugin actually consumes.
 
 ```yaml
 lynx:
   etcd:
     endpoints:
-      - 127.0.0.1:2379
-    timeout: 10s
-    dial_timeout: 5s
-    namespace: lynx/config
-    enable_tls: false
-    cert_file: ""
-    key_file: ""
-    ca_file: ""
-    enable_cache: true
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: 1s
-    shutdown_timeout: 10s
-    enable_register: false
-    enable_discovery: false
-    registry_namespace: lynx/services
-    ttl: 30s
+      - 127.0.0.1:2379 # Required shared etcd endpoint list for the reused client
+    timeout: 10s # Shared client operation timeout
+    dial_timeout: 5s # Shared client connection timeout
+    namespace: lynx/config # Upstream config-key namespace; does not rename lock keys
+    username: "" # Optional username for authenticated clusters
+    password: "" # Optional password paired with username
+    enable_tls: false # Enable TLS for the shared etcd client
+    cert_file: "" # Client cert path when TLS auth is required
+    key_file: "" # Client key path when TLS auth is required
+    ca_file: "" # CA bundle path when server cert validation is required
+    enable_cache: true # Upstream config-cache behavior only; does not change lock semantics
+    enable_metrics: true # Upstream etcd metrics switch
+    enable_retry: true # Upstream client retry manager switch
+    max_retry_times: 3 # Upstream retry cap
+    retry_interval: 1s # Upstream retry interval
+    shutdown_timeout: 10s # Shared client cleanup timeout
+    enable_register: false # Upstream registry switch only; not needed for locking
+    enable_discovery: false # Upstream discovery switch only; not needed for locking
+    registry_namespace: lynx/services # Upstream registry namespace only
+    ttl: 30s # Upstream service-registration TTL only
     service_config:
-      prefix: lynx/config
+      prefix: lynx/config # Upstream config prefix only
       additional_prefixes:
-        - lynx/config/app
+        - lynx/config/app # Additional upstream config prefix
+    # enable_graceful_shutdown: true # Compatibility-only upstream schema field
+    # enable_logging: true # Compatibility-only upstream schema field
+    # log_level: info # Compatibility-only upstream schema field
+    # service_config.priority: 0 # Compatibility-only upstream schema field
+    # service_config.merge_strategy: override # Compatibility-only upstream schema field
 
   # There is no standalone lynx.etcd-lock schema in the repository.
   # Lock behavior is configured in code via LockOptions.
+```
+
+## Minimum Viable YAML Example
+
+Etcd Lock inherits its startup configuration from the etcd plugin. There is no separate `lynx.etcd-lock` YAML tree, so the smallest runnable config is the minimal shared `lynx.etcd` block below.
+
+```yaml
+lynx:
+  etcd:
+    endpoints:
+      - 127.0.0.1:2379 # Required shared etcd endpoint for lock client reuse
 ```
 
 ## Code-level lock options
