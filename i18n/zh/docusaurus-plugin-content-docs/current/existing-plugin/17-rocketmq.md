@@ -58,6 +58,57 @@ title: RocketMQ 插件
 | `enable_trace` | 预期的 consumer trace 开关。 | 需要 trace 诊断时。 | 模板暴露了它，但当前 consumer 创建路径没有把它接入 SDK。 | 以为只改 YAML 就已经打开 trace。 |
 | `topics` | 该 consumer 预期负责的 topic 列表。 | 配置评审和 handler 设计时。 | 配置里会校验 topic，但应用代码在 `SubscribeWith` 里仍要再传一次 topics。 | 只改了一边列表，另一边没同步。 |
 
+## 完整 YAML 示例
+
+```yaml
+rocketmq:
+  name_server:
+    - 127.0.0.1:9876 # 启动与健康探测所需的 NameServer 地址
+    - 127.0.0.1:9877 # 可选的第二个 NameServer，用于高可用启动
+
+  access_key: your-access-key # 只有 ACL 集群才需要填写
+  secret_key: your-secret-key # 与 access_key 配对使用的 ACL 密钥
+  dial_timeout: 3s # 配置层暴露的预期建连超时
+  request_timeout: 30s # 配置层暴露的预期请求超时
+
+  producers:
+    - name: default-producer # 业务代码使用的 producer 名
+      enabled: true # 禁用项会被忽略
+      group_name: lynx-producer-group # 省略时默认 lynx-producer-group
+      max_retries: 3 # 配置层暴露的预期发送重试次数
+      retry_backoff: 100ms # 发送重试之间的退避间隔
+      send_timeout: 3s # 当前实际生效的 SDK 发送超时
+      enable_trace: false # 配置层暴露的预期 producer trace 开关
+      topics:
+        - test-topic # 该 producer 配置对应的预期 topic 列表
+        - user-events
+
+  consumers:
+    - name: default-consumer # 业务代码使用的 consumer 名
+      enabled: true # 禁用项会被忽略
+      group_name: lynx-consumer-group # 省略时默认 lynx-consumer-group
+      consume_model: CLUSTERING # CLUSTERING | BROADCASTING
+      consume_order: CONCURRENTLY # CONCURRENTLY | ORDERLY
+      max_concurrency: 4 # 当前实际生效的 SDK 消费 goroutine 数
+      pull_batch_size: 32 # 当前实际生效的 SDK 拉取批大小
+      pull_interval: 100ms # 当前实际生效的 SDK 拉取间隔
+      enable_trace: false # 配置层暴露的预期 consumer trace 开关
+      topics:
+        - test-topic # 需与应用代码中的 SubscribeWith topics 保持一致
+        - user-events
+```
+
+## 最小可用 YAML 示例
+
+```yaml
+rocketmq:
+  name_server:
+    - 127.0.0.1:9876
+  producers:
+    - name: default-producer
+      enabled: true
+```
+
 ## 配置来源
 
 - `lynx-rocketmq/conf/example_config.yml`

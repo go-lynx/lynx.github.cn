@@ -116,80 +116,84 @@ The example template also includes a root-level `lynx.service_info` block. It be
 | `global.statReporter.plugin.prometheus.interval` | Push interval for the reporter. | When SDK stats reporting is enabled. | Template uses `10s`. | Setting it too low and creating unnecessary reporting pressure. |
 | `config.configConnector.addresses` | Polaris config-center addresses for remote config APIs. | When the plugin should load config from Polaris. | Template uses `127.0.0.1:8093`. | Reusing the service connector address when config center is exposed on a different port. |
 
-## Complete YAML Templates
+## Complete YAML Example
+
+### Main plugin config (`lynx-polaris/conf/example_config.yml`)
 
 ```yaml
 lynx:
   polaris:
-    namespace: default
-    token: your-polaris-token
-    weight: 100
-    ttl: 30
-    timeout: 10s
-    config_path: ./conf/polaris.yaml
-    enable_health_check: true
-    health_check_interval: 30s
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: 1s
-    enable_circuit_breaker: true
-    circuit_breaker_threshold: 0.5
-    enable_service_watch: true
-    enable_config_watch: true
-    load_balancer_type: weighted_random
-    enable_route_rule: true
-    enable_rate_limit: true
-    rate_limit_type: local
-    enable_graceful_shutdown: true
-    shutdown_timeout: 30s
-    enable_logging: true
-    log_level: info
-    service_config:
-      group: DEFAULT_GROUP
-      filename: application.yaml
-      namespace: default
-      additional_configs:
-        - group: SHARED_GROUP
-          filename: shared-config.yaml
-          namespace: default
-          priority: 10
-          merge_strategy: override
+    namespace: default # Polaris namespace; runtime default is default
+    token: your-polaris-token # Optional auth token; omit if the cluster does not require it
+    weight: 100 # Instance weight; keep aligned with service_info.weight when registering
+    ttl: 30 # Heartbeat TTL in seconds; timeout must stay below this value
+    timeout: 10s # Plugin request timeout; validator expects 1s-60s
+    config_path: ./conf/polaris.yaml # Optional SDK config file; repository path is lynx-polaris/conf/polaris.yaml
+    enable_health_check: true # Enable health-check logic
+    health_check_interval: 30s # Health-check interval; used when health checks are enabled
+    enable_metrics: true # Enable Polaris metrics collection
+    enable_retry: true # Enable retry manager for transient failures
+    max_retry_times: 3 # Retry cap; valid range is 0-10
+    retry_interval: 1s # Retry wait interval
+    enable_circuit_breaker: true # Enable circuit-breaker behavior
+    circuit_breaker_threshold: 0.5 # Failure threshold; valid range is 0.1-0.9
+    enable_service_watch: true # Watch service instance changes
+    enable_config_watch: true # Watch remote config changes
+    load_balancer_type: weighted_random # Example load-balancer strategy
+    enable_route_rule: true # Enable route-rule awareness
+    enable_rate_limit: true # Enable rate-limit checks when governance rules exist
+    rate_limit_type: local # Example rate-limit mode
+    enable_graceful_shutdown: true # Schema field; cleanup window still follows shutdown_timeout
+    shutdown_timeout: 30s # Graceful cleanup timeout during unload
+    enable_logging: true # Schema field describing verbose logging intent
+    log_level: info # Supported values: debug, info, warn, error
 
   service_info:
-    service_name: my-service
-    namespace: default
-    host: 127.0.0.1
-    port: 8080
-    weight: 100
-    ttl: 30
+    service_name: my-service # Registered service name
+    namespace: default # Registration namespace; usually matches lynx.polaris.namespace
+    host: 127.0.0.1 # Advertised host or IP; do not keep localhost in containerized deployments
+    port: 8080 # Advertised service port
+    weight: 100 # Registration weight; keep aligned with lynx.polaris.weight
+    ttl: 30 # Registration TTL; keep aligned with lynx.polaris.ttl
     metadata:
-      version: "1.0.0"
-      environment: production
-      region: us-west-1
+      version: "1.0.0" # Example release label
+      environment: production # Example environment label
+      region: us-west-1 # Example region label
 ```
+
+### SDK companion file (`lynx-polaris/conf/polaris.yaml`)
 
 ```yaml
 global:
   serverConnector:
-    protocol: grpc
+    protocol: grpc # SDK transport protocol for Polaris server traffic
     addresses:
-      - 127.0.0.1:8091
+      - 127.0.0.1:8091 # Polaris service-governance endpoint
 
   statReporter:
-    enable: true
+    enable: true # Enable SDK-side stats reporting
     chain:
-      - prometheus
+      - prometheus # Reporter pipeline; must match a configured plugin entry below
     plugin:
       prometheus:
-        type: push
-        address: 127.0.0.1:9091
-        interval: 10s
+        type: push # Template uses push mode
+        address: 127.0.0.1:9091 # Prometheus push destination
+        interval: 10s # Push interval
 
 config:
   configConnector:
     addresses:
-      - 127.0.0.1:8093
+      - 127.0.0.1:8093 # Polaris config-center endpoint
+```
+
+## Minimum Viable YAML Example
+
+The Lynx-side plugin can boot with runtime defaults. Add `config_path` only when you need to override Polaris SDK connectivity explicitly.
+
+```yaml
+lynx:
+  polaris:
+    namespace: default # Smallest explicit plugin block; other validation-sensitive fields fall back to defaults
 ```
 
 ## Common Misconfigurations

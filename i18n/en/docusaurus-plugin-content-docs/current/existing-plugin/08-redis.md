@@ -54,6 +54,34 @@ lynx:
 
 The current schema also supports `network`, `username`, `client_name`, connection lifecycle fields, TLS, and Sentinel / Cluster topologies through `conf/redis.proto`; those newer fields simply are not represented in the old `example_config.yml`.
 
+## Complete YAML Example
+
+The block below mirrors every field that appears in the legacy `lynx-redis/conf/example_config.yml`.
+
+```yaml
+lynx:
+  redis:
+    addr: "localhost:6379" # Legacy single-node address from example_config.yml; migrate new configs to addrs.
+    password: "" # Redis AUTH password.
+    db: 0 # Logical Redis database; cluster mode only supports database 0.
+    pool_size: 10 # Legacy pool-size field; migrate this to max_active_conns / max_idle_conns in current schema.
+    min_idle_conns: 5 # Minimum idle connections kept ready in the pool.
+    max_retries: 3 # Retry count for transient command failures.
+    enable_metrics: true # Legacy sample flag; current runtime installs metrics hooks regardless.
+    enable_health_check: true # Legacy sample flag; current runtime still does startup / readiness checks regardless.
+```
+
+## Minimum Viable YAML Example
+
+For a new single-node deployment, use the current schema and keep only the required address list.
+
+```yaml
+lynx:
+  redis:
+    addrs:
+      - "localhost:6379" # Required current-schema address list; single-node mode still uses addrs.
+```
+
 ## Usage Guidance
 
 - Prefer `GetUniversalRedis()` unless the service is permanently single-node.

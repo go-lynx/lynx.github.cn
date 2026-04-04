@@ -72,40 +72,49 @@ Apollo is Lynx's configuration-center plugin. It is the fit for teams that alrea
 | `priority` | Merge priority hint. | When operators need to know intended precedence. | Default `0`; current plugin keeps insertion order and leaves actual conflict resolution to framework merge logic. | Assuming the plugin itself reorders namespaces by priority. |
 | `merge_strategy` | Conflict merge hint. | When merge behavior should be explicit. | Supported values are `override`, `merge`, `append`. | Setting unsupported strategy names. |
 
-## Complete YAML Template
+## Complete YAML Example
 
 ```yaml
 lynx:
   apollo:
-    app_id: demo-app
-    cluster: default
-    namespace: application
-    meta_server: https://apollo-config.example.com
-    token: your-apollo-token
-    timeout: 10s
-    enable_notification: true
-    notification_timeout: 30s
-    enable_cache: true
-    cache_dir: /tmp/apollo-cache
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: 1s
-    enable_circuit_breaker: true
-    circuit_breaker_threshold: 0.5
-    enable_graceful_shutdown: true
-    shutdown_timeout: 30s
-    enable_logging: true
-    log_level: info
+    app_id: demo-app # Required Apollo application ID
+    cluster: default # Cluster name; runtime default is default
+    namespace: application # Main namespace; runtime default is application
+    meta_server: https://apollo-config.example.com # Required Apollo Meta Server URL
+    token: your-apollo-token # Optional auth token; omit if the environment does not require it
+    timeout: 10s # Request timeout; validator expects 1s-30s and less than notification_timeout
+    enable_notification: true # Enable long-poll style change notification
+    notification_timeout: 30s # Notification wait timeout
+    enable_cache: true # Enable local cache support
+    cache_dir: /tmp/apollo-cache # Required when enable_cache is true
+    enable_metrics: true # Enable metrics collection intent
+    enable_retry: true # Enable retry behavior
+    max_retry_times: 3 # Retry cap; valid range is 0-10
+    retry_interval: 1s # Retry wait interval
+    enable_circuit_breaker: true # Enable circuit-breaker behavior
+    circuit_breaker_threshold: 0.5 # Failure threshold; valid range is 0.1-0.9
+    enable_graceful_shutdown: true # Schema field for graceful-shutdown intent
+    shutdown_timeout: 30s # Cleanup timeout during unload
+    enable_logging: true # Schema field describing verbose logging intent
+    log_level: info # Supported values: debug, info, warn, error
     service_config:
-      namespace: application
+      namespace: application # Primary namespace for multi-namespace bootstrap
       additional_namespaces:
-        - shared-config
-        - feature-flags
-      priority: 0
-      merge_strategy: override
-    release_key: ""
-    ip: ""
+        - shared-config # Shared configuration namespace loaded after the primary one
+        - feature-flags # Feature-flag namespace loaded after shared config
+      priority: 0 # Merge priority hint for operators
+      merge_strategy: override # Supported hints: override, merge, append
+```
+
+## Minimum Viable YAML Example
+
+The Apollo plugin only requires the application identity and a reachable Meta Server. Cluster, namespace, timeout, and cache directory all have runtime defaults.
+
+```yaml
+lynx:
+  apollo:
+    app_id: demo-app # Required Apollo application ID
+    meta_server: https://apollo-config.example.com # Required Apollo Meta Server URL
 ```
 
 ## Common Misconfigurations

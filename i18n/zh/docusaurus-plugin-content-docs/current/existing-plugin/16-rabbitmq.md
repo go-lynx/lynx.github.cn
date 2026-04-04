@@ -65,6 +65,62 @@ title: RabbitMQ 插件
 | `queue_exclusive` | queue 是否独占单连接。 | 私有队列、单 consumer 场景。 | 模板暴露了它，但当前启动声明路径仍固定使用 `false`。 | 以为它已经能阻止其他连接附着。 |
 | `auto_ack` | 是否自动 ACK 消息。 | 真正的消费逻辑里。 | 通常建议保持 `false` 做至少一次处理；它不影响 queue 声明。 | 开成 `true`，但业务仍然期待失败后重新投递。 |
 
+## 完整 YAML 示例
+
+```yaml
+rabbitmq:
+  urls:
+    - amqp://guest:guest@localhost:5672/ # 当前启动路径会优先拨号列表中的第一个 URL
+    - amqp://guest:guest@localhost:5673/ # 可选的第二个 broker URL，用于故障切换预案
+
+  username: guest # 当 URL 中未包含凭证时使用的兜底用户名
+  password: guest # 兜底密码；本地开发之外应改走密钥管理
+  virtual_host: / # broker vhost；默认值为 /
+  dial_timeout: 3s # 配置层暴露的预期建连超时
+  heartbeat: 30s # AMQP 连接的心跳间隔
+  channel_pool_size: 10 # 配置层暴露的预期共享 channel 池大小
+
+  producers:
+    - name: default-producer # 业务代码使用的 producer 名
+      enabled: true # 禁用项会被忽略
+      exchange: lynx.exchange # 要声明并发布到的 exchange
+      exchange_type: direct # direct | fanout | topic | headers
+      routing_key: lynx.routing.key # 纯 fanout exchange 会忽略该值
+      max_retries: 3 # 配置层暴露的预期发布重试次数
+      retry_backoff: 100ms # 重试之间的退避间隔
+      publish_timeout: 3s # 配置层暴露的预期发布超时
+      exchange_durable: true # 业务 exchange 通常应保持 true
+      exchange_auto_delete: false # 仅临时 exchange 才建议自动删除
+      message_persistent: true # 消息持久化投递提示
+
+  consumers:
+    - name: default-consumer # 业务代码使用的 consumer 名
+      enabled: true # 禁用项会被忽略
+      queue: lynx.queue # 要声明并消费的 queue
+      exchange: lynx.exchange # 该 queue 预期绑定的 exchange
+      routing_key: lynx.routing.key # 该 queue 预期绑定的 routing key
+      consumer_tag: lynx.consumer # broker 侧可见的 consumer tag
+      max_concurrency: 4 # 配置层暴露的预期消息处理并发
+      prefetch_count: 10 # 启动时实际应用的 QoS 预取数
+      queue_durable: true # 服务自有业务队列通常应保持 true
+      queue_auto_delete: false # 仅临时队列才建议自动删除
+      queue_exclusive: false # 独占队列不能被其他连接共享
+      auto_ack: false # false 才能保留至少一次处理语义
+```
+
+## 最小可用 YAML 示例
+
+```yaml
+rabbitmq:
+  urls:
+    - amqp://guest:guest@localhost:5672/
+  producers:
+    - name: default-producer
+      enabled: true
+      exchange: lynx.exchange
+      exchange_type: direct
+```
+
 ## 配置来源
 
 - `lynx-rabbitmq/conf/example_config.yml`

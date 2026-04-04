@@ -116,80 +116,84 @@ Polaris 是 Lynx 里能力最完整的控制面插件之一。在这个仓库里
 | `global.statReporter.plugin.prometheus.interval` | reporter 推送间隔。 | 开启 SDK 侧统计上报时。 | 模板使用 `10s`。 | 配得太小，制造无意义的上报压力。 |
 | `config.configConnector.addresses` | Polaris 配置中心地址列表。 | 需要从 Polaris 拉远程配置时。 | 模板使用 `127.0.0.1:8093`。 | 直接复用 server connector 地址，忽略配置中心端口可能不同。 |
 
-## 完整 YAML 模板
+## 完整 YAML 示例
+
+### 主插件配置（`lynx-polaris/conf/example_config.yml`）
 
 ```yaml
 lynx:
   polaris:
-    namespace: default
-    token: your-polaris-token
-    weight: 100
-    ttl: 30
-    timeout: 10s
-    config_path: ./conf/polaris.yaml
-    enable_health_check: true
-    health_check_interval: 30s
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: 1s
-    enable_circuit_breaker: true
-    circuit_breaker_threshold: 0.5
-    enable_service_watch: true
-    enable_config_watch: true
-    load_balancer_type: weighted_random
-    enable_route_rule: true
-    enable_rate_limit: true
-    rate_limit_type: local
-    enable_graceful_shutdown: true
-    shutdown_timeout: 30s
-    enable_logging: true
-    log_level: info
-    service_config:
-      group: DEFAULT_GROUP
-      filename: application.yaml
-      namespace: default
-      additional_configs:
-        - group: SHARED_GROUP
-          filename: shared-config.yaml
-          namespace: default
-          priority: 10
-          merge_strategy: override
+    namespace: default # Polaris namespace；运行时默认就是 default
+    token: your-polaris-token # 可选鉴权 token；集群不要求鉴权时可以省略
+    weight: 100 # 实例权重；如果要注册 service_info，最好和 service_info.weight 保持一致
+    ttl: 30 # 心跳 TTL，单位秒；timeout 必须小于它
+    timeout: 10s # 插件请求超时；validator 要求 1s-60s
+    config_path: ./conf/polaris.yaml # 可选 SDK 配置文件；仓库实际路径是 lynx-polaris/conf/polaris.yaml
+    enable_health_check: true # 启用健康检查逻辑
+    health_check_interval: 30s # 健康检查间隔；仅在开启健康检查时使用
+    enable_metrics: true # 开启 Polaris 指标采集
+    enable_retry: true # 开启瞬时失败重试
+    max_retry_times: 3 # 最大重试次数；合法范围 0-10
+    retry_interval: 1s # 重试间隔
+    enable_circuit_breaker: true # 开启熔断逻辑
+    circuit_breaker_threshold: 0.5 # 熔断阈值；合法范围 0.1-0.9
+    enable_service_watch: true # 监听服务实例变化
+    enable_config_watch: true # 监听远程配置变化
+    load_balancer_type: weighted_random # 示例负载均衡策略
+    enable_route_rule: true # 开启路由规则感知
+    enable_rate_limit: true # 在治理规则存在时启用限流检查
+    rate_limit_type: local # 示例限流模式
+    enable_graceful_shutdown: true # schema 字段；真正的清理窗口仍由 shutdown_timeout 决定
+    shutdown_timeout: 30s # 卸载阶段的优雅清理超时
+    enable_logging: true # schema 字段，用来表达详细日志意图
+    log_level: info # 支持 debug、info、warn、error
 
   service_info:
-    service_name: my-service
-    namespace: default
-    host: 127.0.0.1
-    port: 8080
-    weight: 100
-    ttl: 30
+    service_name: my-service # 注册到 Polaris 的服务名
+    namespace: default # 注册 namespace；通常和 lynx.polaris.namespace 一致
+    host: 127.0.0.1 # 对外发布的主机地址；容器/多机环境不要保留 localhost
+    port: 8080 # 对外发布的服务端口
+    weight: 100 # 注册权重；建议和 lynx.polaris.weight 保持一致
+    ttl: 30 # 注册 TTL；建议和 lynx.polaris.ttl 保持一致
     metadata:
-      version: "1.0.0"
-      environment: production
-      region: us-west-1
+      version: "1.0.0" # 示例版本标签
+      environment: production # 示例环境标签
+      region: us-west-1 # 示例地域标签
 ```
+
+### SDK 配套文件（`lynx-polaris/conf/polaris.yaml`）
 
 ```yaml
 global:
   serverConnector:
-    protocol: grpc
+    protocol: grpc # SDK 访问 Polaris server 的传输协议
     addresses:
-      - 127.0.0.1:8091
+      - 127.0.0.1:8091 # Polaris 服务治理地址
 
   statReporter:
-    enable: true
+    enable: true # 开启 SDK 侧统计上报
     chain:
-      - prometheus
+      - prometheus # reporter 管道；必须和下面 plugin 里的实现对应
     plugin:
       prometheus:
-        type: push
-        address: 127.0.0.1:9091
-        interval: 10s
+        type: push # 模板使用 push 模式
+        address: 127.0.0.1:9091 # Prometheus push 目标地址
+        interval: 10s # 推送间隔
 
 config:
   configConnector:
     addresses:
-      - 127.0.0.1:8093
+      - 127.0.0.1:8093 # Polaris 配置中心地址
+```
+
+## 最小可用 YAML 示例
+
+Lynx 侧插件可以依赖运行时默认值启动。只有在你需要显式覆盖 Polaris SDK 连通性时，才额外补 `config_path`。
+
+```yaml
+lynx:
+  polaris:
+    namespace: default # 最小显式配置；其余校验敏感字段由运行时默认值补齐
 ```
 
 ## 常见误配

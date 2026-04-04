@@ -65,6 +65,62 @@ This page explains the YAML fields from `lynx-rabbitmq/conf/example_config.yml`.
 | `queue_exclusive` | Whether the queue is exclusive to one connection. | Single-consumer, private queue designs. | The template exposes it, but the current startup declaration path still uses `false`. | Assuming it already prevents other consumers from attaching. |
 | `auto_ack` | Whether messages are acknowledged automatically. | Actual consume logic. | Usually keep it `false` for at-least-once handling. It does not affect queue declaration. | Turning it on while the handler still expects manual failure-driven redelivery. |
 
+## Complete YAML Example
+
+```yaml
+rabbitmq:
+  urls:
+    - amqp://guest:guest@localhost:5672/ # Current startup path dials the first URL in the list
+    - amqp://guest:guest@localhost:5673/ # Optional secondary broker URL for failover planning
+
+  username: guest # Fallback username when the URL does not carry credentials
+  password: guest # Fallback password; move to secret management outside local development
+  virtual_host: / # Broker virtual host; defaults to /
+  dial_timeout: 3s # Intended connection timeout knob in config
+  heartbeat: 30s # Heartbeat interval for the AMQP connection
+  channel_pool_size: 10 # Intended shared channel pool size
+
+  producers:
+    - name: default-producer # Application-facing producer name
+      enabled: true # Disabled entries are ignored
+      exchange: lynx.exchange # Exchange to declare and publish to
+      exchange_type: direct # direct | fanout | topic | headers
+      routing_key: lynx.routing.key # Ignored by pure fanout exchanges
+      max_retries: 3 # Intended publish retry count
+      retry_backoff: 100ms # Intended retry backoff between publish attempts
+      publish_timeout: 3s # Intended publish timeout
+      exchange_durable: true # Keep true for business exchanges
+      exchange_auto_delete: false # Auto-delete only for temporary exchanges
+      message_persistent: true # Persistent message delivery hint
+
+  consumers:
+    - name: default-consumer # Application-facing consumer name
+      enabled: true # Disabled entries are ignored
+      queue: lynx.queue # Queue to declare and consume
+      exchange: lynx.exchange # Expected exchange bound to the queue
+      routing_key: lynx.routing.key # Expected binding key
+      consumer_tag: lynx.consumer # Broker-facing consumer tag
+      max_concurrency: 4 # Intended message-handler concurrency
+      prefetch_count: 10 # QoS prefetch count applied at startup
+      queue_durable: true # Keep true for service-owned business queues
+      queue_auto_delete: false # Auto-delete only for temporary queues
+      queue_exclusive: false # Exclusive queues cannot be shared
+      auto_ack: false # false preserves at-least-once handling semantics
+```
+
+## Minimum Viable YAML Example
+
+```yaml
+rabbitmq:
+  urls:
+    - amqp://guest:guest@localhost:5672/
+  producers:
+    - name: default-producer
+      enabled: true
+      exchange: lynx.exchange
+      exchange_type: direct
+```
+
 ## Source Template
 
 - `lynx-rabbitmq/conf/example_config.yml`

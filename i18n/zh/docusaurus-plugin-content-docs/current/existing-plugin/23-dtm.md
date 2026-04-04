@@ -65,6 +65,38 @@ lynx:
 | `grpc_ca_file` | 自定义服务端信任链的 CA 证书路径。 | 只有 `grpc_tls_enabled: true` 且服务端不走默认系统根证书时。 | 可选；不填就沿用系统默认根证书。 | 把它当成所有 TLS 场景都必填，或者私有 CA 场景里反而忘了填。 |
 | `max_connection_retries` | 限制 gRPC 拨号的最大重试次数。 | 只有 `grpc_server` 非空时。 | 为 `0` 时默认补成 `3`；负数会校验失败。启动时还会把 `<1` 的值兜底成至少尝试一次。 | 以为它会影响 HTTP 路径上的 `GenerateGid()` 或健康探测。 |
 
+## 完整 YAML 示例
+
+```yaml
+lynx:
+  dtm:
+    enabled: true # 必填开关；为 false 时会跳过 DTM 启动
+    server_url: "http://dtm:36789/api/dtmsvr" # 必填 HTTP API 地址，GID/查询/Saga/Msg 都依赖它
+    grpc_server: "dtm:36790" # 可选 gRPC 地址；只有相关 helper 真要用时才需要
+    timeout: 10 # NewSaga() / NewMsg() 默认使用 10 秒
+    retry_interval: 10 # 默认 10 秒重试间隔
+    transaction_timeout: 60 # 默认 60 秒全局事务超时
+    branch_timeout: 30 # 文档里的分支超时；helper 默认值仍需你显式传 options
+    pass_through_headers:
+      - "X-Request-ID" # TransactionHelper 辅助路径会透传它
+      - "X-User-ID" # 入站上下文存在时可继续下传
+      - "X-Trace-ID" # 适合链路追踪场景
+    grpc_tls_enabled: false # 只有 DTM gRPC 端要求 TLS 时才设为 true
+    grpc_cert_file: "/etc/dtm/tls/client.crt" # grpc_tls_enabled=true 时需与 grpc_key_file 成对出现
+    grpc_key_file: "/etc/dtm/tls/client.key" # grpc_tls_enabled=true 时需与 grpc_cert_file 成对出现
+    grpc_ca_file: "/etc/dtm/tls/ca.crt" # 私有 CA 或自定义信任链场景下可选
+    max_connection_retries: 3 # 为 0 时默认回退到 3
+```
+
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  dtm:
+    enabled: true # 打开插件
+    server_url: "http://dtm:36789/api/dtmsvr" # 必填 HTTP API 地址
+```
+
 ## 当前 helper 边界
 
 - `NewTcc(gid)` 和 `NewXa(gid)` 目前仍是占位方法，会直接返回 `nil`；实际应使用 `TransactionHelper.ExecuteTCC()`、`TransactionHelper.ExecuteXA()` 或底层 `dtmcli` 全局事务 helper。

@@ -80,41 +80,52 @@ These fields appear as comments in the example file because the schema still acc
 | `service_config.priority` | Retained in schema, but the plugin does not reorder sources by this value. |
 | `service_config.merge_strategy` | Retained in schema, but the plugin does not implement a plugin-local custom merge algorithm from this value. |
 
-## Complete YAML Template
+## Complete YAML Example
 
 ```yaml
 lynx:
   etcd:
     endpoints:
-      - 127.0.0.1:2379
-    timeout: 10s
-    dial_timeout: 5s
-    namespace: lynx/config
-    username: ""
-    password: ""
-    enable_tls: false
-    cert_file: ""
-    key_file: ""
-    ca_file: ""
-    enable_cache: true
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: 1s
-    shutdown_timeout: 10s
-    enable_register: false
-    enable_discovery: false
-    registry_namespace: lynx/services
-    ttl: 30s
+      - 127.0.0.1:2379 # Required etcd endpoint list; each item must be non-empty
+    timeout: 10s # Operation timeout; validator expects 100ms-60s
+    dial_timeout: 5s # Connection timeout; validator expects 100ms-30s
+    namespace: lynx/config # Default config-key namespace prefix
+    username: "" # Optional username for authenticated clusters
+    password: "" # Optional password paired with username
+    enable_tls: false # Enable TLS for the shared etcd client
+    cert_file: "" # Client cert path when TLS auth is required
+    key_file: "" # Client key path when TLS auth is required
+    ca_file: "" # CA bundle path when server cert validation is required
+    enable_cache: true # Enable config-cache behavior
+    enable_metrics: true # Enable metrics collection
+    enable_retry: true # Enable upstream retry manager
+    max_retry_times: 3 # Retry cap for the retry manager
+    retry_interval: 1s # Retry interval
+    shutdown_timeout: 10s # Cleanup timeout during unload
+    enable_register: false # Enable service registration support
+    enable_discovery: false # Enable service discovery support
+    registry_namespace: lynx/services # Service registry namespace when registration is enabled
+    ttl: 30s # Registration TTL when registration is enabled
     service_config:
-      prefix: lynx/config
+      prefix: lynx/config # Primary config prefix loaded from etcd
       additional_prefixes:
-        - lynx/config/app
-    # enable_graceful_shutdown: true
-    # enable_logging: true
-    # log_level: info
-    # service_config.priority: 0
-    # service_config.merge_strategy: override
+        - lynx/config/app # Extra config prefix loaded after the primary one
+    # enable_graceful_shutdown: true # Compatibility-only schema field
+    # enable_logging: true # Compatibility-only schema field
+    # log_level: info # Compatibility-only schema field
+    # service_config.priority: 0 # Compatibility-only schema field
+    # service_config.merge_strategy: override # Compatibility-only schema field
+```
+
+## Minimum Viable YAML Example
+
+The etcd plugin only requires a reachable endpoint list. Timeouts, namespace, and cleanup settings fall back to runtime defaults.
+
+```yaml
+lynx:
+  etcd:
+    endpoints:
+      - 127.0.0.1:2379 # Required shared etcd endpoint
 ```
 
 ## Common Misconfigurations

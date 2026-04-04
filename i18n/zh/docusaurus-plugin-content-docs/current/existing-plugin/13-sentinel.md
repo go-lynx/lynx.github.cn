@@ -137,6 +137,63 @@ lynx:
 | `advanced.stat_interval_ms` | 为高级全局统计窗口保留的字段。 | 当前启动逻辑完全不会消费。 | 只会被解析。真正的窗口仍然由各条规则自己决定。 | 把它当成覆盖所有规则窗口的全局开关。 |
 | `advanced.metric_log_flush_interval_sec` | 为高级指标刷新间隔保留的字段。 | 当前启动逻辑完全不会消费。 | 只会被解析。进程内指标采集频率仍然受 `metrics.interval` 控制。 | 以为改它就能改变 metrics flush 行为。 |
 
+## 完整 YAML 示例
+
+```yaml
+lynx:
+  sentinel:
+    app_name: "order-service" # 为空时先回退到当前 Lynx 应用名，再回退到 lynx-app
+    log_dir: "./logs/sentinel" # 默认 ./logs/sentinel
+    log_level: "info" # 兼容字段；当前 runtime 仍然主要跟随全局 logger
+    flow_rules:
+      - resource: "http:create-user" # 业务代码或中间件里使用的资源名
+        token_calculate_strategy: 0 # flow.Direct
+        control_behavior: 0 # flow.Reject
+        threshold: 200 # 当前资源的限流阈值
+        stat_interval_in_ms: 1000 # 流控统计窗口
+        warm_up_period_sec: 0 # 只有预热类策略才会使用
+        max_queueing_time_ms: 0 # 只有排队/节流行为才会使用
+    circuit_breaker_rules:
+      - resource: "http:create-user" # 熔断保护的资源名
+        strategy: 1 # circuitbreaker.ErrorRatio
+        threshold: 0.5 # 当前熔断策略的触发阈值
+        retry_timeout_ms: 5000 # 熔断打开后多久再探测恢复
+        min_request_amount: 20 # 熔断评估开始前的最小样本量
+        stat_interval_ms: 1000 # 熔断统计窗口
+    system_rules:
+      - metric_type: 0 # system.Load
+        trigger_count: 2.0 # 所选系统指标的触发阈值
+        strategy: 0 # 当前会被解析，但 loader 还不会真正消费
+    metrics:
+      enabled: true # 启动进程内指标采集器
+      interval: "30s" # 留空或非法时都会回退到 30s
+    dashboard:
+      enabled: false # 设为 true 时才会暴露轻量 dashboard
+      port: 8719 # 为 0 时默认回退到 8719
+    data_source:
+      type: "" # 兼容保留字段；当前还不会真的接外部规则源
+      file:
+        flow_rules_path: "" # 预留给外部流控规则文件的路径
+        circuit_breaker_rules_path: "" # 预留给外部熔断规则文件的路径
+        system_rules_path: "" # 预留给外部系统规则文件的路径
+    warm_up:
+      enabled: false # 兼容保留字段；预热仍然按单条 flow rule 配置
+      duration: "" # 兼容保留字段；当前 runtime 会忽略
+    advanced:
+      stat_interval_ms: 0 # 兼容保留字段；今天没有全局覆盖效果
+      metric_log_flush_interval_sec: 0 # 兼容保留字段；metrics 仍然走 metrics.interval
+    enabled: true # 兼容保留字段；当前 runtime 会忽略这个总开关
+```
+
+当前 runtime 即使给出空的 `lynx.sentinel` 块也能启动，因为它会回填 `app_name`、`log_dir`、`log_level`，并自动注入一条默认流控规则和一条默认熔断规则。
+
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  sentinel: {} # runtime 会自动补齐 app_name/log_dir/log_level 和默认 flow + breaker 规则
+```
+
 ## 如何使用
 
 ```go

@@ -91,6 +91,42 @@ lynx:
 | `worker_id_bits` | 指定 worker ID 占用多少位。 | 始终生效。 | 为 `0` 时 runtime 会补成 `5`。它会和固定的 `5` 个 datacenter bits 以及 `sequence_bits` 一起参与总位数约束，三者之和不能超过 `22`。 | 继续沿用旧的 `10` 位 worker 假设，却忘了同步调低 `sequence_bits`。 |
 | `sequence_bits` | 指定每毫秒 sequence 占用多少位。 | 始终生效。 | 为 `0` 时 runtime 会补成 `12`。如果你增加 `worker_id_bits`，就必须相应降低 `sequence_bits`，因为固定 datacenter bits + worker bits + sequence bits 总和不能超过 `22`。 | 写了 `worker_id_bits: 10` 却还保留 `sequence_bits: 12`，导致生成器校验失败。 |
 
+## 完整 YAML 示例
+
+```yaml
+lynx:
+  eon-id:
+    datacenter_id: 1 # 逻辑机房 ID，必须保持在 0-31 之间
+    worker_id: 7 # 手工 worker ID，或自动注册前优先尝试的具体值
+    auto_register_worker_id: true # 设为 true 后，Redis 就变成运行时依赖
+    redis_key_prefix: "prod:lynx:eon-id:" # 最终会被标准化成以 ":" 或 "_" 结尾
+    worker_id_ttl: "30s" # 默认 30s；应保持大于 heartbeat_interval
+    heartbeat_interval: "10s" # 默认 10s；应保持小于 worker_id_ttl
+    enable_clock_drift_protection: true # 控制是否保护时钟回拨
+    max_clock_drift: "5s" # 省略时默认 5s
+    clock_check_interval: "1s" # 当前只会被解析；runtime 不会据此启动独立检查器
+    clock_drift_action: "wait" # 合法值只有 wait、error、ignore
+    enable_sequence_cache: true # 启用 sequence cache 提升吞吐
+    sequence_cache_size: 1000 # 默认 1000；必须放得进 2^sequence_bits
+    enable_metrics: true # 创建生成器指标
+    redis_plugin_name: "redis" # 共享 Redis 资源名，不是 Redis DSN
+    redis_db: 0 # 配置会保留，但当前 runtime 不会靠它切换共享 client 的 DB
+    custom_epoch: 1609459200000 # 为 0 时默认回退到 2021-01-01 00:00:00 UTC
+    worker_id_bits: 5 # 当前 runtime 省略时的回退值
+    sequence_bits: 12 # 当前 runtime 省略时的回退值
+```
+
+当前 `lynx.eon-id` 运行时并没有独立的 `enabled` 或 `node_id` 键，所以最小可运行示例需要使用真实存在的手工 worker 分配字段。
+
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  eon-id:
+    datacenter_id: 0 # 单机房部署的显式 datacenter 配置
+    worker_id: 1 # 关闭自动注册时的显式手工 worker ID
+```
+
 ## 如何使用
 
 ```go

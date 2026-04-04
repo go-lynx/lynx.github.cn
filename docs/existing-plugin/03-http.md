@@ -152,6 +152,97 @@ These keys are currently documentation-only in the HTTP server plugin.
 | `max_requests` | Probe-request count allowed while half-open. | During request handling. | Default `10`. | Leaving it too high and flooding a recovering dependency path. |
 | `failure_threshold` | Failure-rate threshold in the closed state. | During request handling. | Default `0.5`; explicit `0` also becomes `0.5` in the breaker constructor. | Setting `0` to mean "disable the rate check". |
 
+## Complete YAML Example
+
+```yaml
+lynx:
+  http:
+    network: "tcp" # listener type; default tcp
+    addr: ":8080" # bind address; default :8080
+    timeout: "30s" # example template value; runtime default is 10s when omitted
+
+    tls_enable: false # turn on only after lynx.tls has loaded certificates
+    tls_auth_type: 0 # 0..4; ignored while tls_enable=false
+
+    monitoring:
+      enable_metrics: true # controls whether /metrics is exposed
+      metrics_path: "/metrics" # metrics endpoint path
+      health_path: "/health" # health endpoint path
+      enable_request_logging: true # request logs require middleware.enable_logging=true
+      enable_error_logging: true # error logs also require middleware.enable_logging=true
+      enable_route_metrics: true # per-route metrics labels
+      enable_connection_metrics: true # connection / pool gauges
+      enable_queue_metrics: true # queue metrics; useful only with rate-limit middleware
+      enable_error_type_metrics: true # keeps detailed error labels
+
+    security:
+      max_request_size: 10485760 # template value 10 MiB; current runtime stores but does not enforce it
+      cors:
+        enabled: false # template field; current HTTP runtime does not emit CORS headers from here
+        allowed_origins: ["*"] # template allow-list
+        allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"] # template method list
+        allowed_headers: ["*"] # template header list
+        exposed_headers: [] # template exposed headers
+        allow_credentials: false # template credentials flag
+        max_age: 86400 # template preflight cache seconds
+      rate_limit:
+        enabled: true # live in-process limiter switch
+        rate_per_second: 100 # steady-state rate limit
+        burst_limit: 200 # burst allowance
+      security_headers:
+        enabled: false # template field; current HTTP runtime does not emit these headers
+        content_security_policy: "default-src 'self'" # template CSP value
+        x_frame_options: "DENY" # template X-Frame-Options value
+        x_content_type_options: "nosniff" # template X-Content-Type-Options value
+        x_xss_protection: "1; mode=block" # template X-XSS-Protection value
+
+    performance:
+      max_connections: 1000 # live in-flight admission semaphore, not raw socket count
+      max_concurrent_requests: 500 # second in-flight request cap
+      read_buffer_size: 4096 # TCP read buffer size
+      write_buffer_size: 4096 # TCP write buffer size
+      connection_pool:
+        max_idle_conns: 100 # template-only today; server runtime does not consume this block
+        max_idle_conns_per_host: 10 # template-only today
+        max_conns_per_host: 100 # template-only today
+        keep_alive_duration: "30s" # template-only today
+      read_timeout: "30s" # sets net/http.Server.ReadTimeout only when present
+      write_timeout: "30s" # sets net/http.Server.WriteTimeout only when present
+      idle_timeout: "60s" # runtime default is 60s when omitted
+      read_header_timeout: "20s" # runtime default is 20s when omitted
+
+    middleware:
+      enable_tracing: true # tracing middleware switch
+      enable_logging: true # request logging middleware switch
+      enable_recovery: true # panic recovery middleware switch
+      enable_validation: true # protobuf validation middleware switch
+      enable_rate_limit: true # must stay true for local rate limiting to run
+      enable_metrics: true # must stay true for request metrics middleware
+      custom_middleware: {} # placeholder map; current runtime does not interpret it
+
+    graceful_shutdown:
+      shutdown_timeout: "30s" # live cleanup timeout
+      wait_for_ongoing_requests: true # template field; current cleanup logic does not consume it
+      max_wait_time: "60s" # template field; current cleanup logic does not consume it
+
+    circuit_breaker:
+      enabled: true # omitting the whole block still creates a default-enabled breaker
+      max_failures: 5 # failure-count threshold
+      timeout: "60s" # open-state timeout
+      max_requests: 10 # half-open probe limit
+      failure_threshold: 0.5 # closed-state failure-rate threshold
+```
+
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  http:
+    addr: ":8080" # enough to start a plain HTTP listener; network defaults to tcp
+```
+
+Add `lynx.tls` and set `tls_enable: true` only when you actually want HTTPS.
+
 ## Practical Rules
 
 - If you want HTTPS, configure both the TLS plugin and `lynx.http.tls_enable: true`.

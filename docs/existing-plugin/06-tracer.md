@@ -147,57 +147,79 @@ That means the first job of this page is mapping every example key to the runtim
 | `key_file` | Supplies the client private key for mTLS. | Only when `cert_file` is set. | Optional. | Pointing it at the wrong key or a missing file. |
 | `insecure_skip_verify` | Skips peer verification. | Only when TLS is in use. | Test-only; not recommended for production. | Using it as the normal fix for certificate problems. |
 
-## Corrected YAML Skeleton
+## Complete YAML Example
+
+`example_config.yml` is still flat and legacy. The snippet below rewrites that full surface into the runtime-working `lynx.tracer` tree so you can copy it directly.
 
 ```yaml
 lynx:
   tracer:
-    enable: true
-    addr: "otel-collector:4317" # use "None" for propagation-only mode
-    ratio: 1.0
+    enable: true # required master switch
+    addr: "otel-collector:4317" # OTLP collector host:port; use "None" for propagation-only mode
+    ratio: 1.0 # legacy fallback sampler ratio; 0 is normalized to 1.0
     config:
-      protocol: OTLP_GRPC
-      insecure: true
+      protocol: OTLP_GRPC # OTLP_GRPC or OTLP_HTTP
+      insecure: false # true means plaintext transport
       tls:
-        ca_file: "/etc/ssl/certs/otel-ca.pem"
-        cert_file: "/etc/ssl/certs/otel-client.pem"
-        key_file: "/etc/ssl/private/otel-client.key"
-        insecure_skip_verify: false
+        ca_file: "/etc/ssl/certs/otel-ca.pem" # custom CA for TLS verification
+        cert_file: "/etc/ssl/certs/otel-client.pem" # client certificate for mTLS
+        key_file: "/etc/ssl/private/otel-client.key" # client key for mTLS
+        insecure_skip_verify: false # test-only hostname / cert verification bypass
       headers:
-        Authorization: "Bearer ${OTEL_TOKEN}"
-      compression: COMPRESSION_GZIP
-      timeout: 10s
+        Authorization: "Bearer ${OTEL_TOKEN}" # optional exporter header map
+      compression: COMPRESSION_GZIP # COMPRESSION_NONE or COMPRESSION_GZIP
+      timeout: 10s # export timeout
       retry:
-        enabled: true
-        max_attempts: 3
-        initial_interval: 100ms
-        max_interval: 5s
+        enabled: true # OTLP gRPC retry switch
+        max_attempts: 3 # retry cap
+        initial_interval: 100ms # first retry backoff
+        max_interval: 1s # max retry backoff
       connection:
-        connect_timeout: 10s
-        reconnection_period: 5s
+        max_conn_idle_time: 5m # close idle exporter connections after this
+        max_conn_age: 10m # hard max connection age
+        max_conn_age_grace: 10s # grace window before hard close
+        connect_timeout: 10s # dial timeout
+        reconnection_period: 5s # reconnect spacing; defaults to 5s when omitted
+      load_balancing:
+        policy: round_robin # pick_first | round_robin | least_conn
+        health_check: true # gRPC service-config health-check hint
       batch:
-        enabled: true
-        max_queue_size: 2048
-        scheduled_delay: 200ms
-        export_timeout: 30s
-        max_batch_size: 512
+        enabled: true # batch span processor switch
+        max_queue_size: 1000 # queued spans cap
+        scheduled_delay: 1s # legacy batch_timeout maps to this runtime field
+        export_timeout: 30s # one batch export timeout
+        max_batch_size: 100 # spans per batch cap
       sampler:
-        type: PARENT_BASED_TRACEID_RATIO
-        ratio: 0.1
+        type: TRACEID_RATIO # ALWAYS_ON | ALWAYS_OFF | TRACEID_RATIO | PARENT_BASED_TRACEID_RATIO
+        ratio: 0.1 # required for ratio-based samplers
       propagators:
-        - W3C_TRACE_CONTEXT
-        - W3C_BAGGAGE
-        - B3
+        - W3C_TRACE_CONTEXT # default trace context format
+        - W3C_BAGGAGE # baggage propagation
+        - B3 # B3 headers
+        - JAEGER # Jaeger propagation
       resource:
-        service_name: "user-service"
+        service_name: "my-service" # overrides OpenTelemetry service.name
         attributes:
-          deployment.environment: "prod"
+          environment: "production" # custom resource attribute
+          region: "us-west-2" # custom resource attribute
+          team: "platform" # custom resource attribute
       limits:
-        attribute_count_limit: 128
-        attribute_value_length_limit: 2048
-        event_count_limit: 128
-        link_count_limit: 128
-      http_path: /v1/traces
+        attribute_count_limit: 128 # max span attributes
+        attribute_value_length_limit: 256 # max attribute value length
+        event_count_limit: 128 # max events per span
+        event_attribute_count_limit: 32 # compatibility field; currently ignored
+        link_count_limit: 128 # max links per span
+        link_attribute_count_limit: 32 # compatibility field; currently ignored
+      http_path: "/v1/traces" # OTLP HTTP path; used only with protocol=OTLP_HTTP
 ```
 
-Use the legacy `example_config.yml` as a source of ideas, not as a copy-paste-ready runtime file.
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  tracer:
+    enable: true # required switch
+    addr: "otel-collector:4317" # collector endpoint; default exporter path is OTLP gRPC
+```
+
+Set `addr: "None"` only when you intentionally want propagation without exporting spans.

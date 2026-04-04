@@ -72,40 +72,49 @@ Apollo 是 Lynx 的配置中心插件，适合已经把配置发布、namespace 
 | `priority` | 合并优先级提示。 | 需要让运维和开发理解预期优先级时。 | 默认 `0`；当前插件本身不按它重排，实际合并优先级交给框架层。 | 误以为插件会自动按 priority 重排 namespace。 |
 | `merge_strategy` | 冲突合并策略提示。 | 需要明确冲突处理约定时。 | 支持 `override`、`merge`、`append`。 | 使用了框架不认识的策略名。 |
 
-## 完整 YAML 模板
+## 完整 YAML 示例
 
 ```yaml
 lynx:
   apollo:
-    app_id: demo-app
-    cluster: default
-    namespace: application
-    meta_server: https://apollo-config.example.com
-    token: your-apollo-token
-    timeout: 10s
-    enable_notification: true
-    notification_timeout: 30s
-    enable_cache: true
-    cache_dir: /tmp/apollo-cache
-    enable_metrics: true
-    enable_retry: true
-    max_retry_times: 3
-    retry_interval: 1s
-    enable_circuit_breaker: true
-    circuit_breaker_threshold: 0.5
-    enable_graceful_shutdown: true
-    shutdown_timeout: 30s
-    enable_logging: true
-    log_level: info
+    app_id: demo-app # 必填的 Apollo 应用 ID
+    cluster: default # 集群名；运行时默认是 default
+    namespace: application # 主 namespace；运行时默认是 application
+    meta_server: https://apollo-config.example.com # 必填的 Apollo Meta Server URL
+    token: your-apollo-token # 可选鉴权 token；环境不要求时可以省略
+    timeout: 10s # 请求超时；validator 要求 1s-30s 且必须小于 notification_timeout
+    enable_notification: true # 开启长轮询式配置变更通知
+    notification_timeout: 30s # 通知等待超时
+    enable_cache: true # 开启本地缓存支持
+    cache_dir: /tmp/apollo-cache # enable_cache=true 时必须给出缓存目录
+    enable_metrics: true # 表达启用指标采集的意图
+    enable_retry: true # 开启重试能力
+    max_retry_times: 3 # 最大重试次数；合法范围 0-10
+    retry_interval: 1s # 重试间隔
+    enable_circuit_breaker: true # 开启熔断逻辑
+    circuit_breaker_threshold: 0.5 # 熔断阈值；合法范围 0.1-0.9
+    enable_graceful_shutdown: true # 表达优雅关闭意图的 schema 字段
+    shutdown_timeout: 30s # 卸载阶段清理超时
+    enable_logging: true # 表达详细日志意图的 schema 字段
+    log_level: info # 支持 debug、info、warn、error
     service_config:
-      namespace: application
+      namespace: application # 多 namespace 启动时的主 namespace
       additional_namespaces:
-        - shared-config
-        - feature-flags
-      priority: 0
-      merge_strategy: override
-    release_key: ""
-    ip: ""
+        - shared-config # 在主 namespace 后合并的共享配置
+        - feature-flags # 在共享配置之后再合并的特性开关配置
+      priority: 0 # 给运维看的优先级提示
+      merge_strategy: override # 支持 override、merge、append
+```
+
+## 最小可用 YAML 示例
+
+Apollo 插件真正必需的只有应用身份和一个可达的 Meta Server。cluster、namespace、timeout、cache_dir 都有运行时默认值。
+
+```yaml
+lynx:
+  apollo:
+    app_id: demo-app # 必填的 Apollo 应用 ID
+    meta_server: https://apollo-config.example.com # 必填的 Apollo Meta Server URL
 ```
 
 ## 常见误配

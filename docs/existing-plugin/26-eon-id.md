@@ -91,6 +91,42 @@ The sample comments in `example_config.yml` still imply a wider worker-ID range 
 | `worker_id_bits` | Sets how many bits are reserved for worker IDs. | Always. | If `0`, runtime backfills `5`. This field interacts with fixed `5` datacenter bits and `sequence_bits`; the total cannot exceed `22`. | Copying an old `10`-bit worker assumption without reducing `sequence_bits`. |
 | `sequence_bits` | Sets how many bits are reserved for the per-millisecond sequence. | Always. | If `0`, runtime backfills `12`. Raising `worker_id_bits` requires lowering `sequence_bits`, because fixed datacenter bits plus worker bits plus sequence bits must stay within `22`. | Setting `worker_id_bits: 10` and leaving `sequence_bits: 12`, which makes the generator fail validation. |
 
+## Complete YAML Example
+
+```yaml
+lynx:
+  eon-id:
+    datacenter_id: 1 # logical datacenter ID; must stay within 0-31
+    worker_id: 7 # preferred manual worker ID or the first choice before auto-registration fallback
+    auto_register_worker_id: true # when true, Redis becomes a runtime dependency
+    redis_key_prefix: "prod:lynx:eon-id:" # normalized to end with ":" or "_" if you forget the suffix
+    worker_id_ttl: "30s" # defaults to 30s; should stay above heartbeat_interval
+    heartbeat_interval: "10s" # defaults to 10s; should stay below worker_id_ttl
+    enable_clock_drift_protection: true # guards against backward clock movement
+    max_clock_drift: "5s" # defaults to 5s when omitted
+    clock_check_interval: "1s" # parsed today; current runtime does not start a separate checker from it
+    clock_drift_action: "wait" # valid values: wait, error, ignore
+    enable_sequence_cache: true # enables cached sequence allocation for higher throughput
+    sequence_cache_size: 1000 # defaults to 1000; must fit within 2^sequence_bits
+    enable_metrics: true # allocates generator metrics
+    redis_plugin_name: "redis" # shared Redis resource name, not a Redis DSN
+    redis_db: 0 # preserved in config; current runtime does not switch DB on the shared client
+    custom_epoch: 1609459200000 # default epoch = 2021-01-01 00:00:00 UTC when 0
+    worker_id_bits: 5 # current runtime fallback when omitted
+    sequence_bits: 12 # current runtime fallback when omitted
+```
+
+The current runtime does not expose standalone `enabled` or `node_id` keys under `lynx.eon-id`. The smallest runnable YAML therefore uses the actual manual worker-allocation fields below.
+
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  eon-id:
+    datacenter_id: 0 # explicit single-datacenter deployment
+    worker_id: 1 # explicit manual worker ID while auto-registration stays off
+```
+
 ## How To Consume It
 
 ```go

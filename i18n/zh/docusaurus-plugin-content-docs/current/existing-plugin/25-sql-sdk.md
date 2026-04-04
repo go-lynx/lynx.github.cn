@@ -36,6 +36,64 @@ title: SQL SDK
 - 如果你接入的是 MSSQL，就配置 `lynx.mssql`。对应模板在 `lynx-mssql/conf/example_config.yml`。
 - 如果你的代码 import 了 `lynx-sql-sdk`，那是为了接口和共享 runtime 语义，不代表它自己要接管配置归属。
 
+## Complete YAML Example（完整 YAML 示例）
+
+`lynx-sql-sdk` 没有独立的 `conf/example_config.yml`。因此这里所谓“完整示例”，一定是完整的具体 owner 配置块，例如 `lynx.pgsql` 或 `lynx.mssql`，而不是虚构出来的 `lynx.sql` 前缀。
+
+```yaml
+# lynx-sql-sdk 没有独立 YAML 前缀。
+# 你需要配置的是具体 SQL 插件。
+lynx:
+  pgsql:
+    driver: "pgx" # 具体 PostgreSQL 插件配置，归属于 lynx.pgsql。
+    source: "postgres://app_user:app_password@127.0.0.1:5432/orders?sslmode=disable&connect_timeout=10"
+    min_conn: 10
+    max_conn: 50
+    max_idle_conn: 12
+    max_idle_time: "30s"
+    max_life_time: "300s"
+
+# 或者改成 lynx.mssql，而不是发明 lynx.sql：
+# lynx:
+#   mssql:
+#     driver: "mssql"
+#     source: ""
+#     min_conn: 5
+#     max_conn: 20
+#     max_idle_conn: 10
+#     max_idle_time: "300s"
+#     max_life_time: "3600s"
+#     server_config:
+#       instance_name: "sqlserver.internal"
+#       port: 1433
+#       database: "orders"
+#       username: "sa"
+#       password: "change_me"
+#       encrypt: true
+#       trust_server_certificate: false
+#       connection_timeout: 30
+#       command_timeout: 30
+#       application_name: "orders-api"
+#       workstation_id: "orders-api-01"
+#       connection_pooling: true
+#       max_pool_size: 20
+#       min_pool_size: 5
+#       pool_blocking_timeout: 30
+#       pool_lifetime_timeout: 3600
+```
+
+## Minimum Viable YAML Example（最小可用 YAML 示例）
+
+这里不存在 `lynx.sql` 或 `lynx.sql-sdk` 子树。哪怕是最小可运行配置，也必须继续挂在具体数据库插件下面。
+
+```yaml
+# 不存在 lynx.sql 或 lynx.sql-sdk YAML 前缀。
+# 最小可用配置仍然属于具体插件，例如：
+lynx:
+  pgsql:
+    source: "postgres://app_user:app_password@127.0.0.1:5432/orders?sslmode=disable" # 配置归属始终在 lynx.pgsql 下。
+```
+
 ## Related Pages（相关页面）
 
 - [数据库插件](/docs/existing-plugin/db)

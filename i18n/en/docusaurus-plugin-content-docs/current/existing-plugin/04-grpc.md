@@ -144,6 +144,113 @@ The `lynx.polaris` block in `example_polaris_config.yml` is not owned by `lynx-g
 | `lynx.polaris.retry_interval` | Spaces Polaris retries. | Works together with `max_retry_times`. | Using a huge interval and making service discovery look frozen. |
 | `lynx.polaris.health_check_interval` | Controls Polaris-side health checks / refresh cadence. | Affects how quickly discovery state changes are observed. | Expecting it to replace per-RPC gRPC health checks on the client. |
 
+## Complete YAML Example
+
+```yaml
+lynx:
+  polaris:
+    namespace: "default" # discovery namespace from example_polaris_config.yml
+    server_addresses:
+      - "127.0.0.1:8091" # one or more Polaris servers
+    enable_retry: true # Polaris-side retry switch
+    max_retry_times: 3 # Polaris retry cap
+    retry_interval: "2s" # Polaris retry spacing
+    health_check_interval: "5s" # Polaris refresh / health cadence
+
+  grpc:
+    service:
+      network: "tcp" # listener transport; default tcp
+      addr: ":9090" # server bind address; default :9090
+      tls_enable: false # turn on only after lynx.tls has loaded certs
+      tls_auth_type: 0 # 0..4; only meaningful when tls_enable=true
+      timeout: "10s" # request timeout
+      max_concurrent_streams: 1000 # safe runtime default if omitted or 0
+      max_recv_msg_size: 10485760 # 10 MiB inbound message cap
+      max_send_msg_size: 10485760 # 10 MiB outbound message cap
+      graceful_shutdown_timeout: "30s" # YAML-only server option; default 30s
+      enable_tracing: true # server tracing interceptor switch
+      enable_request_logging: true # server request logging interceptor switch
+      enable_metrics: true # server metrics interceptor switch
+      rate_limit:
+        enabled: false # in-process unary rate limiter
+        rate_per_second: 100 # steady-state unary throughput
+        burst: 200 # burst allowance; <=0 falls back to rate_per_second+1
+      max_inflight_unary: 0 # 0 means unlimited concurrent unary RPCs
+      circuit_breaker:
+        enabled: false # server-side circuit breaker switch
+        failure_threshold: 5 # failure-count threshold
+        recovery_timeout: "30s" # open-to-half-open wait
+        success_threshold: 3 # successful probes needed to close again
+        timeout: "10s" # protected request timeout
+        max_concurrent_requests: 10 # breaker-managed concurrency cap
+
+    client:
+      default_timeout: "10s" # fallback RPC timeout
+      default_keep_alive: "30s" # connection keepalive interval
+      max_retries: 3 # default unary retry count
+      retry_backoff: "1s" # retry backoff base interval
+      max_connections: 10 # max connections per service when pooling is used
+      tls_enable: false # global fallback TLS switch; subscribe_services items do not inherit cleanly
+      tls_auth_type: 0 # global fallback TLS auth mode
+      connection_pooling: true # enables the multi-connection pool
+      pool_size: 10 # max number of services tracked by the pool
+      idle_timeout: "60s" # pooled connection idle eviction time
+      health_check_enabled: true # template field; current client code does not consume it
+      health_check_interval: "30s" # template field; current client code does not consume it
+      metrics_enabled: true # template field; current client code does not consume it
+      tracing_enabled: true # live outbound trace-context injection switch
+      logging_enabled: true # template field; current client code does not consume it
+      max_message_size: 4194304 # template field; current client code does not consume it
+      compression_enabled: false # template field; current client code does not consume it
+      compression_type: "gzip" # template field; current client code does not consume it
+      subscribe_services:
+        - name: "user-service" # lookup key for GetConnection("user-service")
+          endpoint: "127.0.0.1:9091" # static fallback when discovery is unavailable
+          timeout: "5s" # per-service timeout override
+          tls_enable: true # per-service TLS switch
+          tls_auth_type: 2 # per-service TLS auth mode
+          max_retries: 5 # per-service retry override
+          required: true # startup fails if this dependency is unavailable
+          metadata:
+            version: "v1.0" # optional load-balancer / routing metadata
+            region: "us-west" # additional routing hint
+          load_balancer: "round_robin" # discovery-only balancing strategy
+          circuit_breaker_enabled: true # per-service client breaker
+          circuit_breaker_threshold: 5 # per-service breaker failure-count threshold
+      services:
+        - name: "legacy-service" # deprecated static service list
+          endpoint: "legacy.internal:9094" # required static endpoint in legacy mode
+          timeout: "10s" # per-service timeout override
+          tls_enable: false # legacy per-service TLS switch
+          tls_auth_type: 0 # legacy per-service TLS auth mode
+          max_retries: 3 # legacy per-service retry override
+
+subscriptions:
+  grpc:
+    - service: "user-service" # bootstrap subscription service name
+      tls: false # enables TLS for the bootstrap subscription connection
+      required: true # fail startup if this connection cannot be established
+      ca_name: "" # optional CA payload name when tls=true
+      ca_group: "" # optional CA group; empty falls back to ca_name
+```
+
+## Minimum Viable YAML Example
+
+Because server and client are independent, the smallest copy-runnable block can be just the server, or a client with one direct upstream. The snippet below shows both without Polaris:
+
+```yaml
+lynx:
+  grpc:
+    service:
+      addr: ":9090" # enough to start the gRPC server; network defaults to tcp
+    client:
+      subscribe_services:
+        - name: "user-service" # connection key for GetConnection("user-service")
+          endpoint: "127.0.0.1:9091" # direct upstream when no discovery plugin is configured
+```
+
+Add `subscriptions.grpc[*]` only when you need bootstrap-time shared subscription connections.
+
 ## Practical Rules
 
 - Turn on server TLS and client TLS separately; they are not coupled automatically.

@@ -54,6 +54,34 @@ lynx:
 
 当前 schema 还支持 `network`、`username`、`client_name`、连接生命周期字段、TLS、Sentinel / Cluster 等能力，这些新字段都在 `conf/redis.proto` 里，只是旧 `example_config.yml` 没有覆盖到。
 
+## Complete YAML Example（完整 YAML 示例）
+
+下面这个代码块逐项镜像了遗留 `lynx-redis/conf/example_config.yml` 里出现过的全部字段。
+
+```yaml
+lynx:
+  redis:
+    addr: "localhost:6379" # example_config.yml 里的遗留单机地址写法；新配置应迁移到 addrs。
+    password: "" # Redis AUTH 密码。
+    db: 0 # Redis 逻辑库编号；cluster 模式只能使用 0。
+    pool_size: 10 # 遗留连接池大小字段；在当前 schema 中应迁移为 max_active_conns / max_idle_conns。
+    min_idle_conns: 5 # 连接池里预留的最小空闲连接数。
+    max_retries: 3 # 瞬时故障时的命令重试次数。
+    enable_metrics: true # 遗留样例开关；当前 runtime 无论如何都会装 metrics hook。
+    enable_health_check: true # 遗留样例开关；当前 runtime 无论如何都会做启动 / readiness 检查。
+```
+
+## Minimum Viable YAML Example（最小可用 YAML 示例）
+
+如果你现在新建单机 Redis 配置，应当直接使用当前 schema，并且只保留必需的地址列表。
+
+```yaml
+lynx:
+  redis:
+    addrs:
+      - "localhost:6379" # 当前 schema 必需的地址列表；即使是单机也用 addrs。
+```
+
 ## Usage Guidance（使用建议）
 
 - 除非服务永远只跑单机 Redis，否则优先使用 `GetUniversalRedis()`。

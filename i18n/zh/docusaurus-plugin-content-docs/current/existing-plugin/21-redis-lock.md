@@ -33,6 +33,43 @@ title: Redis Lock 插件
 
 常用 API 包括 `Lock`、`LockWithToken`、`LockWithRetry`、`LockWithOptions`、`NewLock`、`UnlockByValue`、`GetStats()`、`Shutdown()`。
 
+## Complete YAML Example（完整 YAML 示例）
+
+Redis Lock 没有独立的 `conf/example_config.yml`。因此这里所谓“完整示例”，本质上仍然是在配置它所复用的上游 Redis runtime client。
+
+```yaml
+# Redis Lock 没有独立 YAML 前缀。
+# 需要配置的是 lynx-redis-lock 复用的上游 Redis runtime client。
+lynx:
+  redis:
+    addrs:
+      - "localhost:6379" # 所有 Redis 消费者（包括锁）共享的 Redis 地址。
+    password: "" # 共享的 Redis AUTH 密码。
+    db: 0 # 共享的逻辑数据库编号。
+    min_idle_conns: 5 # 锁流量和其他 Redis 使用方共用的最小空闲连接数。
+    max_active_conns: 20 # runtime 持有 client 的共享活跃连接上限。
+    max_retries: 3 # 共享 Redis 命令重试次数。
+```
+
+## Minimum Viable YAML Example（最小可用 YAML 示例）
+
+这里依然不存在 `lynx.redis-lock` 子树。最小 runtime YAML 只负责创建上游 Redis client；真正的 `key`、`ttl` 等锁参数必须从代码传入。
+
+```yaml
+# 不存在 lynx.redis-lock YAML 前缀。
+# 最小可用 runtime YAML 只负责创建上游 Redis client：
+lynx:
+  redis:
+    addrs:
+      - "localhost:6379"
+
+# 锁参数由代码传入，而不是来自 YAML：
+# key: "jobs:reconcile"
+# ttl: "30s"
+# retry_interval: "250ms"
+# max_retries: 5
+```
+
 ## Related Pages（相关页面）
 
 - [Redis](/docs/existing-plugin/redis)

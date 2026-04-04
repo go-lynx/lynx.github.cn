@@ -33,6 +33,43 @@ title: Redis Lock Plugin
 
 Common APIs include `Lock`, `LockWithToken`, `LockWithRetry`, `LockWithOptions`, `NewLock`, `UnlockByValue`, `GetStats()`, and `Shutdown()`.
 
+## Complete YAML Example
+
+Redis Lock has no standalone `conf/example_config.yml`. A "complete" setup still means configuring the upstream Redis runtime client that the lock library reuses.
+
+```yaml
+# Redis Lock has no standalone YAML prefix.
+# Configure the upstream Redis runtime client that lynx-redis-lock reuses.
+lynx:
+  redis:
+    addrs:
+      - "localhost:6379" # Shared Redis endpoint for all Redis consumers, including locks.
+    password: "" # Shared Redis AUTH password, if the server requires one.
+    db: 0 # Shared logical Redis database.
+    min_idle_conns: 5 # Shared idle-connection floor for lock traffic and any other Redis consumers.
+    max_active_conns: 20 # Shared active-connection cap for the runtime-owned client.
+    max_retries: 3 # Shared Redis command retry count.
+```
+
+## Minimum Viable YAML Example
+
+There is still no `lynx.redis-lock` subtree. The minimum runtime YAML only creates the upstream Redis client; lock-specific values such as `key` and `ttl` stay in code.
+
+```yaml
+# No lynx.redis-lock YAML prefix exists.
+# Minimum viable runtime YAML only creates the upstream Redis client:
+lynx:
+  redis:
+    addrs:
+      - "localhost:6379"
+
+# Lock parameters are passed from code, not from YAML:
+# key: "jobs:reconcile"
+# ttl: "30s"
+# retry_interval: "250ms"
+# max_retries: 5
+```
+
 ## Related Pages
 
 - [Redis](/docs/existing-plugin/redis)

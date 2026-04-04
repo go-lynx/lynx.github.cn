@@ -87,46 +87,59 @@ Code reads this sibling tree from `lynx.tls.auto` only when `lynx.tls.source_typ
 | `shared_ca.config_name` | Control-plane config name for the shared CA payload. | Only when `shared_ca.from: control_plane`. | Required in control-plane mode. | Expecting `file_name` from `lynx.tls` to double as the shared CA source. |
 | `shared_ca.config_group` | Control-plane group for the shared CA payload. | Only when `shared_ca.from: control_plane`. | Optional; empty falls back to `config_name`. | Setting a different group name but forgetting the remote config lives elsewhere. |
 
-## Practical YAML Skeleton
+## Complete YAML Example
+
+This snippet stays under the `lynx:` root from `boot-example.yml`; only the TLS subtree is shown here.
 
 ```yaml
 lynx:
   tls:
-    source_type: "local_file" # control_plane | local_file | memory | auto
-    file_name: ""
-    group: ""
+    source_type: "local_file" # control_plane | local_file | memory | auto; default is control_plane
+    file_name: "gateway-tls" # control-plane payload name when source_type=control_plane
+    group: "gateway-tls" # optional control-plane group; empty falls back to file_name
     local_file:
-      cert_file: "/etc/ssl/certs/server.crt"
-      key_file: "/etc/ssl/private/server.key"
-      root_ca_file: "/etc/ssl/certs/ca.crt"
-      watch_files: false
-      reload_interval: "5s"
-      cert_format: "pem"
+      cert_file: "/etc/ssl/certs/server.crt" # required in local_file mode
+      key_file: "/etc/ssl/private/server.key" # required in local_file mode
+      root_ca_file: "/etc/ssl/certs/root-ca.pem" # optional custom root CA for peer validation
+      watch_files: true # local_file-only hot reload switch; default false
+      reload_interval: "10s" # local file reload check interval; default 5s
+      cert_format: "pem" # pem or der; default pem
     memory:
-      cert_data: ""
-      key_data: ""
-      root_ca_data: ""
+      cert_data: "-----BEGIN CERTIFICATE-----..." # required only in memory mode
+      key_data: "-----BEGIN PRIVATE KEY-----..." # required only in memory mode
+      root_ca_data: "-----BEGIN CERTIFICATE-----..." # optional inline CA bundle
     common:
-      auth_type: 0
-      verify_hostname: true
-      min_tls_version: "1.2"
-      cipher_suites: ""
-      session_cache_size: 32
-      session_ticket_key: ""
+      auth_type: 0 # crypto/tls.ClientAuthType value 0..4
+      verify_hostname: true # accepted and validated, but not wired into tls.Config today
+      min_tls_version: "1.2" # default 1.2; accepts 1.0/1.1/1.2/1.3
+      cipher_suites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256" # parsed but not enforced today
+      session_cache_size: 32 # default 32; 0 disables the client session cache object
+      session_ticket_key: "00112233445566778899aabbccddeeff" # accepted but not applied today
     auto:
-      rotation_interval: "24h"
-      service_name: "user-service"
-      hostname: ""
+      rotation_interval: "24h" # only used when source_type=auto; default 24h
+      service_name: "user-service" # certificate identity when app identity is not enough
+      hostname: "user-service.internal" # optional primary SAN hostname
       sans:
-        - "localhost"
+        - "localhost" # extra DNS/IP SAN entries
         - "127.0.0.1"
-      cert_validity: "24h"
+      cert_validity: "48h" # empty falls back to rotation_interval; keep it >= rotation cadence
       shared_ca:
-        from: "file"
-        cert_file: ""
-        key_file: ""
-        config_name: ""
-        config_group: ""
+        from: "file" # file or control_plane
+        cert_file: "/etc/ssl/certs/shared-ca.crt" # required when from=file
+        key_file: "/etc/ssl/private/shared-ca.key" # required when from=file
+        config_name: "shared-ca" # required when from=control_plane
+        config_group: "shared-ca" # optional; empty falls back to config_name
 ```
 
-Use the `auto` block only when `source_type: auto`. HTTP and gRPC still need their own transport-level TLS switches after certificate loading succeeds.
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  tls:
+    source_type: "local_file" # simplest copy-runnable mode
+    local_file:
+      cert_file: "/etc/ssl/certs/server.crt" # required leaf certificate
+      key_file: "/etc/ssl/private/server.key" # required matching private key
+```
+
+After this loader succeeds, HTTP and gRPC still need their own `tls_enable: true` switches.

@@ -47,6 +47,50 @@ title: MongoDB 插件
 | `write_concern_w` | Write concern 确认级别。 | 只有 `enable_write_concern: true` 时。 | 默认 `1`。 | 没确认副本拓扑和延迟预算，就盲目调高。 |
 | `write_concern_timeout` | Write concern 超时。 | 只有 `enable_write_concern: true` 时。 | 默认 `"5s"`。 | 设得比正常副本确认延迟还短。 |
 
+## Complete YAML Example（完整 YAML 示例）
+
+下面这个示例展开了 `lynx-mongodb/conf/example_config.yml` 中出现的全部字段。
+
+```yaml
+lynx:
+  mongodb:
+    uri: "mongodb://localhost:27017" # MongoDB 连接 URI。
+    database: "orders" # GetMongoDBDatabase() 返回的默认数据库。
+    username: "admin" # 当认证信息不写进 URI 时使用的用户名。
+    password: "change_me" # 与 username 成对使用的认证密码。
+    auth_source: "admin" # username/password 认证所使用的认证库。
+    max_pool_size: 100 # MongoDB 驱动连接池最大值。
+    min_pool_size: 5 # 驱动保留的最小空闲连接数。
+    connect_timeout: "30s" # 初始连接超时。
+    server_selection_timeout: "30s" # 副本集 / 分片场景里的 server selection 超时。
+    socket_timeout: "30s" # Socket 读写超时。
+    heartbeat_interval: "10s" # 驱动心跳间隔。
+    enable_metrics: true # 暴露 gatherer 时导出插件本地 Prometheus 指标。
+    enable_health_check: true # 启动后开启后台健康检查。
+    health_check_interval: "30s" # 后台健康检查间隔。
+    enable_tls: false # 需要证书文件式 TLS 时打开。
+    tls_cert_file: "" # mTLS 客户端证书路径，可选。
+    tls_key_file: "" # mTLS 客户端私钥路径，可选。
+    tls_ca_file: "" # 自定义 CA 证书路径，可选。
+    enable_compression: true # 启用 zlib/snappy 压缩协商。
+    compression_level: 6 # 保存压缩级别意图；当前 runtime 不会把它应用到驱动选项。
+    enable_retry_writes: true # 拓扑支持时启用 retryable writes。
+    enable_read_concern: true # 给 client 应用 read concern。
+    read_concern_level: "local" # enable_read_concern 为 true 时使用的 read concern 级别。
+    enable_write_concern: true # 给 client 应用 write concern。
+    write_concern_w: 1 # write concern 确认级别。
+    write_concern_timeout: "5s" # write concern 超时。
+```
+
+## Minimum Viable YAML Example（最小可用 YAML 示例）
+
+这个插件可以完全依赖默认值启动，因此最小可运行块就是一个空的 `lynx.mongodb` 对象。
+
+```yaml
+lynx:
+  mongodb: {} # 本地开发默认会回落到 mongodb://localhost:27017 和数据库 "test"。
+```
+
 ## Practical Notes（实际注意点）
 
 - `GetMongoDBCollection(name)` 永远基于默认 `database` 解析；集合创建、索引、文档模型仍属于业务代码。

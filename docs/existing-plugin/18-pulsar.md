@@ -138,6 +138,127 @@ This page explains the YAML fields from `lynx-pulsar/conf/example_config.yml`. T
 | `monitoring.health_check_interval` | Health-check interval. | When `enable_health_check: true`. | The repo constructor default is `30s`, and it seeds the health checker interval. | Making it too small and turning a lightweight check into noisy background work. |
 | `monitoring.enable_tracing` | Intended tracing switch. | Tracing/export policy. | Present in the template, but the current plugin startup path does not wire tracing from this flag. | Assuming broker tracing is active after changing only this YAML row. |
 
+## Complete YAML Example
+
+```yaml
+lynx:
+  pulsar:
+    service_url: "pulsar://localhost:6650" # Required broker URL; use pulsar+ssl://... for TLS endpoints
+
+    # Authentication: leave type empty for local clusters without auth
+    auth:
+      type: "token" # "" | token | oauth2 | tls
+      token: "your-token" # Used only when type is token
+
+      oauth2:
+        issuer_url: "https://issuer.example.com" # OAuth2 issuer endpoint
+        client_id: "pulsar-client" # OAuth2 client ID
+        client_secret: "pulsar-secret" # OAuth2 client secret
+        audience: "pulsar://cluster" # Audience expected by the identity provider
+        scope: "openid profile email" # Optional scopes for OAuth2 auth
+
+      tls_auth:
+        cert_file: "/etc/pulsar/client.crt" # Client certificate for TLS authentication
+        key_file: "/etc/pulsar/client.key" # Client private key for TLS authentication
+        ca_file: "/etc/pulsar/ca.crt" # CA bundle for TLS authentication
+
+    # Transport TLS: independent from auth.tls_auth
+    tls:
+      enable: true # Enable TLS transport to the broker
+      allow_insecure_connection: false # Keep false outside controlled local debugging
+      trust_certs_file: "/etc/pulsar/trust-certs.pem" # Custom trust bundle for broker certificates
+      verify_hostname: true # Keep true unless you are debugging certificate naming
+
+    # Connection settings
+    connection:
+      connection_timeout: 30s # Active client connection timeout
+      operation_timeout: 30s # Active client operation timeout
+      keep_alive_interval: 30s # Active keep-alive interval
+      max_connections_per_host: 1 # Active max pooled connections per broker
+      connection_max_lifetime: 0s # 0s means no forced connection rotation
+      enable_connection_pooling: true # Intended connection-pooling switch in config
+
+    # Named producers
+    producers:
+      - name: "default-producer" # Application-facing producer name
+        enabled: true # Disabled entries are ignored
+        topic: "default-topic" # One producer definition maps to one topic
+        options:
+          producer_name: "lynx-default-producer" # Broker-visible producer name override
+          send_timeout: 30s # Active send timeout
+          max_pending_messages: 1000 # Active in-memory pending message limit
+          max_pending_messages_across_partitions: 50000 # Intended cross-partition pending cap
+          block_if_queue_full: false # Intended block-vs-fail policy when the queue is full
+          batching_enabled: true # Batch for throughput; false favors lower latency
+          batching_max_publish_delay: 10ms # Max wait before flushing a partial batch
+          batching_max_messages: 1000 # Max messages per batch
+          batching_max_size: 131072 # Max batch bytes; 128 KiB in this example
+          compression_type: "none" # none | lz4 | zlib | zstd | snappy
+          hashing_scheme: "java_string_hash" # Partition hashing scheme
+          message_routing_mode: "round_robin" # round_robin | single_partition | custom_partition
+          enable_chunking: false # Enable only for large payload scenarios
+          chunk_max_size: 1048576 # Max chunk size when chunking is enabled
+
+    # Named consumers
+    consumers:
+      - name: "default-consumer" # Application-facing consumer name
+        enabled: true # Disabled entries are ignored
+        topics:
+          - "default-topic" # Topics to subscribe to
+        subscription_name: "default-subscription" # Subscription cursor name
+        options:
+          consumer_name: "lynx-default-consumer" # Broker-visible consumer name override
+          subscription_type: "exclusive" # exclusive | shared | failover | key_shared
+          subscription_initial_position: "latest" # latest | earliest
+          subscription_mode: "durable" # durable | non_durable
+          receiver_queue_size: 1000 # Active local receive buffer size
+          max_total_receiver_queue_size_across_partitions: 50000 # Intended cross-partition receive cap
+          consumer_name_prefix: "lynx-consumer" # Intended prefix for generated consumer names
+          read_compacted: false # Intended compacted-topic read mode
+          enable_retry_on_message_failure: true # Intended message-failure retry switch
+          retry_enable: true # Intended consumer retry switch
+          ack_timeout: 0s # 0s means no ack-timeout-driven redelivery
+          negative_ack_delay: 1m # Active delay before negative-ack redelivery
+          priority_level: 0 # Intended broker-side consumer priority
+          crypto_failure_action: "fail" # fail | discard | consume
+          properties:
+            application: "lynx-framework" # Free-form metadata for ownership and diagnostics
+            version: "2.0.0"
+          dead_letter_policy:
+            max_redeliver_count: 3 # Intended max redeliveries before DLQ
+            dead_letter_topic: "dlq-topic" # Intended dead-letter topic name
+            initial_subscription_name: "dlq-subscription" # Intended initial DLQ subscription name
+
+    # Shared retry manager
+    retry:
+      enable: true # Enable the shared retry manager
+      max_attempts: 3 # Max retry attempts
+      initial_delay: 100ms # First retry delay
+      max_delay: 30s # Upper bound for retry backoff
+      retry_delay_multiplier: 2.0 # Exponential backoff multiplier
+      jitter_factor: 0.1 # Randomness to avoid synchronized retries
+
+    # Monitoring and health checks
+    monitoring:
+      enable_metrics: true # Intended metrics switch
+      metrics_namespace: "lynx_pulsar" # Intended metrics namespace prefix
+      enable_health_check: true # Start the background health checker
+      health_check_interval: 30s # Health-check interval
+      enable_tracing: false # Intended tracing switch
+```
+
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  pulsar:
+    service_url: "pulsar://localhost:6650"
+    producers:
+      - name: "default-producer"
+        enabled: true
+        topic: "default-topic"
+```
+
 ## Source Template
 
 - `lynx-pulsar/conf/example_config.yml`

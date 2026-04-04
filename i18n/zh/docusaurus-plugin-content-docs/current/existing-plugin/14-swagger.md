@@ -132,6 +132,136 @@ secure 模板是最容易直接误抄的一份：
 
 如果你保留 `swagger-secure.yml`，应该把它当成“安全意图清单”，然后把真正被当前运行时理解的字段名改正后再使用。
 
+## 完整 YAML 示例
+
+下面这个示例把 `swagger.yml`、`swagger-simple.yml`、`swagger-secure.yml` 里的字段库存合并到了一个块里。当前运行时不会消费的模板键，会保留成注释形式，避免复制后误导成 live 配置。
+
+```yaml
+lynx:
+  swagger:
+    enabled: true # 总开关；默认 true
+
+    security:
+      environment: "development" # 运行时环境标签
+      allowed_environments:
+        - "development" # 允许 Swagger 运行的环境
+        - "testing"
+      disable_in_production: true # 当前默认逻辑会强制它回到 true
+      trusted_origins:
+        - "http://localhost:8080" # UI 服务允许的浏览器来源
+        - "http://127.0.0.1:8081"
+      require_auth: false # 当前会存储，但 handler 不会真的执行鉴权
+
+    generator:
+      enabled: true # 注解扫描 / 重建开关
+      spec_files:
+        - "./openapi/openapi.yaml" # 扫描前先加载的外部 OAS 文件
+      scan_dirs:
+        - "./app/controllers" # 注解扫描目录
+        - "./app/handlers"
+        - "./plugins"
+      output_path: "./docs/swagger.json" # 合并后的输出路径
+      watch_files: true # 当前 live 的运行时键；模板里仍写 watch_enabled
+      # exclude_dirs: ["./vendor", "./test", "./docs", "./.git"] # 模板时代键；当前不消费
+      # recursive: true # 模板时代键；当前不消费
+      # watch_enabled: true # 模板时代键；当前应改用 watch_files
+      # watch_interval: 5s # 模板时代键；当前不消费
+      # gen_on_startup: true # 模板时代键；当前不消费
+
+    ui:
+      enabled: true # UI HTTP 服务开关
+      port: 8081 # UI 服务端口；默认 8081
+      path: "/swagger" # UI 路由前缀
+      deepLinking: true # 当前 HTML 真正会渲染的 camelCase 运行时键
+      docExpansion: "list" # 当前 HTML 真正会渲染的 camelCase 运行时键
+      # title: "Lynx API Documentation" # 模板时代键；当前页面标题来自 info.title
+      # spec_url: "/swagger.json" # 模板时代键；当前不消费
+      # auto_refresh: false # 模板时代键；当前不消费
+      # refresh_interval: 5000 # 模板时代键；当前不消费
+      # deep_linking: true # 模板 snake_case 键；当前运行时期望 deepLinking
+      # display_request_duration: true # 模板键；当前会存储但不会渲染
+      # doc_expansion: "list" # 模板 snake_case 键；当前运行时期望 docExpansion
+      # default_models_expand_depth: 1 # 模板键；当前 HTML 不会使用
+
+    info:
+      title: "Lynx Microservice API" # OpenAPI 标题，也是当前 HTML 页面的标题
+      description: "Secure API documentation built on Lynx framework" # OpenAPI 描述
+      version: "1.0.0" # API 版本号
+      termsOfService: "http://swagger.io/terms/" # 当前运行时使用的 camelCase 服务条款字段
+      contact:
+        name: "API Support Team" # 联系人名称
+        email: "api-support@lynx.io" # 联系邮箱
+        url: "https://lynx.io/support" # 联系链接
+      license:
+        name: "Apache 2.0" # 许可证名称
+        url: "http://www.apache.org/licenses/LICENSE-2.0.html" # 许可证链接
+      # terms_of_service: "http://swagger.io/terms/" # 模板 snake_case 键；当前不消费
+
+    api_server:
+      host: "localhost:8080" # Swagger UI “Try it out” 实际调用的目标 API 地址
+      base_path: "/api/v1" # “Try it out” 使用的 Swagger basePath
+
+    # servers: # 仅模板库存；当前运行时不会读取
+    #   - url: "http://localhost:8080"
+    #     description: "Development environment"
+    # base_path: "/api/v1" # 仅模板顶层键；当前应改用 api_server.base_path
+    # schemes: ["http", "https"] # 当前只是模板字段
+    # consumes: ["application/json", "application/xml", "multipart/form-data"] # 当前只是模板字段
+    # produces: ["application/json", "application/xml"] # 当前只是模板字段
+    # tags: # 当前只是模板字段
+    #   - name: "User Management"
+    #     description: "User-related operations"
+    #     external_docs:
+    #       description: "More information"
+    #       url: "https://lynx.io/docs/user"
+    # external_docs: # 当前只是模板字段
+    #   description: "Lynx Framework Documentation"
+    #   url: "https://lynx.io/docs"
+    # security_definitions: # 当前只是模板字段
+    #   api_key:
+    #     type: "apiKey"
+    #     name: "X-API-Key"
+    #     in: "header"
+    #     description: "API key authentication"
+    # security: # Swagger 顶层安全要求；当前只是模板字段
+    #   - api_key: []
+    # advanced: # 当前只是模板字段
+    #   validate_spec: true
+    #   pretty_json: true
+    #   include_unused_definitions: false
+    #   generate_examples: true
+    #   max_file_size: 10485760
+    #   scan_concurrency: 4
+    #   cache:
+    #     enabled: true
+    #     ttl: 300s
+    #     max_size: 100
+```
+
+## 最小可用 YAML 示例
+
+```yaml
+lynx:
+  swagger:
+    enabled: true # 总开关
+    generator:
+      enabled: true # 从代码生成文档
+      scan_dirs:
+        - "./" # swagger-simple.yml 里最小的扫描范围
+      output_path: "./docs/openapi.yaml" # 生成后的文档输出路径
+    ui:
+      enabled: true # 启动 Swagger UI 服务
+      port: 8081 # 避开 lynx-http 业务端口
+      path: "/swagger" # UI 路由
+    info:
+      title: "My API" # 页面标题和 OpenAPI 标题
+      version: "1.0.0" # OpenAPI 版本号
+    api_server:
+      host: "localhost:8080" # “Try it out” 指向的 lynx-http 地址
+```
+
+如果 `lynx.http.addr` 本身已经是浏览器可访问地址，也可以省略 `api_server.host`，让运行时自行推导。
+
 ## 实用规则
 
 - 想让 Swagger UI 调到正确后端，最好显式写 `api_server.host`，除非 `lynx.http.addr` 本身已经是浏览器可访问的地址。

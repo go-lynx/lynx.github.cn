@@ -65,6 +65,38 @@ lynx:
 | `grpc_ca_file` | Optional CA bundle for custom server trust. | Only when `grpc_tls_enabled: true` and the server is not trusted by the default root store. | Optional; omitted means standard root trust. | Treating it as mandatory in every TLS setup, or forgetting it when the server uses a private CA. |
 | `max_connection_retries` | Caps how many times startup retries the gRPC dial. | Only when `grpc_server` is non-empty. | Defaults to `3` when `0`. Negative values are rejected. Startup also coerces values below `1` to at least one dial attempt. | Expecting it to affect HTTP APIs such as `GenerateGid()` or health probes. |
 
+## Complete YAML Example
+
+```yaml
+lynx:
+  dtm:
+    enabled: true # required switch; false skips DTM startup
+    server_url: "http://dtm:36789/api/dtmsvr" # required HTTP API endpoint for GID, query, Saga, and Msg calls
+    grpc_server: "dtm:36790" # optional gRPC endpoint for helpers that need it
+    timeout: 10 # defaults to 10 seconds for NewSaga() and NewMsg()
+    retry_interval: 10 # defaults to 10 seconds between retries
+    transaction_timeout: 60 # defaults to 60 seconds for the global transaction timeout
+    branch_timeout: 30 # documented branch timeout; helper defaults still need explicit options
+    pass_through_headers:
+      - "X-Request-ID" # forwarded by TransactionHelper helper paths
+      - "X-User-ID" # forwarded when present on the inbound request context
+      - "X-Trace-ID" # useful for cross-service tracing
+    grpc_tls_enabled: false # set true only when the DTM gRPC endpoint requires TLS
+    grpc_cert_file: "/etc/dtm/tls/client.crt" # required with grpc_key_file when grpc_tls_enabled is true
+    grpc_key_file: "/etc/dtm/tls/client.key" # required with grpc_cert_file when grpc_tls_enabled is true
+    grpc_ca_file: "/etc/dtm/tls/ca.crt" # optional CA bundle for private PKI or custom trust roots
+    max_connection_retries: 3 # defaults to 3 when 0
+```
+
+## Minimum Viable YAML Example
+
+```yaml
+lynx:
+  dtm:
+    enabled: true # turn on the plugin
+    server_url: "http://dtm:36789/api/dtmsvr" # required HTTP API endpoint
+```
+
 ## Current Helper Boundary
 
 - `NewTcc(gid)` and `NewXa(gid)` are currently placeholders that return `nil`; use `TransactionHelper.ExecuteTCC()`, `TransactionHelper.ExecuteXA()`, or the underlying `dtmcli` global transaction helpers instead.

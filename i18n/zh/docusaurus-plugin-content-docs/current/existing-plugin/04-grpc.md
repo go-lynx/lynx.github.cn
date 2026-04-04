@@ -142,6 +142,113 @@ title: gRPC 服务
 | `lynx.polaris.retry_interval` | Polaris 重试间隔。 | 和 `max_retry_times` 配合使用。 | 间隔配太大，让服务发现看上去像“卡住”。 |
 | `lynx.polaris.health_check_interval` | 控制 Polaris 侧健康检查 / 刷新频率。 | 会影响发现状态变化被感知的速度。 | 误以为它能替代客户端自己的每次 RPC 健康检查。 |
 
+## 完整 YAML 示例
+
+```yaml
+lynx:
+  polaris:
+    namespace: "default" # example_polaris_config.yml 里的服务发现命名空间
+    server_addresses:
+      - "127.0.0.1:8091" # 一个或多个 Polaris 服务端地址
+    enable_retry: true # Polaris 侧重试开关
+    max_retry_times: 3 # Polaris 重试次数上限
+    retry_interval: "2s" # Polaris 重试间隔
+    health_check_interval: "5s" # Polaris 刷新 / 健康检查频率
+
+  grpc:
+    service:
+      network: "tcp" # 监听传输类型；默认 tcp
+      addr: ":9090" # 服务端监听地址；默认 :9090
+      tls_enable: false # 只有 lynx.tls 已加载证书后才应打开
+      tls_auth_type: 0 # 0..4；仅 tls_enable=true 时有意义
+      timeout: "10s" # 请求超时
+      max_concurrent_streams: 1000 # 省略或 0 时会落到安全默认值
+      max_recv_msg_size: 10485760 # 10 MiB 入站消息上限
+      max_send_msg_size: 10485760 # 10 MiB 出站消息上限
+      graceful_shutdown_timeout: "30s" # 仅 YAML 暴露的服务端选项；默认 30s
+      enable_tracing: true # 服务端 tracing 拦截器开关
+      enable_request_logging: true # 服务端请求日志拦截器开关
+      enable_metrics: true # 服务端指标拦截器开关
+      rate_limit:
+        enabled: false # 进程内 unary 限流器
+        rate_per_second: 100 # 稳态 unary 吞吐
+        burst: 200 # 突发容量；<=0 会回退到 rate_per_second+1
+      max_inflight_unary: 0 # 0 表示不限制并发 unary RPC
+      circuit_breaker:
+        enabled: false # 服务端熔断开关
+        failure_threshold: 5 # 失败次数门槛
+        recovery_timeout: "30s" # open 到 half-open 的等待时长
+        success_threshold: 3 # 关闭熔断前需要的成功探测次数
+        timeout: "10s" # 熔断保护请求时的超时
+        max_concurrent_requests: 10 # 熔断参与时的并发请求上限
+
+    client:
+      default_timeout: "10s" # 全局兜底 RPC 超时
+      default_keep_alive: "30s" # 连接 keepalive 周期
+      max_retries: 3 # 默认 unary 重试次数
+      retry_backoff: "1s" # 重试退避基础间隔
+      max_connections: 10 # 连接池模式下每个服务的最大连接数
+      tls_enable: false # 全局兜底 TLS 开关；subscribe_services 不会可靠继承它
+      tls_auth_type: 0 # 全局兜底 TLS 认证模式
+      connection_pooling: true # 启用多连接池
+      pool_size: 10 # 连接池最多跟踪多少个服务
+      idle_timeout: "60s" # 池化连接空闲淘汰时间
+      health_check_enabled: true # 模板字段；当前客户端代码不会消费
+      health_check_interval: "30s" # 模板字段；当前客户端代码不会消费
+      metrics_enabled: true # 模板字段；当前客户端代码不会消费
+      tracing_enabled: true # live 的出站 trace 上下文注入开关
+      logging_enabled: true # 模板字段；当前客户端代码不会消费
+      max_message_size: 4194304 # 模板字段；当前客户端代码不会消费
+      compression_enabled: false # 模板字段；当前客户端代码不会消费
+      compression_type: "gzip" # 模板字段；当前客户端代码不会消费
+      subscribe_services:
+        - name: "user-service" # GetConnection("user-service") 的查找键
+          endpoint: "127.0.0.1:9091" # discovery 不可用时的静态兜底地址
+          timeout: "5s" # 单服务超时覆盖
+          tls_enable: true # 单服务 TLS 开关
+          tls_auth_type: 2 # 单服务 TLS 认证模式
+          max_retries: 5 # 单服务重试次数覆盖
+          required: true # 依赖不可用时直接让启动失败
+          metadata:
+            version: "v1.0" # 可选负载均衡 / 路由元数据
+            region: "us-west" # 额外路由提示
+          load_balancer: "round_robin" # 仅 discovery 场景生效的选址策略
+          circuit_breaker_enabled: true # 单服务客户端熔断
+          circuit_breaker_threshold: 5 # 单服务熔断失败次数门槛
+      services:
+        - name: "legacy-service" # 已废弃的静态服务列表
+          endpoint: "legacy.internal:9094" # legacy 模式必填的静态地址
+          timeout: "10s" # 单服务超时覆盖
+          tls_enable: false # legacy 单服务 TLS 开关
+          tls_auth_type: 0 # legacy 单服务 TLS 认证模式
+          max_retries: 3 # legacy 单服务重试次数覆盖
+
+subscriptions:
+  grpc:
+    - service: "user-service" # bootstrap 订阅连接使用的服务名
+      tls: false # 是否为这条 bootstrap 订阅连接打开 TLS
+      required: true # 建连失败时是否直接让启动失败
+      ca_name: "" # tls=true 时可选的 CA 配置名
+      ca_group: "" # 可选 CA 分组；留空回退到 ca_name
+```
+
+## 最小可用 YAML 示例
+
+服务端和客户端本来就是两套独立能力，所以最小可复制配置可以只启服务端，也可以只给客户端一个直接上游。下面这个例子把两者都保留了，但不依赖 Polaris：
+
+```yaml
+lynx:
+  grpc:
+    service:
+      addr: ":9090" # 足够启动 gRPC 服务端；network 默认 tcp
+    client:
+      subscribe_services:
+        - name: "user-service" # GetConnection("user-service") 的连接键
+          endpoint: "127.0.0.1:9091" # 没有 discovery 插件时可直接连这个上游
+```
+
+只有在你需要“启动期共享订阅连接”时，才再补 `subscriptions.grpc[*]`。
+
 ## 实用规则
 
 - 服务端 TLS 和客户端 TLS 要分开配，它们不会自动联动。
