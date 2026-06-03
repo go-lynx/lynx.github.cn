@@ -9,7 +9,7 @@ The goal of this page is not to list every feature. It is to help you get a **ru
 
 ## Prerequisites
 
-- Go 1.24+
+- Go 1.26+ (the framework's `go.mod` declares `go 1.26`; on Go 1.21+ the `toolchain` directive auto-downloads the matching toolchain)
 - Git
 - Network access for Go modules and the template repository
 
@@ -111,6 +111,14 @@ For example, a realistic starter path looks like:
 go get github.com/go-lynx/lynx-http
 go get github.com/go-lynx/lynx-redis
 ```
+
+:::tip CLI shortcut
+`lynx plugin install <name>` automates steps 1–2: it runs `go get` for the plugin
+module (adding it to `go.mod`) and drops a config template under `conf/`, then runs
+`go mod tidy`. You still add the blank import (step 3) yourself. Run it from your
+project root, e.g. `lynx plugin install redis`. Remove a plugin with
+`lynx plugin remove redis` (drops the `go.mod` require; remove the blank import first).
+:::
 
 ```yaml
 lynx:

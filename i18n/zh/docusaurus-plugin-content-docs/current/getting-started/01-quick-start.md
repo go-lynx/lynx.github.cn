@@ -9,7 +9,7 @@ title: 快速开始
 
 ## 前置要求
 
-- Go 1.24+
+- Go 1.26+（框架 `go.mod` 声明的是 `go 1.26`；在 Go 1.21+ 上，`toolchain` 指令会自动下载匹配的工具链）
 - Git
 - 能访问 Go 模块和模板仓库的网络环境
 
@@ -111,6 +111,13 @@ lynx run --watch
 go get github.com/go-lynx/lynx-http
 go get github.com/go-lynx/lynx-redis
 ```
+
+:::tip CLI 快捷方式
+`lynx plugin install <名称>` 会自动完成第 1–2 步：对插件模块执行 `go get`（写入 `go.mod`），
+在 `conf/` 下生成配置模板，并执行 `go mod tidy`。第 3 步的匿名导入仍需你自己加。
+请在项目根目录运行，例如 `lynx plugin install redis`。卸载用 `lynx plugin remove redis`
+（会从 `go.mod` 移除该依赖；请先删掉匿名导入）。
+:::
 
 ```yaml
 lynx:
